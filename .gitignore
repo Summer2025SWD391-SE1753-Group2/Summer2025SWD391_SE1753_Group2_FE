@@ -1,0 +1,40 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Vite cache
+.vite/
+
+# Local env files
+.env
+.env.*.local
+
+# Editor folders and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Mac system files
+.DS_Store
+
+# Optional ESLint/Prettier cache
+.eslintcache
+.prettiercache
+
+# Typescript
+*.tsbuildinfo
+
+# Tailwind JIT cache
+.tailwind-cache/
