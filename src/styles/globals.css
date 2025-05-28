@@ -1,3 +1,29 @@
+<<<<<<< Updated upstream
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
+=======
+<<<<<<< Updated upstream
+=======
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+a {
+    text-decoration: none;
+}
+
+/* style.css */
+.btn {
+    border: none;
+    box-shadow: 0 8px 0 #ffa8a8;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+.btn:active {
+    transform: translateY(6px);
+    box-shadow: 0 4px 0 #e4e4e4;
+}
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes

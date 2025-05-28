@@ -22,13 +22,21 @@ export default function LoginPage() {
         </div>
 
         <div className="flex space-x-4">
+<<<<<<< Updated upstream
           <Button className="w-1/2 hover:bg-rose-500">Sign in</Button>
+=======
+          <Button className="btn w-1/2 hover:bg-rose-500">Sign in</Button>
+>>>>>>> Stashed changes
           <Button  className="w-1/2 hover:bg-rose-500">
             Create an account
           </Button>
         </div>
 
+<<<<<<< Updated upstream
         <div className="text-center text-sm text-muted-foreground">
+=======
+        <div className=" text-center text-sm text-muted-foreground">
+>>>>>>> Stashed changes
           Or sign in with:
         </div>
 
