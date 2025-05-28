@@ -4,7 +4,7 @@ module.exports = {
   theme: {
     extend: {
       borderRadius: {
-        lg: "var(--radius)",
+         lg: "2rem",
       },
       colors: {
         background: "hsl(var(--background))",
