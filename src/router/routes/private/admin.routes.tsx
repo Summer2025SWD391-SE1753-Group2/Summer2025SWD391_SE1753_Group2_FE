@@ -1,5 +1,5 @@
 import { RouteConfig } from "../../types/router.types";
-import AdminLayout from "@/components/layout/auth/admin";
+import AdminLayout from "@/components/layout/admin/AdminLayout";
 import AdminDashboard from "@/pages/auth/admin/dashboard/Dashboard";
 import { AuthGuard } from "../../guards/AuthGuard";
 import { RoleGuard } from "../../guards/RoleGuard";
@@ -12,7 +12,7 @@ export const adminRoutes: RouteConfig[] = [
     path: "/admin",
     element: (
       <AuthGuard>
-        <RoleGuard roles={["admin"]}>
+        <RoleGuard allowedRoles={["admin"]}>
           <AdminLayout />
         </RoleGuard>
       </AuthGuard>
@@ -23,7 +23,7 @@ export const adminRoutes: RouteConfig[] = [
     path: "/admin/users",
     element: (
       <AuthGuard>
-        <RoleGuard roles={["admin"]}>
+        <RoleGuard allowedRoles={["admin"]}>
           <UserManagement />
         </RoleGuard>
       </AuthGuard>
@@ -33,7 +33,7 @@ export const adminRoutes: RouteConfig[] = [
     path: "/admin/posts",
     element: (
       <AuthGuard>
-        <RoleGuard roles={["admin"]}>
+        <RoleGuard allowedRoles={["admin"]}>
           <PostManagement />
         </RoleGuard>
       </AuthGuard>
@@ -43,7 +43,7 @@ export const adminRoutes: RouteConfig[] = [
     path: "/admin/reports",
     element: (
       <AuthGuard>
-        <RoleGuard roles={["admin"]}>
+        <RoleGuard allowedRoles={["admin"]}>
           <ReportManagement />
         </RoleGuard>
       </AuthGuard>

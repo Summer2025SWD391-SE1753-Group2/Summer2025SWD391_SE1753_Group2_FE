@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
-import { BaseLayout } from "../../shared/BaseLayout";
-import { Topbar } from "../../shared/Topbar/Topbar";
+import { BaseLayout } from "../shared/BaseLayout";
+import { Topbar } from "../shared/Topbar/Topbar";
 import { Search, Home, Users, Flag, Settings, Shield } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -13,24 +13,24 @@ const sidebarItems = [
     icon: Home,
   },
   {
-    title: "Người dùng",
+    title: "Quản lý người dùng",
     href: "/admin/users",
     icon: Users,
   },
   {
-    title: "Báo cáo",
-    href: "/admin/reports",
+    title: "Quản lý bài viết",
+    href: "/admin/posts",
     icon: Flag,
   },
   {
-    title: "Cài đặt",
-    href: "/admin/settings",
-    icon: Settings,
+    title: "Quản lý báo cáo",
+    href: "/admin/reports",
+    icon: Shield,
   },
   {
-    title: "Phân quyền",
-    href: "/admin/roles",
-    icon: Shield,
+    title: "Cài đặt hệ thống",
+    href: "/admin/settings",
+    icon: Settings,
   },
 ];
 
@@ -42,7 +42,7 @@ export default function AdminLayout() {
           <div className="flex w-full items-center gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Tìm kiếm..." className="pl-8" />
+              <Input placeholder="Tìm kiếm quản trị..." className="pl-8" />
             </div>
           </div>
         </Topbar>

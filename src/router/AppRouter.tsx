@@ -3,9 +3,9 @@ import {
   createBrowserRouter,
   type RouteObject,
 } from "react-router-dom";
-import { userPublicRoutes } from "./routes/public/user.routes";
+import { userRoutes as userPublicRoutes } from "./routes/public/user.routes";
 import { authRoutes } from "./routes/public/auth.routes";
-import { userRoutes } from "./routes/private/user.routes";
+import { userRoutes as userPrivateRoutes } from "./routes/private/user.routes";
 import { moderatorRoutes } from "./routes/private/moderator.routes";
 import { adminRoutes } from "./routes/private/admin.routes";
 import NotFound from "@/pages/NotFound";
@@ -28,10 +28,10 @@ function convertRouteConfigToRouteObject(routes: RouteConfig[]): RouteObject[] {
 }
 
 const router = createBrowserRouter([
-  ...userPublicRoutes,
+  ...convertRouteConfigToRouteObject(userPublicRoutes),
   ...convertRouteConfigToRouteObject(authRoutes),
-  ...convertRouteConfigToRouteObject(userRoutes),
-  ...moderatorRoutes,
+  ...convertRouteConfigToRouteObject(userPrivateRoutes),
+  ...convertRouteConfigToRouteObject(moderatorRoutes),
   ...convertRouteConfigToRouteObject(adminRoutes),
   { path: "*", element: <NotFound /> },
 ]);

@@ -1,15 +1,19 @@
 import { Navigate } from "react-router-dom";
 import { GuardProps } from "../types/router.types";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/store/auth/authStore";
 
-export const RoleGuard = ({ children, roles }: GuardProps) => {
-  const { user } = useAuth();
+interface RoleGuardProps extends GuardProps {
+  allowedRoles: string[];
+}
 
-  if (!roles || !user) {
-    return <>{children}</>;
+export const RoleGuard = ({ children, allowedRoles }: RoleGuardProps) => {
+  const { user, isAuthenticated } = useAuthStore();
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
   }
 
-  if (!roles.includes(user.role)) {
+  if (!allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

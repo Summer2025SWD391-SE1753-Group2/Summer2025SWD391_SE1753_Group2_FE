@@ -1,9 +1,9 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { GuardProps } from "../types/router.types";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/store/auth/authStore";
 
 export const AuthGuard = ({ children }: GuardProps) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthStore();
   const location = useLocation();
 
   if (!isAuthenticated) {

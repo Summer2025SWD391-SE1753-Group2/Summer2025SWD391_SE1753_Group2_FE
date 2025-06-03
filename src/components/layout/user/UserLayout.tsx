@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
-import { BaseLayout } from "../../shared/BaseLayout";
-import { Topbar } from "../../shared/Topbar/Topbar";
+import { BaseLayout } from "../shared/BaseLayout";
+import { Topbar } from "../shared/Topbar/Topbar";
 import { Search, Home, Bookmark, MessageCircle, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

@@ -1,4 +1,4 @@
-import { type RouteObject } from "react-router-dom";
+import { RouteConfig } from "../../types/router.types";
 import ModeratorLayout from "@/components/layout/moderator";
 import ModeratorDashboard from "@/pages/auth/moderator/dashboard-mor/Dashboard";
 import { AuthGuard } from "../../guards/AuthGuard";
@@ -7,12 +7,12 @@ import { PostApproval } from "@/pages/auth/moderator/post-management/PostApprova
 import { ReportHandling } from "@/pages/auth/moderator/report-management/ReportHandling";
 import { GroupChatManagement } from "@/pages/chat/chat-with-group/GroupChatManagement";
 
-export const moderatorRoutes: RouteObject[] = [
+export const moderatorRoutes: RouteConfig[] = [
   {
     path: "/moderator",
     element: (
       <AuthGuard>
-        <RoleGuard roles={["moderator", "admin"]}>
+        <RoleGuard allowedRoles={["moderator", "admin"]}>
           <ModeratorLayout />
         </RoleGuard>
       </AuthGuard>
@@ -23,7 +23,7 @@ export const moderatorRoutes: RouteObject[] = [
     path: "/moderator/posts",
     element: (
       <AuthGuard>
-        <RoleGuard roles={["moderator", "admin"]}>
+        <RoleGuard allowedRoles={["moderator", "admin"]}>
           <PostApproval />
         </RoleGuard>
       </AuthGuard>
@@ -33,7 +33,7 @@ export const moderatorRoutes: RouteObject[] = [
     path: "/moderator/reports",
     element: (
       <AuthGuard>
-        <RoleGuard roles={["moderator", "admin"]}>
+        <RoleGuard allowedRoles={["moderator", "admin"]}>
           <ReportHandling />
         </RoleGuard>
       </AuthGuard>
@@ -43,7 +43,7 @@ export const moderatorRoutes: RouteObject[] = [
     path: "/moderator/groups",
     element: (
       <AuthGuard>
-        <RoleGuard roles={["moderator", "admin"]}>
+        <RoleGuard allowedRoles={["moderator", "admin"]}>
           <GroupChatManagement />
         </RoleGuard>
       </AuthGuard>
