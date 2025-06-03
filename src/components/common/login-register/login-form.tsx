@@ -91,8 +91,14 @@ export function LoginForm({
           </span>
         </div>
         <Button
+          type="button"
           variant="outline"
           className="w-full flex items-center justify-center gap-2"
+          onClick={() => {
+            window.location.href = `${
+              import.meta.env.VITE_API_URL
+            }/api/v1/auth/google/login`;
+          }}
         >
           Login with Google
         </Button>

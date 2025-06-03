@@ -1,5 +1,5 @@
 import { type RouteObject } from "react-router-dom";
-import ModeratorLayout from "@/components/layout/moderator-layout";
+import ModeratorLayout from "@/components/layout/moderator";
 import ModeratorDashboard from "@/pages/auth/moderator/dashboard-mor/Dashboard";
 import { AuthGuard } from "../../guards/AuthGuard";
 import { RoleGuard } from "../../guards/RoleGuard";

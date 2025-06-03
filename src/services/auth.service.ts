@@ -4,7 +4,29 @@ import type {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
+  UserInfo,
 } from "@/types/api";
+
+// Cookie utilities
+const setCookie = (name: string, value: string, days: number = 7) => {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(
+    value
+  )}; expires=${expires}; path=/; SameSite=Strict; Secure=${
+    location.protocol === "https:"
+  }`;
+};
+
+const getCookie = (name: string): string | null => {
+  return document.cookie.split("; ").reduce((r, v) => {
+    const parts = v.split("=");
+    return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+  }, "");
+};
+
+const deleteCookie = (name: string) => {
+  setCookie(name, "", -1);
+};
 
 export const authService = {
   async login(data: LoginRequest): Promise<ApiResponse<AuthResponse>> {
@@ -12,7 +34,8 @@ export const authService = {
     params.append("grant_type", "password");
     params.append("username", data.email || data.username || "");
     params.append("password", data.password);
-    const response = await axiosInstance.post<ApiResponse<AuthResponse>>(
+
+    const response = await axiosInstance.post<AuthResponse>(
       "/api/v1/auth/access-token",
       params,
       {
@@ -21,29 +44,99 @@ export const authService = {
         },
       }
     );
-    if (response.data.data?.access_token) {
-      localStorage.setItem("token", response.data.data.access_token);
+
+    // Store tokens in cookies (more secure than localStorage)
+    if (response.data.access_token) {
+      setCookie("access_token", response.data.access_token, 1); // 1 day
+      if (response.data.refresh_token) {
+        setCookie("refresh_token", response.data.refresh_token, 7); // 7 days
+      }
+
+      // Store user info
+      if (response.data.user) {
+        setCookie("user_info", JSON.stringify(response.data.user), 7);
+      }
     }
-    return response.data;
+
+    return {
+      data: response.data,
+      message: "Login successful",
+      status: 200,
+    };
   },
 
   async register(data: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
-    const response = await axiosInstance.post<ApiResponse<AuthResponse>>(
+    const response = await axiosInstance.post<AuthResponse>(
       "/api/v1/auth/register",
       data
     );
-    return response.data;
+
+    return {
+      data: response.data,
+      message: "Registration successful",
+      status: 200,
+    };
+  },
+
+  async refreshToken(): Promise<string | null> {
+    const refreshToken = getCookie("refresh_token");
+    if (!refreshToken) return null;
+
+    try {
+      const response = await axiosInstance.post<{
+        access_token: string;
+        token_type: string;
+      }>("/api/v1/auth/refresh-token", { refresh_token: refreshToken });
+
+      if (response.data.access_token) {
+        setCookie("access_token", response.data.access_token, 1);
+        return response.data.access_token;
+      }
+    } catch (error) {
+      // If refresh fails, clear all auth data
+      console.log(error);
+    }
+    return null;
   },
 
   async logout(): Promise<void> {
-    localStorage.removeItem("token");
+    // Clear cookies
+    deleteCookie("access_token");
+    deleteCookie("refresh_token");
+    deleteCookie("user_info");
+
+    // Optional: Call logout API if BE has logout endpoint
+    try {
+      await axiosInstance.post("/api/v1/auth/logout");
+    } catch (error) {
+      console.log(error);
+    }
   },
 
   getToken(): string | null {
-    return localStorage.getItem("token");
+    return getCookie("access_token");
+  },
+
+  getRefreshToken(): string | null {
+    return getCookie("refresh_token");
+  },
+
+  getUserInfo(): UserInfo | null {
+    const userInfo = getCookie("user_info");
+    return userInfo ? JSON.parse(userInfo) : null;
   },
 
   isAuthenticated(): boolean {
     return !!this.getToken();
+  },
+
+  hasRole(role: string): boolean {
+    const userInfo = this.getUserInfo();
+    return userInfo?.role === role;
+  },
+
+  isPhoneVerified(): boolean {
+    const userInfo = this.getUserInfo();
+    return userInfo?.phone_verified === true;
   },
 };

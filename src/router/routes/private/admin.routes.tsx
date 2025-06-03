@@ -1,5 +1,5 @@
 import { RouteConfig } from "../../types/router.types";
-import AdminLayout from "@/components/layout/admin-layout";
+import AdminLayout from "@/components/layout/auth/admin";
 import AdminDashboard from "@/pages/auth/admin/dashboard/Dashboard";
 import { AuthGuard } from "../../guards/AuthGuard";
 import { RoleGuard } from "../../guards/RoleGuard";

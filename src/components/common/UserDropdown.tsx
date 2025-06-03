@@ -12,7 +12,10 @@ interface UserDropdownProps {
   onLogout: () => void;
 }
 
-export default function UserDropdown({ avatarUrl, onLogout }: UserDropdownProps) {
+export default function UserDropdown({
+  avatarUrl,
+  onLogout,
+}: UserDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -32,10 +35,7 @@ export default function UserDropdown({ avatarUrl, onLogout }: UserDropdownProps)
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem
-          className="text-red-500"
-          onClick={onLogout}
-        >
+        <DropdownMenuItem className="text-red-500" onClick={onLogout}>
           Đăng xuất
         </DropdownMenuItem>
       </DropdownMenuContent>
