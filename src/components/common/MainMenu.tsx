@@ -15,7 +15,11 @@ interface MainMenuProps {
   onLogout: () => void;
 }
 
-export default function MainMenu({ isLoggedIn, avatarUrl, onLogout }: MainMenuProps) {
+export default function MainMenu({
+  isLoggedIn,
+  avatarUrl,
+  onLogout,
+}: MainMenuProps) {
   return (
     <NavigationMenu>
       <NavigationMenuList className="space-x-3 items-center">

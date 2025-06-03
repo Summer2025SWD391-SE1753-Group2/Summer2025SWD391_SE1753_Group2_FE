@@ -9,7 +9,7 @@ module.exports = {
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        // add more custom colors if needed
+        "read-header": "#FF0000",
       },
     },
   },

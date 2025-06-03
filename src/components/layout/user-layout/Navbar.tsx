@@ -38,14 +38,6 @@ export default function Navbar() {
           avatarUrl={user.avatar}
           onLogout={handleLogout}
         />
-
-        {/* Toggle for dev testing */}
-        <button
-          onClick={() => setIsLoggedIn(!isLoggedIn)}
-          className="rainbow-flow rounded-3xl px-8 text-white absolute right-1 top-44 bg-rose-500"
-        >
-          Test login
-        </button>
       </div>
     </div>
   );

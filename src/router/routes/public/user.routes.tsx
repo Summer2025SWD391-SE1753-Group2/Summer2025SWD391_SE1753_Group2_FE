@@ -1,8 +1,8 @@
 import { type RouteObject } from "react-router-dom";
 import UserLayout from "@/components/layout/user-layout";
 import HomePage from "@/pages/user/HomePage";
-import LoginPage from "@/pages/auth/user/login/LoginPage";
-import RegisterPage from "@/pages/auth/user/register/RegisterPage";
+import LoginPage from "@/pages/auth/user/login-register/LoginPage";
+import RegisterPage from "@/pages/auth/user/login-register/RegisterPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
 export const userPublicRoutes: RouteObject[] = [
