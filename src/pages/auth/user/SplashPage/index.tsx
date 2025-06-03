@@ -1,24 +1,24 @@
-// src/pages/SplashPage.tsx
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-// Danh sách URL hình ảnh thức ăn từ Unsplash (có thể thay thế bằng ảnh của bạn)
+// Danh sách URL hình ảnh thức ăn của bạn
 const foodImages = [
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=300&auto=format&fit=crop", // Pizza
-  "https://images.unsplash.com/photo-1513104890138-7cacd02a8a98?q=80&w=300&auto=format&fit=crop", // Burger
-  "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=300&auto=format&fit=crop", // Pasta
-  "https://images.unsplash.com/photo-1600891964599-f61ba0e24092?q=80&w=300&auto=format&fit=crop", // Sushi
-  "https://images.unsplash.com/photo-1565299624946-b28fddf7f5a7?q=80&w=300&auto=format&fit=crop", // Salad
-  "https://images.unsplash.com/photo-1621184455862-c163e4b4e0fa?q=80&w=300&auto=format&fit=crop", // Dessert
-  "https://images.unsplash.com/photo-1551024601-bec78aea704b?q=80&w=300&auto=format&fit=crop", // Donut
-  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=300&auto=format&fit=crop", // Tacos
-  "https://images.unsplash.com/photo-1606787620819-8bdf0c44c293?q=80&w=300&auto=format&fit=crop", // BBQ
-  "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=300&auto=format&fit=crop", // Smoothie
-  "https://images.unsplash.com/photo-1628253747716-0c8c83f48ac5?q=80&w=300&auto=format&fit=crop", // Steak
-  "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?q=80&w=300&auto=format&fit=crop", // Ramen
-  "https://images.unsplash.com/photo-1565299585323-76e1a0d2a5d6?q=80&w=300&auto=format&fit=crop", // Pancakes
-  "https://images.unsplash.com/photo-1551024709-8f23bef730fb?q=80&w=300&auto=format&fit=crop", // Coffee
-  "https://images.unsplash.com/photo-1599599810769-91aa89e382b2?q=80&w=300&auto=format&fit=crop", // Phở
+  "https://bizweb.dktcdn.net/100/339/225/files/thuc-an-nhanh.jpg?v=1627638748869",
+  "https://blog.abit.vn/wp-content/uploads/2020/05/lay-si-do-an-vat-trung-quoc-10_opt.jpg",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSyHRBN_msdrprIUxPRKUQ_D55psSRY-aadQw&s",
+  "https://objectstorage.omzcloud.vn/pys-object-storage/web/uploads/posts/avatar/1646117052.jpg",
+  "https://suckhoedoisong.qltns.mediacdn.vn/2014/11-greek-yogurt-636-0-0-1389186353473.jpg",
+  "https://goldensmiletravel.com/uploads/images/2023/06/09/image1-1686293610.jpg",
+  "https://blog.dktcdn.net/files/ban-do-an.jpg",
+  "https://beptruong.edu.vn/wp-content/uploads/2017/09/nguoi-an-do-an-boc-de-ton-trong-hat-gao.jpg",
+  "https://file.hstatic.net/200000201143/file/chup-do-an__1__223f315554d649228a59ac97c5a51045_grande.jpg",
+  "https://cdn.nguyenkimmall.com/images/companies/_1/Content/tin-tuc/gia-dung/10-mon-do-an-vat-giam-can-day-tinh-healthy-va-balance-h1.jpg",
+  "https://itsvietnam.com.vn/wp-content/uploads/2021/10/326-%C4%91%E1%BA%A1i-di%E1%BB%87n-600x600.png",
+  "https://storage.quannhautudo.com/data/thumb_1200/Data/images/product/2023/06/202306271709202695.webp",
+  "https://simg.zalopay.com.vn/zlp-website/assets/do_an_ngon_ha_noi_Pho_Cuon_Ha_Noi_0f923efc0f.jpg",
+  "https://vj-prod-website-cms.s3.ap-southeast-1.amazonaws.com/shutterstock1153329463-1669175879108.jpg",
+  "https://cdn.prod.website-files.com/5f37e24d2bb0e5491702cddb/5f7f3dc784183855fde5a89c_dich-vu-chup-anh-mon-an.jpg",
+
 ];
 
 export default function SplashPage() {
@@ -33,7 +33,7 @@ export default function SplashPage() {
               <div key={index} className="mb-3 break-inside-avoid">
                 <img
                   src={image}
-                  alt={`Food image ${index + 1}`}
+                  alt={`Hình ảnh món ăn ${index + 1}`}
                   className="w-full rounded-lg shadow-sm object-cover"
                 />
               </div>
@@ -47,17 +47,17 @@ export default function SplashPage() {
         {/* Nội dung chính */}
         <div className="relative z-20 flex flex-col items-center justify-center space-y-6 text-center px-4">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
-            Welcome to Your Food App
+            Chào mừng đến với ứng dụng ẩm thực của bạn
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-white drop-shadow-lg max-w-md">
-            Discover delicious recipes and culinary inspirations
+            Khám phá các công thức nấu ăn ngon và nguồn cảm hứng ẩm thực
           </p>
           <Button
             asChild
             className="bg-red-600 hover:bg-red-700 text-white rounded-full px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg font-semibold transition-colors"
-            aria-label="Log in"
+            aria-label="Đăng nhập"
           >
-            <Link to="/login">Log In</Link>
+            <Link to="/login">Đăng nhập</Link>
           </Button>
         </div>
       </main>
