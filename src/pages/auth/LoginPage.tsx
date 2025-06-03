@@ -2,18 +2,19 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, AlertCircle } from "lucide-react";
 
 export function LoginPage() {
   const location = useLocation();
   const message = location.state?.message;
+  const error = location.state?.error;
 
   useEffect(() => {
-    // Clear the message from location state after showing it
-    if (message) {
+    // Clear the message/error from location state after showing it
+    if (message || error) {
       window.history.replaceState({}, document.title);
     }
-  }, [message]);
+  }, [message, error]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-900 dark:to-gray-800">
@@ -27,6 +28,16 @@ export function LoginPage() {
           </Alert>
         </div>
       )}
+
+      {error && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </div>
+      )}
+
       <LoginForm />
     </div>
   );

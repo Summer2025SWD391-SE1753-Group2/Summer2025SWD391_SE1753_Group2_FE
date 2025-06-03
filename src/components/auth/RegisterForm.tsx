@@ -54,25 +54,42 @@ export function RegisterForm() {
     }
 
     // Validate password strength
-    if (formData.password.length < 6) {
-      setPasswordError("Mật khẩu phải có ít nhất 6 ký tự");
+    if (formData.password.length < 8) {
+      setPasswordError("Mật khẩu phải có ít nhất 8 ký tự");
+      return;
+    }
+
+    // Check for uppercase letter
+    if (!/[A-Z]/.test(formData.password)) {
+      setPasswordError("Mật khẩu phải chứa ít nhất 1 chữ cái viết hoa");
+      return;
+    }
+
+    // Check for number (recommended)
+    if (!/[0-9]/.test(formData.password)) {
+      setPasswordError("Mật khẩu phải chứa ít nhất 1 số");
       return;
     }
 
     try {
-      await register({
+      const registerData = {
         username: formData.username,
         email: formData.email,
         password: formData.password,
         full_name: formData.full_name,
         date_of_birth: formData.date_of_birth,
         phone: formData.phone || undefined,
-      });
+      };
+
+      console.log("Frontend register data:", registerData);
+
+      await register(registerData);
 
       // Navigate to login with success message
       navigate("/login", {
         state: {
-          message: "Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.",
+          message:
+            "Đăng ký thành công! Vui lòng kiểm tra email để tiếp tục đăng nhập.",
         },
       });
     } catch {
@@ -161,19 +178,20 @@ export function RegisterForm() {
                   disabled={isLoading}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Số điện thoại</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="0123456789"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                />
-              </div>
             </div>
+
+            {/* <div className="space-y-2">
+              <Label htmlFor="phone">Số điện thoại</Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="text"
+                placeholder="Số điện thoại"
+                value={formData.phone}
+                onChange={handleInputChange}
+                disabled={isLoading}
+              />
+            </div> */}
 
             <div className="space-y-2">
               <Label htmlFor="password">Mật khẩu *</Label>
@@ -182,7 +200,7 @@ export function RegisterForm() {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Mật khẩu (ít nhất 6 ký tự)"
+                  placeholder="Mật khẩu mạnh"
                   value={formData.password}
                   onChange={handleInputChange}
                   required
@@ -203,6 +221,9 @@ export function RegisterForm() {
                   )}
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Ít nhất 8 ký tự, có chữ hoa và số
+              </p>
             </div>
 
             <div className="space-y-2">

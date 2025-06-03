@@ -11,6 +11,7 @@ interface AuthState {
 
   // Actions
   login: (data: LoginRequest) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
@@ -45,6 +46,22 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             isLoading: false,
             error: error instanceof Error ? error.message : "Login failed",
+          });
+          throw error;
+        }
+      },
+
+      loginWithGoogle: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          await authService.loginWithGoogle();
+          // Note: The actual authentication happens on the backend
+          // User will be redirected back with auth data
+        } catch (error: unknown) {
+          set({
+            isLoading: false,
+            error:
+              error instanceof Error ? error.message : "Google login failed",
           });
           throw error;
         }

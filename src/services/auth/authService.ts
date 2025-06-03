@@ -65,17 +65,89 @@ export const authService = {
     };
   },
 
-  async register(data: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
+  async loginWithGoogle(): Promise<void> {
+    // Redirect to Google OAuth login endpoint
+    const apiBaseUrl =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    window.location.href = `${apiBaseUrl}/api/v1/auth/google/login`;
+  },
+
+  async handleGoogleCallback(
+    authorizationCode: string
+  ): Promise<ApiResponse<AuthResponse>> {
     const response = await axiosInstance.post<AuthResponse>(
-      "/api/v1/auth/register",
-      data
+      "/api/v1/auth/google/callback",
+      { code: authorizationCode },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
     );
+
+    // Store tokens in cookies
+    if (response.data.access_token) {
+      setCookie("access_token", response.data.access_token, 1); // 1 day
+      if (response.data.refresh_token) {
+        setCookie("refresh_token", response.data.refresh_token, 7); // 7 days
+      }
+
+      // Store user info
+      if (response.data.user) {
+        setCookie("user_info", JSON.stringify(response.data.user), 7);
+      }
+    }
 
     return {
       data: response.data,
-      message: "Registration successful",
+      message: "Google login successful",
       status: 200,
     };
+  },
+
+  async register(data: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
+    console.log("Register request data:", data);
+
+    try {
+      const response = await axiosInstance.post<AuthResponse>(
+        "/api/v1/auth/register",
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Register response:", response.data);
+
+      return {
+        data: response.data,
+        message: "Registration successful",
+        status: 200,
+      };
+    } catch (error: unknown) {
+      console.error("Register error:", error);
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as {
+          response?: { data?: unknown; status?: number };
+        };
+        console.error("Register error response:", axiosError.response?.data);
+        console.error("Register error status:", axiosError.response?.status);
+
+        // Log detail array if exists
+        if (
+          axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "detail" in axiosError.response.data
+        ) {
+          const detail = (axiosError.response.data as { detail: unknown })
+            .detail;
+          console.error("Validation errors:", detail);
+        }
+      }
+      throw error;
+    }
   },
 
   async refreshToken(): Promise<string | null> {
