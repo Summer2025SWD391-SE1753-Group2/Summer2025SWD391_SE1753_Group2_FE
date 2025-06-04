@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Heart, MessageCircle, Share2 } from "lucide-react";
+import { PlusCircle, MessageCircle } from "lucide-react";
 
 export const HomePage = () => {
   const { user, isAuthenticated } = useAuthStore();
@@ -96,17 +96,9 @@ export const HomePage = () => {
 
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <div className="flex items-center space-x-4">
-                  <button className="flex items-center space-x-1 hover:text-red-500 transition-colors">
-                    <Heart className="w-4 h-4" />
-                    <span>{post.likes}</span>
-                  </button>
                   <button className="flex items-center space-x-1 hover:text-blue-500 transition-colors">
                     <MessageCircle className="w-4 h-4" />
                     <span>{post.comments}</span>
-                  </button>
-                  <button className="flex items-center space-x-1 hover:text-green-500 transition-colors">
-                    <Share2 className="w-4 h-4" />
-                    <span>{post.shares}</span>
                   </button>
                 </div>
               </div>
