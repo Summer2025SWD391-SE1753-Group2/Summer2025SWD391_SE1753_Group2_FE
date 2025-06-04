@@ -49,6 +49,11 @@ export function LoginForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
+      <Link to="/" className="flex items-center space-x-2 absolute top-2 left-2">
+        <span className="inline-block font-bold text-xl">
+          🍜 Food Forum
+        </span>
+      </Link> 
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
@@ -109,9 +114,9 @@ export function LoginForm() {
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col space-y-4">
+          <CardFooter className="flex flex-col space-y-4 mt-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin " />}
               Đăng nhập
             </Button>
 

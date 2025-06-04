@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const sidebarItems = [
   {
@@ -35,7 +36,7 @@ export default function UserLayout() {
     <BaseLayout
       topbar={
         <Topbar>
-          <div className="flex w-full items-center gap-4">
+          <div className="flex w-full items-center gap-4 ">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -43,7 +44,9 @@ export default function UserLayout() {
                 className="pl-8"
               />
             </div>
+            <Link to="/postdetail">
             <Button>Đăng bài</Button>
+            </Link>
           </div>
         </Topbar>
       }

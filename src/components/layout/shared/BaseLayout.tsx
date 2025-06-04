@@ -13,7 +13,7 @@ export function BaseLayout({ sidebar, topbar, children }: BaseLayoutProps) {
       <div className="flex flex-1">
         {sidebar && <Sidebar>{sidebar}</Sidebar>}
         <main className="flex-1 overflow-auto">
-          <div className="container mx-auto p-4">{children}</div>
+          <div className="container mx-auto p-4 bg-gray-100">{children}</div>
         </main>
       </div>
     </div>

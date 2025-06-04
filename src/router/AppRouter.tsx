@@ -6,6 +6,7 @@ import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { GoogleCallbackPage } from "@/pages/auth/GoogleCallbackPage";
 import NotFound from "@/pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import PostDetail from "@/pages/posts/PostDetail";
 
 const router = createBrowserRouter([
   {
@@ -16,6 +17,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <HomePage />,
+      },
+      {
+        path: "/postdetail",
+        element: <PostDetail />,
       },
     ],
   },

@@ -37,6 +37,7 @@ export const authService = {
   },
 
   async login(data: LoginRequest): Promise<ApiResponse<AuthResponse>> {
+    await new Promise(resolve => setTimeout(resolve,600));
     const params = new URLSearchParams();
     params.append("grant_type", "password");
     params.append("username", data.email || data.username || "");
