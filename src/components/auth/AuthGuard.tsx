@@ -1,52 +1,35 @@
-import { useEffect } from "react";
+import { ReactNode } from "react";
+import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/auth/authStore";
-import { Navigate, useLocation } from "react-router-dom";
 
 interface AuthGuardProps {
-  children: React.ReactNode;
+  children: ReactNode;
   requireAuth?: boolean;
-  requiredRole?: string;
-  requirePhoneVerification?: boolean;
-  fallbackPath?: string;
+  requireRole?: string;
+  requirePhoneVerified?: boolean;
 }
 
 export function AuthGuard({
   children,
-  requireAuth = true,
-  requiredRole,
-  requirePhoneVerification = false,
-  fallbackPath = "/login",
+  requireAuth = false,
+  requireRole,
+  requirePhoneVerified = false,
 }: AuthGuardProps) {
-  const { user, isAuthenticated, checkAuth } = useAuthStore();
-  const location = useLocation();
+  const { user, isAuthenticated } = useAuthStore();
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  // If authentication is not required, render children
-  if (!requireAuth) {
-    return <>{children}</>;
+  // If authentication is required but user is not authenticated
+  if (requireAuth && !isAuthenticated) {
+    return <Navigate to="/auth/login" replace />;
   }
 
-  // If not authenticated, redirect to login
-  if (!isAuthenticated) {
-    return <Navigate to={fallbackPath} state={{ from: location }} replace />;
+  // If specific role is required
+  if (requireRole && (!user || user.role?.role_name !== requireRole)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
-  // If user data is not available yet, show loading or redirect
-  if (!user) {
-    return <Navigate to={fallbackPath} state={{ from: location }} replace />;
-  }
-
-  // Check role requirement
-  if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to="/unauthorized" state={{ from: location }} replace />;
-  }
-
-  // Check phone verification requirement
-  if (requirePhoneVerification && !user.phone_verified) {
-    return <Navigate to="/verify-phone" state={{ from: location }} replace />;
+  // If phone verification is required
+  if (requirePhoneVerified && (!user || !user.phone_verified)) {
+    return <Navigate to="/verify-phone" replace />;
   }
 
   return <>{children}</>;

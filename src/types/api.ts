@@ -20,14 +20,25 @@ export interface RegisterRequest {
 }
 
 export interface UserInfo {
-  id: number;
-  email: string;
   username: string;
+  email: string;
   full_name: string;
-  phone?: string;
-  phone_verified: boolean;
-  role: string;
+  avatar?: string;
+  bio?: string;
+  phone_number?: string;
   status: string;
+  role: {
+    role_id: number;
+    role_name: string;
+    status: string;
+  };
+  email_verified: boolean;
+  phone_verified: boolean;
+  date_of_birth?: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  updated_by: string;
 }
 
 export interface AuthResponse {

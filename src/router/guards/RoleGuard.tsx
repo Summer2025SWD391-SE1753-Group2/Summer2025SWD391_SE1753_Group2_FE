@@ -10,10 +10,10 @@ export const RoleGuard = ({ children, allowedRoles }: RoleGuardProps) => {
   const { user, isAuthenticated } = useAuthStore();
 
   if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth/login" replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  if (!allowedRoles.includes(user.role.role_name)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

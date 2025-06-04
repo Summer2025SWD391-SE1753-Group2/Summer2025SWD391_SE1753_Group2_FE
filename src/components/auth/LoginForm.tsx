@@ -42,7 +42,6 @@ export function LoginForm() {
     clearError();
     try {
       await loginWithGoogle();
-      // User will be redirected to Google OAuth
     } catch {
       // Error is handled by the store
     }
@@ -149,7 +148,10 @@ export function LoginForm() {
               </Link>
               <div className="text-muted-foreground">
                 Chưa có tài khoản?{" "}
-                <Link to="/register" className="text-primary hover:underline">
+                <Link
+                  to="/auth/register"
+                  className="text-primary hover:underline"
+                >
                   Đăng ký ngay
                 </Link>
               </div>

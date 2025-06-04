@@ -18,14 +18,14 @@ export function GoogleCallbackPage() {
 
       if (error) {
         console.error("Google OAuth error:", error);
-        navigate("/login", {
+        navigate("/auth/login", {
           state: { error: "Google đăng nhập thất bại. Vui lòng thử lại." },
         });
         return;
       }
 
       if (!code) {
-        navigate("/login", {
+        navigate("/auth/login", {
           state: { error: "Không nhận được mã xác thực từ Google." },
         });
         return;
@@ -37,7 +37,7 @@ export function GoogleCallbackPage() {
         navigate("/", { replace: true });
       } catch (error) {
         console.error("Google callback error:", error);
-        navigate("/login", {
+        navigate("/auth/login", {
           state: {
             error: "Xử lý đăng nhập Google thất bại. Vui lòng thử lại.",
           },

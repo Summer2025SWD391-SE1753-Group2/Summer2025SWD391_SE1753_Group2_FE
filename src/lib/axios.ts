@@ -76,7 +76,7 @@ axiosInstance.interceptors.response.use(
           deleteCookie("access_token");
           deleteCookie("refresh_token");
           deleteCookie("user_info");
-          window.location.href = "/login";
+          window.location.href = "/auth/login";
           console.log(refreshError);
         }
       } else {
@@ -84,7 +84,7 @@ axiosInstance.interceptors.response.use(
         deleteCookie("access_token");
         deleteCookie("refresh_token");
         deleteCookie("user_info");
-        window.location.href = "/login";
+        window.location.href = "/auth/login";
       }
     }
     return Promise.reject(error);

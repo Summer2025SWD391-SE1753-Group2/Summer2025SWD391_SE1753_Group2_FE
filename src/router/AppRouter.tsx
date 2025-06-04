@@ -1,39 +1,40 @@
-import {
-  RouterProvider,
-  createBrowserRouter,
-  type RouteObject,
-} from "react-router-dom";
-import { userRoutes as userPublicRoutes } from "./routes/public/user.routes";
-import { authRoutes } from "./routes/public/auth.routes";
-import { userRoutes as userPrivateRoutes } from "./routes/private/user.routes";
-import { moderatorRoutes } from "./routes/private/moderator.routes";
-import { adminRoutes } from "./routes/private/admin.routes";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
+import HomePage from "@/pages/user/HomePage";
+import { LoginPage } from "@/pages/auth/LoginPage";
+import { RegisterPage } from "@/pages/auth/RegisterPage";
+import { GoogleCallbackPage } from "@/pages/auth/GoogleCallbackPage";
 import NotFound from "@/pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { RouteConfig } from "./types/router.types";
-
-function convertRouteConfigToRouteObject(routes: RouteConfig[]): RouteObject[] {
-  return routes.map(({ children, index, ...route }) => {
-    const result: RouteObject = { ...route };
-    if (children) {
-      result.children = convertRouteConfigToRouteObject(
-        children as RouteConfig[]
-      );
-    }
-    if (index) {
-      (result as unknown as { index: true }).index = true;
-    }
-    return result;
-  });
-}
 
 const router = createBrowserRouter([
-  ...convertRouteConfigToRouteObject(userPublicRoutes),
-  ...convertRouteConfigToRouteObject(authRoutes),
-  ...convertRouteConfigToRouteObject(userPrivateRoutes),
-  ...convertRouteConfigToRouteObject(moderatorRoutes),
-  ...convertRouteConfigToRouteObject(adminRoutes),
-  { path: "*", element: <NotFound /> },
+  {
+    path: "/",
+    element: <LayoutWrapper />,
+    errorElement: <div>Route Error</div>,
+    children: [
+      {
+        index: true,
+        element: <HomePage />,
+      },
+    ],
+  },
+  {
+    path: "/auth/login",
+    element: <LoginPage />,
+  },
+  {
+    path: "/auth/register",
+    element: <RegisterPage />,
+  },
+  {
+    path: "/auth/google/callback",
+    element: <GoogleCallbackPage />,
+  },
+  {
+    path: "*",
+    element: <NotFound />,
+  },
 ]);
 
 export const AppRouter = () => (

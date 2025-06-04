@@ -29,6 +29,13 @@ const deleteCookie = (name: string) => {
 };
 
 export const authService = {
+  async getUserProfile(username: string): Promise<UserInfo> {
+    const response = await axiosInstance.get<UserInfo>(
+      `/api/v1/accounts/profiles/${username}`
+    );
+    return response.data;
+  },
+
   async login(data: LoginRequest): Promise<ApiResponse<AuthResponse>> {
     const params = new URLSearchParams();
     params.append("grant_type", "password");
@@ -52,9 +59,17 @@ export const authService = {
         setCookie("refresh_token", response.data.refresh_token, 7); // 7 days
       }
 
-      // Store user info
-      if (response.data.user) {
-        setCookie("user_info", JSON.stringify(response.data.user), 7);
+      // Get user profile using the username from login data
+      const username = data.username || data.email || "";
+      try {
+        const userProfile = await this.getUserProfile(username);
+        setCookie("user_info", JSON.stringify(userProfile), 7);
+
+        // Update response to include user info
+        response.data.user = userProfile;
+      } catch (profileError) {
+        console.warn("Failed to fetch user profile:", profileError);
+        // Continue with login even if profile fetch fails
       }
     }
 
@@ -204,7 +219,7 @@ export const authService = {
 
   hasRole(role: string): boolean {
     const userInfo = this.getUserInfo();
-    return userInfo?.role === role;
+    return userInfo?.role?.role_name === role;
   },
 
   isPhoneVerified(): boolean {

@@ -86,7 +86,7 @@ export function RegisterForm() {
       await register(registerData);
 
       // Navigate to login with success message
-      navigate("/login", {
+      navigate("/auth/login", {
         state: {
           message:
             "Đăng ký thành công! Vui lòng kiểm tra email để tiếp tục đăng nhập.",
@@ -180,19 +180,6 @@ export function RegisterForm() {
               </div>
             </div>
 
-            {/* <div className="space-y-2">
-              <Label htmlFor="phone">Số điện thoại</Label>
-              <Input
-                id="phone"
-                name="phone"
-                type="text"
-                placeholder="Số điện thoại"
-                value={formData.phone}
-                onChange={handleInputChange}
-                disabled={isLoading}
-              />
-            </div> */}
-
             <div className="space-y-2">
               <Label htmlFor="password">Mật khẩu *</Label>
               <div className="relative">
@@ -265,7 +252,7 @@ export function RegisterForm() {
 
             <div className="text-center text-sm text-muted-foreground">
               Đã có tài khoản?{" "}
-              <Link to="/login" className="text-primary hover:underline">
+              <Link to="/auth/login" className="text-primary hover:underline">
                 Đăng nhập ngay
               </Link>
             </div>

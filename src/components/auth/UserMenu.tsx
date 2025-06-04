@@ -31,14 +31,14 @@ export function UserMenu() {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate("/login");
+      navigate("/auth/login");
     } catch {
       // Error handled by store
     }
   };
 
-  const getRoleIcon = (role: string) => {
-    switch (role.toLowerCase()) {
+  const getRoleIcon = (roleName: string) => {
+    switch (roleName.toLowerCase()) {
       case "admin":
         return <Crown className="h-4 w-4" />;
       case "moderator":
@@ -48,8 +48,8 @@ export function UserMenu() {
     }
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role.toLowerCase()) {
+  const getRoleColor = (roleName: string) => {
+    switch (roleName.toLowerCase()) {
       case "admin":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
       case "moderator":
@@ -109,13 +109,13 @@ export function UserMenu() {
             <div className="flex items-center gap-2 flex-wrap">
               <Badge
                 variant="secondary"
-                className={`text-xs ${getRoleColor(user.role)}`}
+                className={`text-xs ${getRoleColor(user.role.role_name)}`}
               >
                 <span className="flex items-center gap-1">
-                  {getRoleIcon(user.role)}
-                  {user.role === "admin"
+                  {getRoleIcon(user.role.role_name)}
+                  {user.role.role_name === "admin"
                     ? "Quản trị viên"
-                    : user.role === "moderator"
+                    : user.role.role_name === "moderator"
                     ? "Điều hành viên"
                     : "Thành viên"}
                 </span>

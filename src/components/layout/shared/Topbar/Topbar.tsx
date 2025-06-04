@@ -51,13 +51,13 @@ export function Topbar({ className, children, ...props }: TopbarProps) {
         ) : (
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/login" className="flex items-center gap-2">
+              <Link to="/auth/login" className="flex items-center gap-2">
                 <LogIn className="h-4 w-4" />
                 <span className="hidden sm:inline">Đăng nhập</span>
               </Link>
             </Button>
             <Button size="sm" asChild>
-              <Link to="/register" className="flex items-center gap-2">
+              <Link to="/auth/register" className="flex items-center gap-2">
                 <UserPlus className="h-4 w-4" />
                 <span className="hidden sm:inline">Đăng ký</span>
               </Link>

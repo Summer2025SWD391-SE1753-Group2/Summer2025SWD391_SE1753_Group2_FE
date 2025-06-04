@@ -7,6 +7,7 @@ interface AuthState {
   user: UserInfo | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
   error: string | null;
 
   // Actions
@@ -21,18 +22,20 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      isInitialized: false,
       error: null,
 
       login: async (data: LoginRequest) => {
         set({ isLoading: true, error: null });
         try {
-          await authService.login(data);
+          const response = await authService.login(data);
 
-          const userInfo = authService.getUserInfo();
+          // Get user info from response or from service
+          const userInfo = response.data.user || authService.getUserInfo();
 
           set({
             user: userInfo,
@@ -132,12 +135,16 @@ export const useAuthStore = create<AuthState>()(
       },
 
       checkAuth: () => {
+        const state = get();
+        if (state.isInitialized) return; // Don't check if already initialized
+
         const isAuth = authService.isAuthenticated();
         const userInfo = authService.getUserInfo();
 
         set({
           user: userInfo,
           isAuthenticated: isAuth,
+          isInitialized: true,
         });
       },
 
