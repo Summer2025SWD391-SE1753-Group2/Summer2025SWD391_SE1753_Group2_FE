@@ -52,30 +52,30 @@ const ForgotPasswordPage = () => {
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4">
-      <div className="w-full max-w-sm space-y-6 p-6 text-center border border-gray-300 rounded-lg">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm space-y-6 p-6 text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
         <div className="flex justify-center">
-          <div className="w-12 h-12 rounded-full border-2 border-gray-600 flex items-center justify-center">
-            <Lock className="w-6 h-6 text-gray-600" />
+          <div className="w-12 h-12 rounded-full border-2 border-gray-600 dark:border-gray-400 flex items-center justify-center">
+            <Lock className="w-6 h-6 text-gray-600 dark:text-gray-400" />
           </div>
         </div>
 
-        <h2 className="text-xl font-bold text-gray-800">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
           Đặt lại mật khẩu
         </h2>
-        <p className="text-sm text-gray-600 leading-relaxed">
+        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
           Nhập email hoặc tên đăng nhập và mật khẩu mới của bạn. <br />
           Chúng tôi sẽ gửi một liên kết để xác nhận việc đặt lại mật khẩu.
         </p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="relative">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1 text-left">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 text-left">
               Email hoặc tên đăng nhập
             </label>
             <Input
               id="email"
-              className="rounded-lg bg-gray-100 border border-gray-300 text-gray-700 placeholder-gray-400 focus:ring-0 focus:border-blue-600"
+              className="rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-0 focus:border-blue-600 dark:focus:border-blue-500"
               type="email"
               placeholder="Nhập email hoặc tên đăng nhập*"
               value={email}
@@ -90,14 +90,14 @@ const ForgotPasswordPage = () => {
           </div>
 
           <div className="relative">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1 text-left">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 text-left">
               Mật khẩu mới (ít nhất 6 ký tự)
             </label>
             <div style={{ display: "flex", alignItems: "center", position: "relative" }}>
               <Input
                 id="password"
-                className="rounded-lg bg-gray-100 border border-gray-300 text-gray-700 placeholder-gray-400 focus:ring-0 focus:border-blue-600"
-                style={{ paddingRight: "40px" }} // Chừa chỗ cho icon
+                className="rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-0 focus:border-blue-600 dark:focus:border-blue-500"
+                style={{ paddingRight: "40px" }}
                 type={showPassword ? "text" : "password"}
                 placeholder="Nhập mật khẩu mới*"
                 value={password}
@@ -113,7 +113,7 @@ const ForgotPasswordPage = () => {
                 onClick={togglePasswordVisibility}
                 aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
-                {showPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
+                {showPassword ? <EyeOff className="h-5 w-5 text-gray-500 dark:text-gray-400" /> : <Eye className="h-5 w-5 text-gray-500 dark:text-gray-400" />}
               </span>
             </div>
             {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
@@ -121,7 +121,7 @@ const ForgotPasswordPage = () => {
 
           <Button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+            className="w-full"
             aria-label="Gửi liên kết đặt lại"
           >
             Gửi liên kết đặt lại
@@ -131,23 +131,23 @@ const ForgotPasswordPage = () => {
         <div>
           <Link
             to="/login"
-            className="text-sm text-gray-600 hover:text-blue-600 hover:underline"
+            className="text-primary hover:underline"
             aria-label="Không thể đặt lại mật khẩu?"
           >
             Không thể đặt lại mật khẩu?
           </Link>
         </div>
 
-        <div className="flex items-center justify-center space-x-2 text-gray-600 text-sm">
-          <span className="h-px w-10 bg-gray-300"></span>
+        <div className="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400 text-sm">
+          <span className="h-px w-10 bg-gray-300 dark:bg-gray-600"></span>
           <span>HOẶC</span>
-          <span className="h-px w-10 bg-gray-300"></span>
+          <span className="h-px w-10 bg-gray-300 dark:bg-gray-600"></span>
         </div>
 
         <div>
           <Link
-            to="/register"
-            className="text-sm text-gray-600 hover:text-blue-600 hover:underline"
+            to="/auth/register"
+            className="text-primary hover:underline"
             aria-label="Tạo tài khoản mới"
           >
             Tạo tài khoản mới
@@ -156,8 +156,8 @@ const ForgotPasswordPage = () => {
 
         <div className="mt-6">
           <Link
-            to="/login"
-            className="text-sm text-gray-600 hover:text-blue-600 hover:underline"
+            to="/auth/login"
+            className="text-primary hover:underline"
             aria-label="Quay lại đăng nhập"
           >
             Quay lại đăng nhập
