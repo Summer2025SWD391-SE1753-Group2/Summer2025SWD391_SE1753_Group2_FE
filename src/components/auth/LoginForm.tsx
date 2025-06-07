@@ -141,7 +141,7 @@ export function LoginForm() {
 
             <div className="flex flex-col items-center space-y-2 text-sm">
               <Link
-                to="/forgot-password"
+                to="/auth/forgot-password"
                 className="text-primary hover:underline"
               >
                 Quên mật khẩu?
