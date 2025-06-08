@@ -6,6 +6,7 @@ import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { GoogleCallbackPage } from "@/pages/auth/GoogleCallbackPage";
 import NotFound from "@/pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 
 const router = createBrowserRouter([
   {
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
   {
     path: "/auth/register",
     element: <RegisterPage />,
+  },
+  {
+    path: "/auth/forgot-password",
+    element: <ForgotPasswordPage />,
   },
   {
     path: "/auth/google/callback",
