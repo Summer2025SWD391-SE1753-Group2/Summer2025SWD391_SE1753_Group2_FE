@@ -25,6 +25,7 @@ export interface UserInfo {
   full_name: string;
   avatar?: string;
   bio?: string;
+  account_id: string;
   phone_number?: string;
   status: string;
   role: {
