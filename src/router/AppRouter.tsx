@@ -6,6 +6,9 @@ import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { GoogleCallbackPage } from "@/pages/auth/GoogleCallbackPage";
 import NotFound from "@/pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import ProfilePage from "@/pages/user/profile/ProfilePage";
+import TagManagerPage from "@/pages/user/tag-manager/TagManagerPage";
+
 
 const router = createBrowserRouter([
   {
@@ -16,6 +19,18 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <HomePage />,
+      },
+      {
+        path:"/profile",
+        element: <ProfilePage />,
+      },
+      {
+        path:"/tag-manager",
+        element: <TagManagerPage />,
+      },
+      {
+        path:"/profile",
+        element: <ProfilePage />,
       },
     ],
   },
