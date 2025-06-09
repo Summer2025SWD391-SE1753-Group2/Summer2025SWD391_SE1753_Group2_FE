@@ -8,6 +8,7 @@ import NotFound from "@/pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import ProfilePage from "@/pages/user/profile/ProfilePage";
 import TagManagerPage from "@/pages/user/tag-manager/TagManagerPage";
+import { CreatePostPage } from "@/pages/posts/CreatePostPage";
 
 const router = createBrowserRouter([
   {
@@ -28,8 +29,8 @@ const router = createBrowserRouter([
         element: <TagManagerPage />,
       },
       {
-        path: "/profile",
-        element: <ProfilePage />,
+        path: "/posts/create",
+        element: <CreatePostPage />,
       },
     ],
   },
