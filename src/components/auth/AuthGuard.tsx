@@ -6,14 +6,12 @@ interface AuthGuardProps {
   children: ReactNode;
   requireAuth?: boolean;
   requireRole?: string;
-  requirePhoneVerified?: boolean;
 }
 
 export function AuthGuard({
   children,
   requireAuth = false,
   requireRole,
-  requirePhoneVerified = false,
 }: AuthGuardProps) {
   const { user, isAuthenticated } = useAuthStore();
 
@@ -25,11 +23,6 @@ export function AuthGuard({
   // If specific role is required
   if (requireRole && (!user || user.role?.role_name !== requireRole)) {
     return <Navigate to="/unauthorized" replace />;
-  }
-
-  // If phone verification is required
-  if (requirePhoneVerified && (!user || !user.phone_verified)) {
-    return <Navigate to="/verify-phone" replace />;
   }
 
   return <>{children}</>;

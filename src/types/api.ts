@@ -16,7 +16,6 @@ export interface RegisterRequest {
   password: string;
   full_name: string;
   date_of_birth: string;
-  phone?: string;
 }
 
 export interface UserInfo {
@@ -26,15 +25,13 @@ export interface UserInfo {
   avatar?: string;
   bio?: string;
   account_id: string;
-  phone_number?: string;
-  status: string;
+  status: "active" | "inactive" | "banned";
   role: {
     role_id: number;
-    role_name: string;
-    status: string;
+    role_name: "user" | "moderator" | "admin";
+    status: "active" | "inactive";
   };
   email_verified: boolean;
-  phone_verified: boolean;
   date_of_birth?: string;
   created_at: string;
   updated_at: string;

@@ -17,7 +17,7 @@ interface AuthState {
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
   clearError: () => void;
-  checkAuth: () => void;
+  checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -114,11 +114,20 @@ export const useAuthStore = create<AuthState>()(
         try {
           const token = await authService.refreshToken();
           if (token) {
-            const userInfo = authService.getUserInfo();
-            set({
-              user: userInfo,
-              isAuthenticated: true,
-            });
+            try {
+              const userInfo = await authService.getCurrentUserProfile();
+              set({
+                user: userInfo,
+                isAuthenticated: true,
+              });
+            } catch (err) {
+              console.warn("Failed to fetch user profile:", err);
+              const userInfo = authService.getUserInfo();
+              set({
+                user: userInfo,
+                isAuthenticated: true,
+              });
+            }
           } else {
             set({
               user: null,
@@ -134,18 +143,36 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      checkAuth: () => {
+      checkAuth: async () => {
         const state = get();
         if (state.isInitialized) return; // Don't check if already initialized
 
         const isAuth = authService.isAuthenticated();
-        const userInfo = authService.getUserInfo();
 
-        set({
-          user: userInfo,
-          isAuthenticated: isAuth,
-          isInitialized: true,
-        });
+        if (isAuth) {
+          try {
+            const userInfo = await authService.getCurrentUserProfile();
+            set({
+              user: userInfo,
+              isAuthenticated: true,
+              isInitialized: true,
+            });
+          } catch (err) {
+            console.warn("Failed to fetch user profile on checkAuth:", err);
+            const userInfo = authService.getUserInfo();
+            set({
+              user: userInfo,
+              isAuthenticated: !!userInfo,
+              isInitialized: true,
+            });
+          }
+        } else {
+          set({
+            user: null,
+            isAuthenticated: false,
+            isInitialized: true,
+          });
+        }
       },
 
       clearError: () => {

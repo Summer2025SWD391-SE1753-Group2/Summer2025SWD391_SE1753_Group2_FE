@@ -11,16 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  User,
-  Settings,
-  LogOut,
-  Shield,
-  Crown,
-  UserCheck,
-  Phone,
-  PhoneOff,
-} from "lucide-react";
+import { User, Settings, LogOut, Shield, Crown, UserCheck } from "lucide-react";
 
 export function UserMenu() {
   const { user, logout, isLoading } = useAuthStore();
@@ -121,25 +112,6 @@ export function UserMenu() {
                 </span>
               </Badge>
 
-              <Badge
-                variant={user.phone_verified ? "default" : "secondary"}
-                className="text-xs"
-              >
-                <span className="flex items-center gap-1">
-                  {user.phone_verified ? (
-                    <>
-                      <Phone className="h-3 w-3" />
-                      Đã xác thực SĐT
-                    </>
-                  ) : (
-                    <>
-                      <PhoneOff className="h-3 w-3" />
-                      Chưa xác thực SĐT
-                    </>
-                  )}
-                </span>
-              </Badge>
-
               {user.status && (
                 <Badge
                   variant={user.status === "active" ? "default" : "destructive"}
@@ -170,16 +142,6 @@ export function UserMenu() {
           <Settings className="mr-2 h-4 w-4" />
           <span>Cài đặt</span>
         </DropdownMenuItem>
-
-        {!user.phone_verified && (
-          <DropdownMenuItem
-            onClick={() => navigate("/verify-phone")}
-            className="cursor-pointer text-amber-600 dark:text-amber-400"
-          >
-            <Phone className="mr-2 h-4 w-4" />
-            <span>Xác thực số điện thoại</span>
-          </DropdownMenuItem>
-        )}
 
         <DropdownMenuSeparator />
 

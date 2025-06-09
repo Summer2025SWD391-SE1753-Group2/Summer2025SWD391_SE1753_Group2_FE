@@ -1,7 +1,7 @@
 export interface Role {
   role_id: number;
-  role_name: string;
-  status: string;
+  role_name: "user" | "moderator" | "admin";
+  status: "active" | "inactive";
 }
 
 export interface UserProfile {
@@ -11,12 +11,10 @@ export interface UserProfile {
   avatar: string;
   bio: string;
   account_id: string;
-  status: "active" | "inactive" | string;
+  status: "active" | "inactive" | "banned";
   role: Role;
   email_verified: boolean;
-  phone_verified: boolean;
-  phone_number: string;
-  date_of_birth: string; 
+  date_of_birth: string;
   created_at: string;
   updated_at: string;
   created_by: string;

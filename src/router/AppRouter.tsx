@@ -9,7 +9,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import ProfilePage from "@/pages/user/profile/ProfilePage";
 import TagManagerPage from "@/pages/user/tag-manager/TagManagerPage";
 
-
 const router = createBrowserRouter([
   {
     path: "/",
@@ -21,15 +20,15 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path:"/profile",
+        path: "/profile",
         element: <ProfilePage />,
       },
       {
-        path:"/tag-manager",
+        path: "/tag-manager",
         element: <TagManagerPage />,
       },
       {
-        path:"/profile",
+        path: "/profile",
         element: <ProfilePage />,
       },
     ],

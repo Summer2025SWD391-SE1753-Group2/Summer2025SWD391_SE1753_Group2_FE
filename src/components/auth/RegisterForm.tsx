@@ -23,7 +23,6 @@ export function RegisterForm() {
     confirmPassword: "",
     full_name: "",
     date_of_birth: "",
-    phone: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -78,7 +77,6 @@ export function RegisterForm() {
         password: formData.password,
         full_name: formData.full_name,
         date_of_birth: formData.date_of_birth,
-        phone: formData.phone || undefined,
       };
 
       console.log("Frontend register data:", registerData);

@@ -58,7 +58,8 @@ export const ProfilePage = () => {
     }
   };
 
-  if (!profile) return <p className="p-6 text-center">⏳ Đang load dữ liệu...</p>;
+  if (!profile)
+    return <p className="p-6 text-center">⏳ Đang load dữ liệu...</p>;
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
@@ -67,14 +68,27 @@ export const ProfilePage = () => {
 
       <Card className="rounded-2xl shadow-sm">
         <CardContent className="grid grid-cols-2 gap-4 py-4">
-          <div><strong>Username:</strong> {profile.username}</div>
-          <div><strong>Email:</strong> {profile.email}</div>
-          <div><strong>Phone:</strong> {profile.phone_number}</div>
-          <div><strong>Status:</strong> {profile.status}</div>
-          <div><strong>Role:</strong> {profile.role.role_name}</div>
-          <div><strong>Email Verified:</strong> {profile.email_verified ? "✅" : "❌"}</div>
-          <div><strong>Phone Verified:</strong> {profile.phone_verified ? "✅" : "❌"}</div>
-          <div><strong>Created:</strong> {new Date(profile.created_at).toLocaleString()}</div>
+          <div>
+            <strong>Username:</strong> {profile.username}
+          </div>
+          <div>
+            <strong>Email:</strong> {profile.email}
+          </div>
+
+          <div>
+            <strong>Status:</strong> {profile.status}
+          </div>
+          <div>
+            <strong>Role:</strong> {profile.role.role_name}
+          </div>
+          <div>
+            <strong>Email Verified:</strong>{" "}
+            {profile.email_verified ? "✅" : "❌"}
+          </div>
+          <div>
+            <strong>Created:</strong>{" "}
+            {new Date(profile.created_at).toLocaleString()}
+          </div>
         </CardContent>
       </Card>
 

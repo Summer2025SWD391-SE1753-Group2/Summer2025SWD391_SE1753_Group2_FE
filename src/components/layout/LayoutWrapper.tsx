@@ -12,7 +12,9 @@ export function LayoutWrapper() {
   useEffect(() => {
     // Check auth on mount only if not initialized
     if (!isInitialized) {
-      checkAuth();
+      checkAuth().catch((err) => {
+        console.error("Failed to check auth:", err);
+      });
     }
   }, [checkAuth, isInitialized]);
 
@@ -25,7 +27,6 @@ export function LayoutWrapper() {
     );
   }
 
-  // If not authenticated, use guest layout
   if (!isAuthenticated || !user) {
     return (
       <GuestLayout>
@@ -34,7 +35,6 @@ export function LayoutWrapper() {
     );
   }
 
-  // Choose layout based on user role
   const roleName = user.role?.role_name;
 
   switch (roleName) {
@@ -42,8 +42,8 @@ export function LayoutWrapper() {
       return <AdminLayout />;
     case "moderator":
       return <ModeratorLayout />;
-    case "user_l1":
-    case "user_l2":
+    case "user":
+      return <UserLayout />;
     default:
       return <UserLayout />;
   }
