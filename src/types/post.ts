@@ -12,21 +12,30 @@ export interface Topic {
   status: "active" | "inactive";
 }
 
+export interface Unit {
+  unit_id: string;
+  name: string;
+  description?: string;
+  status: "active" | "inactive";
+}
+
 export interface Material {
   material_id: string;
   name: string;
   description?: string;
-  default_unit: CookingUnit;
-  category: MaterialCategory;
+  image_url?: string;
+  unit?: string; // Reference to Unit.name
+  default_unit?: string; // For backward compatibility with existing mock data
+  category?: MaterialCategory; // For backward compatibility with mock data
   status: "active" | "inactive";
 }
 
 export interface PostMaterial {
   material_id: string;
-  material: Material;
-  quantity?: number;
-  unit: CookingUnit;
-  notes?: string;
+  material?: Material; // Optional for display
+  quantity: number; // Required in BE
+  unit?: string; // For backward compatibility
+  notes?: string; // For backward compatibility
 }
 
 export type MaterialCategory =
@@ -145,15 +154,13 @@ export interface Post {
 export interface CreatePostRequest {
   title: string;
   content: string;
-  tag_ids?: string[];
-  topic_ids?: string[];
-  materials?: Array<{
+  tag_ids: string[];
+  topic_ids: string[];
+  materials: Array<{
     material_id: string;
-    quantity?: number;
-    unit: CookingUnit;
-    notes?: string;
+    quantity: number;
   }>;
-  images?: File[];
+  images: string[]; // Firebase URLs
 }
 
 export interface PostFormData {

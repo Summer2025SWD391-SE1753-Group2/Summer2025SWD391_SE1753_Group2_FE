@@ -222,11 +222,11 @@ export function PostCard({
                   variant="secondary"
                   className="text-xs flex items-center gap-1"
                 >
-                  <span>{postMaterial.material.name}</span>
+                  <span>{postMaterial.material?.name}</span>
                   {postMaterial.quantity && (
                     <span className="text-muted-foreground">
                       ({postMaterial.quantity}{" "}
-                      {getCookingUnitAbbr(postMaterial.unit)})
+                      {getCookingUnitAbbr(postMaterial.unit || "")}))
                     </span>
                   )}
                 </Badge>

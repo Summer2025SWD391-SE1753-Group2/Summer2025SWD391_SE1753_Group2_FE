@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,189 +8,86 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { FileUpload } from "@/components/posts/FileUpload";
 import { MultiSelect } from "@/components/posts/MultiSelect";
-import { MaterialInput } from "@/components/posts/MaterialInput";
-import { Badge } from "@/components/ui/badge";
-import {
-  ArrowLeft,
-  Send,
-  Save,
-  AlertCircle,
-  Clock,
-  CheckCircle,
-} from "lucide-react";
+import { SimpleMaterialInput } from "@/components/posts/SimpleMaterialInput";
+import { ArrowLeft, Send, AlertCircle, Clock, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import type {
-  PostFormData,
-  Tag,
-  Topic,
-  Material,
-  PostMaterial,
-  MaterialCategory,
-  CookingUnit,
-} from "@/types/post";
+import type { Tag, Topic, Material, PostMaterial } from "@/types/post";
+import { createPost, CreatePostApiRequest } from "@/services/posts/postService";
+import { getAllTags } from "@/services/tags/tags-service";
+import { getAllTopics } from "@/services/topics/topicService";
+import { getAllMaterials } from "@/services/materials/materialService";
 
-// Mock data - sẽ được thay thế bằng API calls
-const mockTags: Tag[] = [
-  {
-    tag_id: "1",
-    name: "Món chính",
-    description: "Các món ăn chính trong bữa cơm",
-    status: "active",
-  },
-  {
-    tag_id: "2",
-    name: "Tráng miệng",
-    description: "Các món ăn tráng miệng",
-    status: "active",
-  },
-  {
-    tag_id: "3",
-    name: "Đồ uống",
-    description: "Các loại đồ uống",
-    status: "active",
-  },
-  {
-    tag_id: "4",
-    name: "Ăn vặt",
-    description: "Các món ăn nhẹ",
-    status: "active",
-  },
-  {
-    tag_id: "5",
-    name: "Ăn kiêng",
-    description: "Món ăn dành cho người ăn kiêng",
-    status: "active",
-  },
-];
+interface FileUploadItem {
+  file: File;
+  progress?: {
+    progress: number;
+    status: "uploading" | "completed" | "error";
+  };
+  result?: {
+    url: string;
+    fileName: string;
+  };
+  previewUrl?: string;
+}
 
-const mockTopics: Topic[] = [
-  {
-    topic_id: "1",
-    name: "Món Việt",
-    description: "Các món ăn truyền thống Việt Nam",
-    status: "active",
-  },
-  {
-    topic_id: "2",
-    name: "Món Âu",
-    description: "Các món ăn châu Âu",
-    status: "active",
-  },
-  {
-    topic_id: "3",
-    name: "Món Á",
-    description: "Các món ăn châu Á",
-    status: "active",
-  },
-  {
-    topic_id: "4",
-    name: "Bánh ngọt",
-    description: "Các loại bánh ngọt",
-    status: "active",
-  },
-  { topic_id: "5", name: "Lẩu", description: "Các món lẩu", status: "active" },
-];
-
-const mockMaterials: Material[] = [
-  {
-    material_id: "1",
-    name: "Thịt heo",
-    description: "Thịt heo tươi, sạch",
-    default_unit: "gram",
-    category: "thit",
-    status: "active",
-  },
-  {
-    material_id: "2",
-    name: "Gạo tẻ",
-    description: "Gạo tẻ thơm",
-    default_unit: "kg",
-    category: "hat_lua",
-    status: "active",
-  },
-  {
-    material_id: "3",
-    name: "Cà chua",
-    description: "Cà chua chín đỏ",
-    default_unit: "qua",
-    category: "rau_cu",
-    status: "active",
-  },
-  {
-    material_id: "4",
-    name: "Hành lá",
-    description: "Hành lá tươi",
-    default_unit: "bo",
-    category: "rau_cu",
-    status: "active",
-  },
-  {
-    material_id: "5",
-    name: "Muối",
-    description: "Muối tinh khiết",
-    default_unit: "muong_cafe",
-    category: "gia_vi",
-    status: "active",
-  },
-  {
-    material_id: "6",
-    name: "Đường",
-    description: "Đường cát trắng",
-    default_unit: "muong_canh",
-    category: "gia_vi",
-    status: "active",
-  },
-  {
-    material_id: "7",
-    name: "Nước mắm",
-    description: "Nước mắm Phú Quốc",
-    default_unit: "muong_canh",
-    category: "nuoc_tuong",
-    status: "active",
-  },
-  {
-    material_id: "8",
-    name: "Dầu ăn",
-    description: "Dầu ăn thực vật",
-    default_unit: "ml",
-    category: "dau_mo",
-    status: "active",
-  },
-  {
-    material_id: "9",
-    name: "Trứng gà",
-    description: "Trứng gà tươi",
-    default_unit: "qua",
-    category: "sua_trung",
-    status: "active",
-  },
-  {
-    material_id: "10",
-    name: "Cá hồi",
-    description: "Cá hồi tươi",
-    default_unit: "gram",
-    category: "ca",
-    status: "active",
-  },
-];
+interface FormData {
+  title: string;
+  content: string;
+  selectedTags: Tag[];
+  selectedTopics: Topic[];
+  selectedMaterials: PostMaterial[];
+}
 
 export function CreatePostPage() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<PostFormData>({
+  const [loading, setLoading] = useState(true);
+
+  // Data from API
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]);
+
+  const [formData, setFormData] = useState<FormData>({
     title: "",
     content: "",
     selectedTags: [],
     selectedTopics: [],
     selectedMaterials: [],
-    images: [],
   });
 
-  const handleInputChange = (field: keyof PostFormData, value: any) => {
+  const [uploadedFiles, setUploadedFiles] = useState<FileUploadItem[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+
+  // Load data from API
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [tagsData, topicsData, materialsData] = await Promise.all([
+          getAllTags(),
+          getAllTopics(),
+          getAllMaterials(),
+        ]);
+
+        setTags(tagsData);
+        setTopics(topicsData);
+        setMaterials(materialsData);
+      } catch (error) {
+        console.error("Error loading data:", error);
+        toast.error("Không thể tải dữ liệu. Vui lòng thử lại.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleInputChange = (field: keyof FormData, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = async (isDraft = false) => {
+  const handleSubmit = async () => {
     if (!formData.title.trim()) {
       toast.error("Vui lòng nhập tiêu đề bài viết");
       return;
@@ -204,8 +101,7 @@ export function CreatePostPage() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with actual API call
-      const createPostRequest = {
+      const requestData: CreatePostApiRequest = {
         title: formData.title,
         content: formData.content,
         tag_ids: formData.selectedTags.map((tag) => tag.tag_id),
@@ -213,63 +109,38 @@ export function CreatePostPage() {
         materials: formData.selectedMaterials.map((pm) => ({
           material_id: pm.material_id,
           quantity: pm.quantity,
-          unit: pm.unit,
-          notes: pm.notes,
         })),
-        images: formData.images,
+        images: imageUrls, // URLs từ Firebase
       };
 
-      console.log("Create post request:", createPostRequest);
+      await createPost(requestData);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      toast.success(
-        isDraft
-          ? "Bài viết đã được lưu vào nháp"
-          : "Bài viết của bạn đã được gửi và đang chờ duyệt"
-      );
-
+      toast.success("Bài viết của bạn đã được gửi và đang chờ duyệt");
       navigate("/");
-    } catch (error) {
-      toast.error("Không thể đăng bài. Vui lòng thử lại.");
+    } catch (err) {
+      console.error("Error creating post:", err);
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Không thể đăng bài. Vui lòng thử lại."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCreateTag = (name: string) => {
-    const newTag: Tag = {
-      tag_id: `new-${Date.now()}`,
-      name,
-      status: "active",
-    };
-    handleInputChange("selectedTags", [...formData.selectedTags, newTag]);
-    toast.success(`Đã tạo tag mới: ${name}`);
-  };
-
-  const handleCreateTopic = (name: string) => {
-    const newTopic: Topic = {
-      topic_id: `new-${Date.now()}`,
-      name,
-      status: "active",
-    };
-    handleInputChange("selectedTopics", [...formData.selectedTopics, newTopic]);
-    toast.success(`Đã tạo chủ đề mới: ${name}`);
-  };
-
-  const handleCreateMaterial = (name: string) => {
-    const newMaterial: Material = {
-      material_id: `new-${Date.now()}`,
-      name,
-      status: "active",
-    };
-    handleInputChange("selectedMaterials", [
-      ...formData.selectedMaterials,
-      newMaterial,
-    ]);
-    toast.success(`Đã tạo nguyên liệu mới: ${name}`);
-  };
+  if (loading) {
+    return (
+      <div className="container mx-auto py-6 px-4 max-w-4xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">Đang tải dữ liệu...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-4xl">
@@ -295,15 +166,18 @@ export function CreatePostPage() {
       {/* Post Status Info */}
       <Card className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-950">
         <CardContent className="pt-6">
-          <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
-            <AlertCircle className="h-5 w-5" />
-            <div>
+          <div className="flex items-start gap-3 text-amber-800 dark:text-amber-200">
+            <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+            <div className="space-y-2">
               <p className="font-medium">Lưu ý về quy trình duyệt bài</p>
-              <p className="text-sm">
-                Bài viết của bạn sẽ được gửi tới moderator/admin để duyệt trước
-                khi hiển thị công khai. Quá trình này thường mất 1-2 giờ trong
-                giờ hành chính.
-              </p>
+              <div className="text-sm space-y-1">
+                <p>
+                  • Bài viết sẽ được gửi tới moderator/admin để duyệt trước khi
+                  hiển thị công khai
+                </p>
+                <p>• Quá trình duyệt thường mất 1-2 giờ trong giờ hành chính</p>
+                <p>• Chỉ chọn từ danh sách tags, chủ đề, nguyên liệu có sẵn</p>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -348,21 +222,23 @@ export function CreatePostPage() {
           {/* Media Upload */}
           <Card>
             <CardHeader>
-              <CardTitle>Hình ảnh & Video</CardTitle>
+              <CardTitle>Hình ảnh món ăn</CardTitle>
             </CardHeader>
             <CardContent>
               <FileUpload
-                files={formData.images}
-                onFilesChange={(files) => handleInputChange("images", files)}
-                maxSize={20}
-                maxFiles={10}
+                files={uploadedFiles}
+                onFilesChange={setUploadedFiles}
+                onUrlsChange={setImageUrls}
+                accept="image/*"
+                maxSize={10}
+                maxFiles={1}
               />
             </CardContent>
           </Card>
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="flex flex-col space-y-6 h-fit">
           {/* Tags */}
           <Card>
             <CardHeader>
@@ -371,8 +247,8 @@ export function CreatePostPage() {
             <CardContent className="space-y-6">
               <MultiSelect
                 label="Tags"
-                placeholder="Tìm hoặc tạo tag..."
-                items={mockTags.map((tag) => ({
+                placeholder="Tìm tag..."
+                items={tags.map((tag) => ({
                   id: tag.tag_id,
                   name: tag.name,
                   description: tag.description,
@@ -394,16 +270,14 @@ export function CreatePostPage() {
                   )
                 }
                 maxItems={5}
-                canCreate={true}
-                onCreateNew={handleCreateTag}
               />
 
               <Separator />
 
               <MultiSelect
                 label="Chủ đề"
-                placeholder="Tìm hoặc tạo chủ đề..."
-                items={mockTopics.map((topic) => ({
+                placeholder="Tìm chủ đề..."
+                items={topics.map((topic) => ({
                   id: topic.topic_id,
                   name: topic.name,
                   description: topic.description,
@@ -425,59 +299,48 @@ export function CreatePostPage() {
                   )
                 }
                 maxItems={3}
-                canCreate={true}
-                onCreateNew={handleCreateTopic}
-              />
-
-              <Separator />
-
-              <MaterialInput
-                materials={mockMaterials}
-                selectedMaterials={formData.selectedMaterials}
-                onSelectionChange={(materials) =>
-                  handleInputChange("selectedMaterials", materials)
-                }
-                maxItems={20}
               />
             </CardContent>
           </Card>
 
-          {/* Actions */}
-          <Card>
+          {/* Materials */}
+          <SimpleMaterialInput
+            materials={materials}
+            selectedMaterials={formData.selectedMaterials}
+            onSelectionChange={(materials) =>
+              handleInputChange("selectedMaterials", materials)
+            }
+            maxItems={20}
+          />
+
+          {/* Actions - Flex grow để fill hết không gian còn lại */}
+          <Card className="flex-grow flex flex-col">
             <CardHeader>
               <CardTitle>Hành động</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Button
-                onClick={() => handleSubmit(false)}
-                disabled={isSubmitting}
-                className="w-full"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Clock className="w-4 h-4 mr-2 animate-spin" />
-                    Đang gửi...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    Gửi bài để duyệt
-                  </>
-                )}
-              </Button>
+            <CardContent className="flex-grow flex flex-col justify-between space-y-3">
+              <div className="space-y-3">
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="w-full"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Clock className="w-4 h-4 mr-2 animate-spin" />
+                      Đang gửi...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Gửi bài để duyệt
+                    </>
+                  )}
+                </Button>
+              </div>
 
-              <Button
-                variant="outline"
-                onClick={() => handleSubmit(true)}
-                disabled={isSubmitting}
-                className="w-full"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Lưu nháp
-              </Button>
-
-              {/* Post Info */}
-              <div className="pt-3 space-y-2 text-xs text-muted-foreground">
+              {/* Post Info - Đẩy xuống dưới */}
+              <div className="pt-3 space-y-2 text-xs text-muted-foreground mt-auto">
                 <div className="flex items-center gap-2">
                   <Clock className="h-3 w-3" />
                   Thời gian duyệt: 1-2 giờ

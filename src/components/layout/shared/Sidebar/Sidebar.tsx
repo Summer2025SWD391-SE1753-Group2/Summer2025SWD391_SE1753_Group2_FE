@@ -2,7 +2,6 @@ import { cn } from "@/lib/utils";
 import { useLayoutStore } from "@/store/layout/layoutStore";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChevronLeft } from "lucide-react";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -26,14 +25,7 @@ export function Sidebar({ className, children, ...props }: SidebarProps) {
           size="icon"
           className="h-6 w-6"
           onClick={toggleSidebar}
-        >
-          <ChevronLeft
-            className={cn(
-              "h-4 w-4 transition-transform",
-              !isSidebarOpen && "rotate-180"
-            )}
-          />
-        </Button>
+        ></Button>
       </div>
       <ScrollArea className="flex-1 px-2">{children}</ScrollArea>
     </div>

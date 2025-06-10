@@ -3,12 +3,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X, File, Image as ImageIcon } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Upload, X, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  uploadFile,
+  validateFile,
+  UploadProgress,
+  UploadResult,
+} from "@/services/firebase/uploadService";
+
+interface FileUploadItem {
+  file: File;
+  progress?: UploadProgress;
+  result?: UploadResult;
+  previewUrl?: string;
+}
 
 interface FileUploadProps {
-  files: File[];
-  onFilesChange: (files: File[]) => void;
+  files: FileUploadItem[];
+  onFilesChange: (files: FileUploadItem[]) => void;
+  onUrlsChange: (urls: string[]) => void;
   accept?: string;
   maxSize?: number; // in MB
   maxFiles?: number;
@@ -18,52 +33,134 @@ interface FileUploadProps {
 export function FileUpload({
   files,
   onFilesChange,
-  accept = "image/*,video/*",
-  maxSize = 20,
-  maxFiles = 10,
+  onUrlsChange,
+  accept = "image/*",
+  maxSize = 10,
+  maxFiles = 1,
   className,
 }: FileUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
-  const [urlInput, setUrlInput] = useState("");
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragOver(true);
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragOver(false);
   }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
+      e.stopPropagation();
       setIsDragOver(false);
 
       const droppedFiles = Array.from(e.dataTransfer.files);
       addFiles(droppedFiles);
     },
-    [files, maxFiles, maxSize]
+    [maxFiles, maxSize, onFilesChange]
   );
 
-  const addFiles = (newFiles: File[]) => {
-    const validFiles = newFiles.filter((file) => {
-      if (file.size > maxSize * 1024 * 1024) {
-        alert(`File ${file.name} quá lớn. Tối đa ${maxSize}MB`);
-        return false;
-      }
-      return true;
-    });
+  const addFiles = useCallback(
+    async (newFiles: File[]) => {
+      const validatedFiles: FileUploadItem[] = [];
 
-    const totalFiles = [...files, ...validFiles];
-    if (totalFiles.length > maxFiles) {
-      alert(`Chỉ được upload tối đa ${maxFiles} files`);
-      onFilesChange([...files, ...validFiles].slice(0, maxFiles));
-    } else {
-      onFilesChange([...files, ...validFiles]);
-    }
-  };
+      for (const file of newFiles) {
+        const validation = validateFile(file, maxSize);
+        if (!validation.isValid) {
+          console.error(
+            `❌ Validation failed for ${file.name}: ${validation.error}`
+          );
+          alert(`File ${file.name}: ${validation.error}`);
+          continue;
+        }
+
+        // Tạo preview URL ngay lập tức
+        const previewUrl = URL.createObjectURL(file);
+
+        validatedFiles.push({
+          file,
+          previewUrl,
+        });
+      }
+
+      // Với maxFiles = 1, thay thế file cũ bằng file mới
+      const totalFiles =
+        maxFiles === 1 ? validatedFiles : [...files, ...validatedFiles];
+
+      if (totalFiles.length > maxFiles) {
+        alert(`Chỉ được upload tối đa ${maxFiles} ảnh`);
+        return;
+      }
+
+      // Thêm files vào state
+      onFilesChange(totalFiles);
+
+      // Upload files lên Firebase
+      if (validatedFiles.length > 0) {
+        await uploadFiles(validatedFiles, totalFiles);
+      }
+    },
+    [files, maxFiles, maxSize, onFilesChange]
+  );
+
+  const uploadFiles = useCallback(
+    async (
+      fileItems: FileUploadItem[],
+      currentFilesList?: FileUploadItem[]
+    ) => {
+      // Get current files from state or use passed list
+      const currentFiles = [...(currentFilesList || files)];
+
+      for (const fileItem of fileItems) {
+        const fileIndex = currentFiles.findIndex(
+          (item) => item.file === fileItem.file
+        );
+
+        if (fileIndex === -1) {
+          console.error("❌ File not found in current files array");
+          continue;
+        }
+
+        try {
+          const result = await uploadFile(
+            fileItem.file,
+            "posts",
+            (progress) => {
+              // Cập nhật progress
+              currentFiles[fileIndex] = {
+                ...currentFiles[fileIndex],
+                progress,
+              };
+              onFilesChange([...currentFiles]);
+            }
+          );
+
+          // Upload thành công
+          currentFiles[fileIndex] = { ...currentFiles[fileIndex], result };
+          onFilesChange([...currentFiles]);
+        } catch (error) {
+          console.error(`❌ Upload failed for ${fileItem.file.name}:`, error);
+          currentFiles[fileIndex] = {
+            ...currentFiles[fileIndex],
+            progress: { progress: 0, status: "error" },
+          };
+          onFilesChange([...currentFiles]);
+        }
+      }
+
+      // Cập nhật URLs cho parent component
+      const allUrls = currentFiles
+        .filter((item) => item.result)
+        .map((item) => item.result!.url);
+      onUrlsChange(allUrls);
+    },
+    [files, onFilesChange, onUrlsChange]
+  );
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -73,17 +170,21 @@ export function FileUpload({
   };
 
   const removeFile = (index: number) => {
+    const fileToRemove = files[index];
+
+    // Clean up object URL to prevent memory leaks
+    if (fileToRemove.previewUrl) {
+      URL.revokeObjectURL(fileToRemove.previewUrl);
+    }
+
     const newFiles = files.filter((_, i) => i !== index);
     onFilesChange(newFiles);
-  };
 
-  const handleUrlSubmit = () => {
-    if (urlInput.trim()) {
-      // Tạo một File object từ URL (placeholder)
-      // Trong thực tế, bạn sẽ cần xử lý URL này khác
-      console.log("URL submitted:", urlInput);
-      setUrlInput("");
-    }
+    // Cập nhật URLs
+    const remainingUrls = newFiles
+      .filter((item) => item.result)
+      .map((item) => item.result!.url);
+    onUrlsChange(remainingUrls);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -94,100 +195,168 @@ export function FileUpload({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const isImage = (file: File) => file.type.startsWith("image/");
-  const isVideo = (file: File) => file.type.startsWith("video/");
-
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Drag & Drop Area */}
-      <Card
-        className={cn(
-          "border-2 border-dashed transition-colors cursor-pointer",
-          isDragOver
-            ? "border-primary bg-primary/5"
-            : "border-muted-foreground/25 hover:border-primary/50"
-        )}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <Upload className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
-            Chọn một tệp hoặc kéo và thả ở đây
-          </h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Bạn nên sử dụng tập tin .jpg chất lượng cao có kích thước dưới{" "}
-            {maxSize} MB hoặc tập tin .mp4 chất lượng cao có kích thước dưới{" "}
-            {maxSize * 10} MB.
-          </p>
-          <Label htmlFor="file-upload">
-            <Button type="button" variant="outline" className="cursor-pointer">
-              Chọn file
-            </Button>
-            <Input
-              id="file-upload"
-              type="file"
-              multiple
-              accept={accept}
-              onChange={handleFileInput}
-              className="hidden"
-            />
-          </Label>
-        </CardContent>
-      </Card>
+      {/* Drag & Drop Area - Ẩn khi đã có ảnh */}
+      {files.length === 0 && (
+        <Card
+          className={cn(
+            "border-2 border-dashed transition-colors cursor-pointer",
+            isDragOver
+              ? "border-primary bg-primary/5"
+              : "border-muted-foreground/25 hover:border-primary/50"
+          )}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <Upload className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">
+              Chọn một tệp hoặc kéo và thả ở đây
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Bạn nên sử dụng tập tin .jpg chất lượng cao có kích thước dưới{" "}
+              {maxSize} MB
+            </p>
+            <div>
+              <Input
+                id="file-upload"
+                type="file"
+                multiple={maxFiles > 1}
+                accept={accept}
+                onChange={handleFileInput}
+                className="hidden"
+              />
+              <Label htmlFor="file-upload" className="cursor-pointer">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="cursor-pointer pointer-events-none"
+                >
+                  Chọn file
+                </Button>
+              </Label>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* URL Input */}
-      <div className="flex gap-2">
-        <Input
-          placeholder="Hoặc dán URL hình ảnh/video..."
-          value={urlInput}
-          onChange={(e) => setUrlInput(e.target.value)}
-          className="flex-1"
-        />
-        <Button onClick={handleUrlSubmit} variant="outline">
-          Lưu từ URL
-        </Button>
-      </div>
-
-      {/* File List */}
+      {/* Image Preview */}
       {files.length > 0 && (
         <div className="space-y-2">
-          <Label className="text-sm font-medium">
-            Files đã chọn ({files.length})
-          </Label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {files.map((file, index) => (
-              <Card key={`${file.name}-${index}`} className="p-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    {isImage(file) ? (
-                      <ImageIcon className="h-8 w-8 text-green-500" />
-                    ) : isVideo(file) ? (
-                      <File className="h-8 w-8 text-blue-500" />
-                    ) : (
-                      <File className="h-8 w-8 text-gray-500" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatFileSize(file.size)}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeFile(index)}
-                    className="flex-shrink-0 h-8 w-8 p-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">Ảnh đã chọn</Label>
+            <div>
+              <Input
+                id="file-upload-replace"
+                type="file"
+                accept={accept}
+                onChange={handleFileInput}
+                className="hidden"
+              />
+              <Label htmlFor="file-upload-replace" className="cursor-pointer">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="cursor-pointer pointer-events-none"
+                >
+                  Thay đổi ảnh
+                </Button>
+              </Label>
+            </div>
           </div>
+          {files.map((fileItem, index) => (
+            <Card
+              key={`${fileItem.file.name}-${index}`}
+              className="overflow-hidden"
+            >
+              <div className="relative">
+                {/* Image Preview */}
+                <div className="aspect-video bg-muted/50 flex items-center justify-center relative overflow-hidden">
+                  {fileItem.result?.url || fileItem.previewUrl ? (
+                    <img
+                      src={fileItem.result?.url || fileItem.previewUrl}
+                      alt={fileItem.file.name}
+                      className="w-full h-full object-cover"
+                      onError={() => {
+                        console.error(
+                          "❌ Image failed to load:",
+                          fileItem.result?.url || fileItem.previewUrl
+                        );
+                      }}
+                    />
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      <Upload className="h-12 w-12 mx-auto mb-2" />
+                      <p className="text-sm">Đang tải ảnh...</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Remove Button */}
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => removeFile(index)}
+                  className="absolute top-2 right-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+
+                {/* Upload Progress Overlay */}
+                {fileItem.progress &&
+                  fileItem.progress.status === "uploading" && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <div className="text-white text-center">
+                        <div className="mb-2">
+                          <Progress
+                            value={fileItem.progress.progress}
+                            className="w-48 h-2 bg-white/20"
+                          />
+                        </div>
+                        <p className="text-sm">
+                          Đang tải lên...{" "}
+                          {Math.round(fileItem.progress.progress)}%
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Upload Success */}
+                {fileItem.progress &&
+                  fileItem.progress.status === "completed" && (
+                    <div className="absolute top-2 left-2">
+                      <div className="bg-green-500 text-white rounded-full p-1">
+                        <CheckCircle className="h-4 w-4" />
+                      </div>
+                    </div>
+                  )}
+
+                {/* Upload Error */}
+                {fileItem.progress && fileItem.progress.status === "error" && (
+                  <div className="absolute inset-0 bg-red-500/80 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                      <p className="text-sm">Lỗi tải lên</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* File Info */}
+              <CardContent className="p-3">
+                <p className="text-sm font-medium truncate">
+                  {fileItem.file.name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatFileSize(fileItem.file.size)}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>
