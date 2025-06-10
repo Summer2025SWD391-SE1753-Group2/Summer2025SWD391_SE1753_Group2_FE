@@ -1,23 +1,13 @@
 import axiosInstance from "@/lib/axios";
 import { Tag } from "@/types/post";
 
-import { DEFAULT_API_BASE } from "@/config/api";
-
-const API_BASE = DEFAULT_API_BASE;
-
 export const getAllTags = async (): Promise<Tag[]> => {
-  const response = await fetch(`${API_BASE}/tags/`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
+  try {
+    const response = await axiosInstance.get("/api/v1/tags/");
+    return response.data;
+  } catch {
     throw new Error("Không thể tải danh sách tags");
   }
-
-  return response.json();
 };
 
 const createTag = async (data: {

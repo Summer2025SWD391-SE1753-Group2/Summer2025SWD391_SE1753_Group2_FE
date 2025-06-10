@@ -1,20 +1,11 @@
 import { Unit } from "@/types/post";
-
-import { DEFAULT_API_BASE } from "@/config/api";
-
-const API_BASE = DEFAULT_API_BASE;
+import axiosInstance from "@/lib/axios";
 
 export const getAllUnits = async (): Promise<Unit[]> => {
-  const response = await fetch(`${API_BASE}/units/`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
+  try {
+    const response = await axiosInstance.get("/api/v1/units/");
+    return response.data;
+  } catch {
     throw new Error("Không thể tải danh sách đơn vị");
   }
-
-  return response.json();
 };

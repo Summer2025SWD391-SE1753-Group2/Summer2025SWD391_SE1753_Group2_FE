@@ -35,7 +35,6 @@ export function MultiSelect<T extends SelectItem>({
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
-  // Show all items if no search term, otherwise filter
   const filteredItems = searchTerm.trim()
     ? items.filter(
         (item) =>
@@ -71,7 +70,6 @@ export function MultiSelect<T extends SelectItem>({
     <div className={cn("space-y-3", className)}>
       <Label className="text-sm font-medium">{label}</Label>
 
-      {/* Selected Items */}
       {selectedItems.length > 0 && (
         <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-2 border rounded-md bg-muted/20">
           {selectedItems.map((item) => (
@@ -95,7 +93,6 @@ export function MultiSelect<T extends SelectItem>({
         </div>
       )}
 
-      {/* Search Input */}
       <div className="relative">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -115,7 +112,6 @@ export function MultiSelect<T extends SelectItem>({
           ></Button>
         </div>
 
-        {/* Dropdown */}
         {isOpen && (
           <Card className="absolute top-full left-0 right-0 z-50 mt-1 border shadow-lg">
             <CardContent className="p-0">
@@ -153,7 +149,6 @@ export function MultiSelect<T extends SelectItem>({
                 )}
               </div>
 
-              {/* Footer info */}
               <div className="border-t px-3 py-2 bg-muted/20">
                 <div className="text-xs text-muted-foreground flex justify-between items-center">
                   <span>
@@ -169,7 +164,6 @@ export function MultiSelect<T extends SelectItem>({
         )}
       </div>
 
-      {/* Click outside to close */}
       {isOpen && (
         <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
       )}

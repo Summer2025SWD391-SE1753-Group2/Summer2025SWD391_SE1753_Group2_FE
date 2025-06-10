@@ -1,20 +1,11 @@
 import { Material } from "@/types/post";
-
-import { DEFAULT_API_BASE } from "@/config/api";
-
-const API_BASE = DEFAULT_API_BASE;
+import axiosInstance from "@/lib/axios";
 
 export const getAllMaterials = async (): Promise<Material[]> => {
-  const response = await fetch(`${API_BASE}/materials/`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
+  try {
+    const response = await axiosInstance.get("/api/v1/materials/");
+    return response.data;
+  } catch {
     throw new Error("Không thể tải danh sách nguyên liệu");
   }
-
-  return response.json();
 };

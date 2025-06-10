@@ -11,8 +11,10 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 import type { Post } from "@/types/post";
 
 interface PostCardProps {
@@ -222,7 +224,11 @@ export function PostCard({
                   variant="secondary"
                   className="text-xs flex items-center gap-1"
                 >
-                  <span>{postMaterial.material?.name}</span>
+                  <span>
+                    {postMaterial.material?.name ||
+                      postMaterial.material_name ||
+                      "Nguyên liệu"}
+                  </span>
                   {postMaterial.quantity && (
                     <span className="text-muted-foreground">
                       ({postMaterial.quantity}{" "}
@@ -263,6 +269,12 @@ export function PostCard({
             <Button variant="ghost" size="sm" onClick={onShare}>
               <Share2 className="h-4 w-4" />
               <span className="ml-1 text-sm">Chia sẻ</span>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to={`/posts/${post.post_id}`}>
+                <ExternalLink className="h-4 w-4" />
+                <span className="ml-1 text-sm">Xem chi tiết</span>
+              </Link>
             </Button>
           </div>
           <Button variant="ghost" size="sm" onClick={onBookmark}>

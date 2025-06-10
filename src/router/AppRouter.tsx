@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import ProfilePage from "@/pages/user/profile/ProfilePage";
 import TagManagerPage from "@/pages/user/tag-manager/TagManagerPage";
 import { CreatePostPage } from "@/pages/posts/CreatePostPage";
+import { PostDetailPage } from "@/pages/posts/PostDetailPage";
 
 const router = createBrowserRouter([
   {
@@ -31,6 +32,10 @@ const router = createBrowserRouter([
       {
         path: "/posts/create",
         element: <CreatePostPage />,
+      },
+      {
+        path: "/posts/:postId",
+        element: <PostDetailPage />,
       },
     ],
   },

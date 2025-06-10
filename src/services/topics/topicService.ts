@@ -1,20 +1,11 @@
 import { Topic } from "@/types/post";
-
-import { DEFAULT_API_BASE } from "@/config/api";
-
-const API_BASE = DEFAULT_API_BASE;
+import axiosInstance from "@/lib/axios";
 
 export const getAllTopics = async (): Promise<Topic[]> => {
-  const response = await fetch(`${API_BASE}/topics/`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
+  try {
+    const response = await axiosInstance.get("/api/v1/topics/");
+    return response.data;
+  } catch {
     throw new Error("Không thể tải danh sách chủ đề");
   }
-
-  return response.json();
 };

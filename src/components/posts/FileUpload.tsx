@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Upload, X, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   uploadFile,
@@ -79,7 +79,6 @@ export function FileUpload({
           continue;
         }
 
-        // Tạo preview URL ngay lập tức
         const previewUrl = URL.createObjectURL(file);
 
         validatedFiles.push({
@@ -88,7 +87,6 @@ export function FileUpload({
         });
       }
 
-      // Với maxFiles = 1, thay thế file cũ bằng file mới
       const totalFiles =
         maxFiles === 1 ? validatedFiles : [...files, ...validatedFiles];
 
@@ -97,10 +95,8 @@ export function FileUpload({
         return;
       }
 
-      // Thêm files vào state
       onFilesChange(totalFiles);
 
-      // Upload files lên Firebase
       if (validatedFiles.length > 0) {
         await uploadFiles(validatedFiles, totalFiles);
       }
@@ -113,7 +109,6 @@ export function FileUpload({
       fileItems: FileUploadItem[],
       currentFilesList?: FileUploadItem[]
     ) => {
-      // Get current files from state or use passed list
       const currentFiles = [...(currentFilesList || files)];
 
       for (const fileItem of fileItems) {
@@ -122,7 +117,7 @@ export function FileUpload({
         );
 
         if (fileIndex === -1) {
-          console.error("❌ File not found in current files array");
+          console.error(" File not found in current files array");
           continue;
         }
 
@@ -131,7 +126,6 @@ export function FileUpload({
             fileItem.file,
             "posts",
             (progress) => {
-              // Cập nhật progress
               currentFiles[fileIndex] = {
                 ...currentFiles[fileIndex],
                 progress,
@@ -140,11 +134,10 @@ export function FileUpload({
             }
           );
 
-          // Upload thành công
           currentFiles[fileIndex] = { ...currentFiles[fileIndex], result };
           onFilesChange([...currentFiles]);
         } catch (error) {
-          console.error(`❌ Upload failed for ${fileItem.file.name}:`, error);
+          console.error(` Upload failed for ${fileItem.file.name}:`, error);
           currentFiles[fileIndex] = {
             ...currentFiles[fileIndex],
             progress: { progress: 0, status: "error" },
@@ -153,7 +146,6 @@ export function FileUpload({
         }
       }
 
-      // Cập nhật URLs cho parent component
       const allUrls = currentFiles
         .filter((item) => item.result)
         .map((item) => item.result!.url);
@@ -169,24 +161,6 @@ export function FileUpload({
     }
   };
 
-  const removeFile = (index: number) => {
-    const fileToRemove = files[index];
-
-    // Clean up object URL to prevent memory leaks
-    if (fileToRemove.previewUrl) {
-      URL.revokeObjectURL(fileToRemove.previewUrl);
-    }
-
-    const newFiles = files.filter((_, i) => i !== index);
-    onFilesChange(newFiles);
-
-    // Cập nhật URLs
-    const remainingUrls = newFiles
-      .filter((item) => item.result)
-      .map((item) => item.result!.url);
-    onUrlsChange(remainingUrls);
-  };
-
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -197,7 +171,6 @@ export function FileUpload({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Drag & Drop Area - Ẩn khi đã có ảnh */}
       {files.length === 0 && (
         <Card
           className={cn(
@@ -242,7 +215,6 @@ export function FileUpload({
         </Card>
       )}
 
-      {/* Image Preview */}
       {files.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -273,7 +245,6 @@ export function FileUpload({
               className="overflow-hidden"
             >
               <div className="relative">
-                {/* Image Preview */}
                 <div className="aspect-video bg-muted/50 flex items-center justify-center relative overflow-hidden">
                   {fileItem.result?.url || fileItem.previewUrl ? (
                     <img
@@ -295,18 +266,6 @@ export function FileUpload({
                   )}
                 </div>
 
-                {/* Remove Button */}
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => removeFile(index)}
-                  className="absolute top-2 right-2"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-
-                {/* Upload Progress Overlay */}
                 {fileItem.progress &&
                   fileItem.progress.status === "uploading" && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -325,7 +284,6 @@ export function FileUpload({
                     </div>
                   )}
 
-                {/* Upload Success */}
                 {fileItem.progress &&
                   fileItem.progress.status === "completed" && (
                     <div className="absolute top-2 left-2">
@@ -335,7 +293,6 @@ export function FileUpload({
                     </div>
                   )}
 
-                {/* Upload Error */}
                 {fileItem.progress && fileItem.progress.status === "error" && (
                   <div className="absolute inset-0 bg-red-500/80 flex items-center justify-center">
                     <div className="text-white text-center">
@@ -346,7 +303,6 @@ export function FileUpload({
                 )}
               </div>
 
-              {/* File Info */}
               <CardContent className="p-3">
                 <p className="text-sm font-medium truncate">
                   {fileItem.file.name}
