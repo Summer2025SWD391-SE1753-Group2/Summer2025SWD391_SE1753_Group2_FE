@@ -1,11 +1,18 @@
 import { Outlet } from "react-router-dom";
 import { BaseLayout } from "../shared/BaseLayout";
 import { Topbar } from "../shared/Topbar/Topbar";
-import { Search, Home, Bookmark, MessageCircle, User } from "lucide-react";
+import {
+  Search,
+  Home,
+  Bookmark,
+  MessageCircle,
+  User,
+  Plus,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const sidebarItems = [
   {
@@ -31,6 +38,8 @@ const sidebarItems = [
 ];
 
 export default function UserLayout() {
+  const navigate = useNavigate();
+
   return (
     <BaseLayout
       topbar={
@@ -43,7 +52,13 @@ export default function UserLayout() {
                 className="pl-8"
               />
             </div>
-            <Button>Đăng bài</Button>
+            <Button
+              onClick={() => navigate("/posts/create")}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Đăng bài
+            </Button>
           </div>
         </Topbar>
       }
