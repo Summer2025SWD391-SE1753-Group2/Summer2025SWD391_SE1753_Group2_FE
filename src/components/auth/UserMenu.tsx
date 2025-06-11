@@ -107,7 +107,7 @@ export function UserMenu() {
                   {user.role.role_name === "admin"
                     ? "Quản trị viên"
                     : user.role.role_name === "moderator"
-                    ? "Điều hành viên"
+                    ? "Kiểm duyệt viên"
                     : "Thành viên"}
                 </span>
               </Badge>

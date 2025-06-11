@@ -1,53 +1,41 @@
 import { useAuthStore } from "@/store/auth/authStore";
 import { Link } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MessageCircle } from "lucide-react";
+import { PlusCircle, Loader2 } from "lucide-react";
+import { PostCard } from "@/components/posts/PostCard";
+import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import { getAllPosts } from "@/services/posts/postService";
+import type { Post } from "@/types/post";
 
 export const HomePage = () => {
   const { user, isAuthenticated } = useAuthStore();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const mockPosts = [
-    {
-      id: 1,
-      title: "Cách làm bánh mì nướng muối ớt siêu ngon",
-      author: "Nguyễn Văn A",
-      content:
-        "Hôm nay mình sẽ chia sẻ cách làm bánh mì nướng muối ớt cực kỳ đơn giản mà ai cũng có thể làm được tại nhà...",
-      likes: 24,
-      comments: 8,
-      shares: 3,
-      createdAt: "2 giờ trước",
-    },
-    {
-      id: 2,
-      title: "Bún bò Huế chuẩn vị miền Trung",
-      author: "Trần Thị B",
-      content:
-        "Món bún bò Huế này được mình học từ bà ngoại, giữ nguyên hương vị truyền thống...",
-      likes: 45,
-      comments: 12,
-      shares: 7,
-      createdAt: "5 giờ trước",
-    },
-    {
-      id: 3,
-      title: "Salad rau củ giảm cân hiệu quả",
-      author: "Lê Văn C",
-      content:
-        "Công thức salad này không chỉ ngon mà còn giúp bạn duy trì vóc dáng hoàn hảo...",
-      likes: 18,
-      comments: 5,
-      shares: 2,
-      createdAt: "1 ngày trước",
-    },
-  ];
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const response = await getAllPosts(0, 20); // Get first 20 posts
+        setPosts(response || []); // API trả về array trực tiếp
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Không thể tải bài viết";
+        toast.error(errorMessage);
+        setPosts([]); // Không fallback về mock data nữa
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  const handlePostAction = (action: string, postId: string) => {
+    toast.success(`${action} bài viết ${postId}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -64,47 +52,45 @@ export const HomePage = () => {
             : "Đăng nhập để tham gia cộng đồng chia sẻ công thức nấu ăn!"}
         </p>
         {isAuthenticated && user && (
-          <Button className="bg-orange-600 hover:bg-orange-700">
-            <PlusCircle className="w-4 h-4 mr-2" />
-            Đăng công thức mới
+          <Button asChild className="bg-orange-600 hover:bg-orange-700">
+            <Link to="/posts/create">
+              <PlusCircle className="w-4 h-4 mr-2" />
+              Đăng công thức mới
+            </Link>
           </Button>
         )}
       </div>
 
-      {/* Posts Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {mockPosts.map((post) => (
-          <Card
-            key={post.id}
-            className="overflow-hidden hover:shadow-lg transition-shadow"
-          >
-            <div className="aspect-video bg-gradient-to-br from-orange-200 to-red-200 dark:from-orange-800 dark:to-red-800 flex items-center justify-center">
-              <span className="text-4xl">🍳</span>
-            </div>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg line-clamp-2">
-                {post.title}
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Bởi {post.author} • {post.createdAt}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                {post.content}
+      {/* Posts Feed */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold">Bài viết mới nhất</h2>
+        {loading ? (
+          <div className="flex justify-center items-center p-8">
+            <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+            <span className="ml-2">Đang tải bài viết...</span>
+          </div>
+        ) : posts.length === 0 ? (
+          <Card className="text-center">
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground">
+                Chưa có bài viết nào. Hãy là người đầu tiên chia sẻ công thức!
               </p>
-
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <div className="flex items-center space-x-4">
-                  <button className="flex items-center space-x-1 hover:text-blue-500 transition-colors">
-                    <MessageCircle className="w-4 h-4" />
-                    <span>{post.comments}</span>
-                  </button>
-                </div>
-              </div>
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          <div className="space-y-6">
+            {posts.map((post) => (
+              <PostCard
+                key={post.post_id}
+                post={post}
+                onLike={() => handlePostAction("Đã thích", post.post_id)}
+                onComment={() => handlePostAction("Đã bình luận", post.post_id)}
+                onShare={() => handlePostAction("Đã chia sẻ", post.post_id)}
+                onBookmark={() => handlePostAction("Đã lưu", post.post_id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Guest CTA */}
