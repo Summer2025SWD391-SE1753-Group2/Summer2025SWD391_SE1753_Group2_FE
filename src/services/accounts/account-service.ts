@@ -21,8 +21,15 @@ const getProfileByUsername = async (username: string): Promise<UserProfile> => {
   return response.data;
 };
 
+// Search users by username
+const searchUsersByUsername = async (name: string, skip: number = 0, limit: number = 100): Promise<UserProfile[]> => {
+  const response = await axiosInstance.get<UserProfile[]>(`/api/v1/accounts/search/?name=${name}&skip=${skip}&limit=${limit}`);
+  return response.data;
+};
+
 export {
   getOwnProfile,
   updateOwnProfile,
   getProfileByUsername,
+  searchUsersByUsername,
 };
