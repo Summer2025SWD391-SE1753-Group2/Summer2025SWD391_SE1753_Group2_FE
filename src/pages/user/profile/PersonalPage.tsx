@@ -53,13 +53,13 @@ export function PersonalPage() {
   }, [username]);
 
   const handleAddFriend = async () => {
-    try {
-      // Giả sử có API addFriend
-      await addFriend(profile!.username);
-      setProfile((prev) => (prev ? { ...prev, friends: (prev.friends || 0) + 1 } : null));
-    } catch (err) {
-      console.error("Lỗi khi thêm bạn:", err);
-    }
+    // try {
+    //   // Giả sử có API addFriend
+    //   await addFriend(profile!.username);
+    //   setProfile((prev) => (prev ? { ...prev, friends: (prev.friends || 0) + 1 } : null));
+    // } catch (err) {
+    //   console.error("Lỗi khi thêm bạn:", err);
+    // }
   };
 
   if (loading) return <div className="p-6 text-center">Đang tải dữ liệu...</div>;
@@ -88,9 +88,9 @@ export function PersonalPage() {
                   ? new Date(profile.date_of_birth).toLocaleDateString("vi-VN")
                   : "Không có"}
               </p>
-              <p className="text-sm text-gray-500">
+              {/* <p className="text-sm text-gray-500">
                 {(profile.friends || 0).toLocaleString()} bạn bè
-              </p>
+              </p> */}
 
               <div className="flex gap-3 mt-3">
                 {/* Role badge */}
