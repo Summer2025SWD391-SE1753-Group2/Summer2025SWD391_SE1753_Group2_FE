@@ -15,7 +15,6 @@
       "@/lib/*": ["src/lib/*"],
       "@/store/*": ["src/store/*"],
       "@/styles/*": ["src/styles/*"],
-      "@/assets/*": ["src/assets/*"],
       "@/features/*": ["src/features/*"],
       "@/router/*": ["src/router/*"]
     },

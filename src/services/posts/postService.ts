@@ -1,4 +1,5 @@
-import axiosInstance from "@/lib/axios";
+
+import axiosInstance from "@/lib/api/axios";
 import type { Post } from "@/types/post";
 
 export interface CreatePostApiRequest {
