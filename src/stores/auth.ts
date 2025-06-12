@@ -45,13 +45,16 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await authService.login(data);
           const userInfo = response.data?.user || authService.getUserInfo();
-          if (!userInfo) throw new Error("Không lấy được thông tin người dùng.");
+          if (!userInfo)
+            throw new Error("Không lấy được thông tin người dùng.");
           get().setUser(userInfo);
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Đăng nhập thất bại.";
           set({
             user: null,
             isAuthenticated: false,
-            error: error?.message || "Đăng nhập thất bại.",
+            error: errorMessage,
           });
           throw error;
         } finally {
@@ -64,10 +67,12 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           await authService.loginWithGoogle(); // redirect flow
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Google login failed";
           set({
             isLoading: false,
-            error: error?.message || "Google login failed",
+            error: errorMessage,
           });
           throw error;
         }
@@ -78,9 +83,11 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           await authService.register(data);
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Đăng ký thất bại";
           set({
-            error: error?.message || "Đăng ký thất bại",
+            error: errorMessage,
           });
           throw error;
         } finally {
@@ -140,7 +147,7 @@ export const useAuthStore = create<AuthState>()(
             const userInfo = await authService.getCurrentUserProfile();
             console.log("Fetched user info (live):", userInfo);
             get().setUser(userInfo);
-          } catch (err) {
+          } catch {
             console.warn("Failed to fetch user profile, fallback to cookie");
             const userInfo = authService.getUserInfo();
             if (userInfo) get().setUser(userInfo);

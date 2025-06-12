@@ -5,147 +5,312 @@ import type {
   LoginRequest,
   RegisterRequest,
   UserInfo,
+  ErrorResponse,
 } from "@/types/auth";
 
-const setCookie = (name: string, value: string, days: number = 7) => {
+/**
+ * Cookie utility functions với better security
+ */
+const setCookie = (name: string, value: string, days: number = 7): void => {
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  const isSecure = location.protocol === "https:";
   document.cookie = `${name}=${encodeURIComponent(
     value
-  )}; expires=${expires}; path=/; SameSite=Strict; Secure=${
-    location.protocol === "https:"
-  }`;
+  )}; expires=${expires}; path=/; SameSite=Strict${isSecure ? "; Secure" : ""}`;
 };
 
 const getCookie = (name: string): string | null => {
-  return document.cookie.split("; ").reduce((r, v) => {
+  const value = document.cookie.split("; ").reduce((r, v) => {
     const parts = v.split("=");
     return parts[0] === name ? decodeURIComponent(parts[1]) : r;
   }, "");
+  return value || null;
 };
 
-const deleteCookie = (name: string) => {
+const deleteCookie = (name: string): void => {
   setCookie(name, "", -1);
 };
 
+/**
+ * Validation functions
+ */
+const validateLoginData = (data: LoginRequest): void => {
+  if (!data.password || data.password.length < 6) {
+    throw new Error("Mật khẩu phải có ít nhất 6 ký tự");
+  }
+
+  const loginValue = data.email || data.username || "";
+  if (!loginValue.trim()) {
+    throw new Error("Vui lòng nhập email hoặc tên đăng nhập");
+  }
+
+  // Kiểm tra định dạng - nếu có @ thì phải là email hợp lệ
+  if (loginValue.includes("@")) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(loginValue)) {
+      throw new Error("Email không hợp lệ");
+    }
+  } else {
+    // Nếu không có @ thì phải là username hợp lệ
+    if (loginValue.length < 3 || loginValue.length > 20) {
+      throw new Error("Tên đăng nhập phải có từ 3-20 ký tự");
+    }
+  }
+};
+
+const validateRegisterData = (data: RegisterRequest): void => {
+  if (!data.username || data.username.length < 3) {
+    throw new Error("Tên đăng nhập phải có ít nhất 3 ký tự");
+  }
+
+  if (!data.email || !data.email.includes("@")) {
+    throw new Error("Email không hợp lệ");
+  }
+
+  if (!data.password || data.password.length < 8) {
+    throw new Error("Mật khẩu phải có ít nhất 8 ký tự");
+  }
+
+  if (!data.full_name || data.full_name.trim().length < 2) {
+    throw new Error("Họ tên phải có ít nhất 2 ký tự");
+  }
+
+  if (!data.date_of_birth) {
+    throw new Error("Vui lòng nhập ngày sinh");
+  }
+
+  // Validate age (must be at least 13 years old)
+  const birthDate = new Date(data.date_of_birth);
+  const today = new Date();
+  const age = today.getFullYear() - birthDate.getFullYear();
+  if (age < 13) {
+    throw new Error("Bạn phải ít nhất 13 tuổi để đăng ký");
+  }
+};
+
+/**
+ * Auth Service với improved error handling
+ */
 export const authService = {
+  /**
+   * Get current user profile
+   */
   async getCurrentUserProfile(): Promise<UserInfo> {
-    const res = await axiosInstance.get<UserInfo>("/api/v1/accounts/me");
-    return res.data;
+    try {
+      const res = await axiosInstance.get<UserInfo>("/api/v1/accounts/me");
+      return res.data;
+    } catch (error) {
+      console.error("Failed to get current user profile:", error);
+      throw new Error("Không thể lấy thông tin người dùng");
+    }
   },
 
+  /**
+   * Get user profile by username
+   */
   async getUserProfile(username: string): Promise<UserInfo> {
-    const res = await axiosInstance.get<UserInfo>(
-      `/api/v1/accounts/profiles/${username}`
-    );
-    return res.data;
+    if (!username || username.trim().length === 0) {
+      throw new Error("Tên người dùng không hợp lệ");
+    }
+
+    try {
+      const res = await axiosInstance.get<UserInfo>(
+        `/api/v1/accounts/profiles/${username}`
+      );
+      return res.data;
+    } catch (error) {
+      console.error("Failed to get user profile:", error);
+      throw new Error("Không thể lấy thông tin người dùng");
+    }
   },
 
+  /**
+   * Login with enhanced validation and error handling
+   */
   async login(data: LoginRequest): Promise<ApiResponse<AuthResponse>> {
+    validateLoginData(data);
+
+    const loginValue = data.email || data.username || "";
     const params = new URLSearchParams();
     params.append("grant_type", "password");
-    params.append("username", data.email || data.username || "");
+    params.append("username", loginValue);
     params.append("password", data.password);
+    params.append("scope", "");
 
-    const res = await axiosInstance.post<AuthResponse>(
-      "/api/v1/auth/access-token",
-      params,
-      {
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    console.log("🚀 Login attempt:", { loginValue, password: "***" });
+
+    try {
+      const res = await axiosInstance.post<AuthResponse>(
+        "/api/v1/auth/access-token",
+        params,
+        {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        }
+      );
+
+      if (!res.data.access_token) {
+        throw new Error("Không nhận được token xác thực");
       }
-    );
 
-    if (res.data.access_token) {
+      // Store tokens
       setCookie("access_token", res.data.access_token, 1);
-      if (res.data.refresh_token)
+      if (res.data.refresh_token) {
         setCookie("refresh_token", res.data.refresh_token, 7);
+      }
 
+      // Get and store user profile
       try {
         const profile = await this.getCurrentUserProfile();
         setCookie("user_info", JSON.stringify(profile), 7);
         res.data.user = profile;
-      } catch (err) {
-        console.warn("User profile fetch failed:", err);
+      } catch (profileError) {
+        console.warn("User profile fetch failed:", profileError);
+        // Don't fail login if profile fetch fails
       }
+
+      return {
+        data: res.data,
+        message: "Đăng nhập thành công",
+        status: 200,
+      };
+    } catch (error) {
+      console.error("Login failed:", error);
+      const errorMsg = this.extractErrorMessage(error);
+      throw new Error(errorMsg);
     }
-
-    return { data: res.data, message: "Login successful", status: 200 };
   },
 
+  /**
+   * Register with enhanced validation
+   */
   async register(data: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
-    const res = await axiosInstance.post<AuthResponse>(
-      "/api/v1/auth/register",
-      data,
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-    return { data: res.data, message: "Registration successful", status: 200 };
+    validateRegisterData(data);
+
+    try {
+      const res = await axiosInstance.post<AuthResponse>(
+        "/api/v1/auth/register",
+        data,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      return {
+        data: res.data,
+        message: "Đăng ký thành công",
+        status: 200,
+      };
+    } catch (error) {
+      console.error("Registration failed:", error);
+      const errorMsg = this.extractErrorMessage(error);
+      throw new Error(errorMsg);
+    }
   },
 
+  /**
+   * Refresh token with better error handling
+   */
   async refreshToken(): Promise<string | null> {
     const refreshToken = getCookie("refresh_token");
-    if (!refreshToken) return null;
+    if (!refreshToken) {
+      console.warn("No refresh token available");
+      return null;
+    }
 
     try {
       const res = await axiosInstance.post<{ access_token: string }>(
         "/api/v1/auth/refresh-token",
-        {
-          refresh_token: refreshToken,
-        }
+        { refresh_token: refreshToken }
       );
 
       if (res.data.access_token) {
         setCookie("access_token", res.data.access_token, 1);
         return res.data.access_token;
       }
-    } catch (err) {
-      console.error("Refresh token failed", err);
+
+      throw new Error("Invalid refresh token response");
+    } catch (error) {
+      console.error("Refresh token failed:", error);
+      // Clear invalid tokens
+      this.clearTokens();
+      return null;
     }
-    return null;
   },
 
+  /**
+   * Logout with cleanup
+   */
   async logout(): Promise<void> {
-    deleteCookie("access_token");
-    deleteCookie("refresh_token");
-    deleteCookie("user_info");
     try {
       await axiosInstance.post("/api/v1/auth/logout");
-    } catch (err) {
-      console.warn("Logout API error:", err);
+    } catch (error) {
+      console.warn("Logout API error:", error);
+      // Continue with cleanup even if API fails
+    } finally {
+      this.clearTokens();
     }
   },
 
+  /**
+   * Google login redirect
+   */
   async loginWithGoogle(): Promise<void> {
     const baseUrl =
       import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
     window.location.href = `${baseUrl}/api/v1/auth/google/login`;
   },
 
+  /**
+   * Handle Google callback
+   */
   async handleGoogleCallback(code: string): Promise<ApiResponse<AuthResponse>> {
-    const res = await axiosInstance.post<AuthResponse>(
-      "/api/v1/auth/google/callback",
-      { code }
-    );
+    if (!code || code.trim().length === 0) {
+      throw new Error("Mã xác thực Google không hợp lệ");
+    }
 
-    if (res.data.access_token) {
+    try {
+      const res = await axiosInstance.post<AuthResponse>(
+        "/api/v1/auth/google/callback",
+        { code }
+      );
+
+      if (!res.data.access_token) {
+        throw new Error("Không nhận được token từ Google");
+      }
+
+      // Store tokens
       setCookie("access_token", res.data.access_token, 1);
-      if (res.data.refresh_token)
+      if (res.data.refresh_token) {
         setCookie("refresh_token", res.data.refresh_token, 7);
+      }
 
+      // Get and store user profile
       try {
         const profile = await this.getCurrentUserProfile();
         setCookie("user_info", JSON.stringify(profile), 7);
         res.data.user = profile;
-      } catch (err) {
-        console.warn("Google user profile fetch failed:", err);
-        if (res.data.user)
+      } catch (profileError) {
+        console.warn("Google user profile fetch failed:", profileError);
+        if (res.data.user) {
           setCookie("user_info", JSON.stringify(res.data.user), 7);
+        }
       }
-    }
 
-    return { data: res.data, message: "Google login successful", status: 200 };
+      return {
+        data: res.data,
+        message: "Đăng nhập Google thành công",
+        status: 200,
+      };
+    } catch (error) {
+      console.error("Google callback failed:", error);
+      const errorMsg = this.extractErrorMessage(error);
+      throw new Error(errorMsg);
+    }
   },
 
+  /**
+   * Token management
+   */
   getToken(): string | null {
     return getCookie("access_token");
   },
@@ -155,16 +320,88 @@ export const authService = {
   },
 
   getUserInfo(): UserInfo | null {
-    const userInfo = getCookie("user_info");
-    return userInfo ? JSON.parse(userInfo) : null;
+    try {
+      const userInfo = getCookie("user_info");
+      return userInfo ? JSON.parse(userInfo) : null;
+    } catch (error) {
+      console.error("Failed to parse user info:", error);
+      deleteCookie("user_info");
+      return null;
+    }
   },
 
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    return !!token && token.length > 0;
   },
 
   hasRole(role: string): boolean {
     const info = this.getUserInfo();
     return info?.role?.role_name === role;
+  },
+
+  /**
+   * Clear all tokens and user data
+   */
+  clearTokens(): void {
+    deleteCookie("access_token");
+    deleteCookie("refresh_token");
+    deleteCookie("user_info");
+  },
+
+  /**
+   * Extract meaningful error message from API response
+   */
+  extractErrorMessage(error: unknown): string {
+    if (typeof error === "object" && error !== null) {
+      const apiError = error as {
+        response?: {
+          data?: ErrorResponse | { detail?: string; message?: string };
+          status?: number;
+        };
+        message?: string;
+      };
+
+      // Check for API error response
+      if (apiError.response?.data) {
+        const data = apiError.response.data;
+
+        // Handle ErrorResponse type
+        if ("detail" in data && data.detail) {
+          return data.detail;
+        }
+
+        // Handle generic error message
+        if ("message" in data && data.message) {
+          return data.message;
+        }
+      }
+
+      // Handle HTTP status codes
+      if (apiError.response?.status) {
+        switch (apiError.response.status) {
+          case 401:
+            return "Tài khoản hoặc mật khẩu không chính xác";
+          case 403:
+            return "Tài khoản đã bị khóa hoặc chưa được xác thực";
+          case 404:
+            return "Không tìm thấy tài khoản";
+          case 429:
+            return "Quá nhiều lần thử. Vui lòng thử lại sau";
+          case 500:
+            return "Lỗi hệ thống. Vui lòng thử lại sau";
+          default:
+            return "Có lỗi xảy ra. Vui lòng thử lại";
+        }
+      }
+
+      // Handle generic error message
+      if (apiError.message) {
+        return apiError.message;
+      }
+    }
+
+    // Fallback error message
+    return "Có lỗi không xác định xảy ra";
   },
 };
