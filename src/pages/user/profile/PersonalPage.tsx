@@ -1,11 +1,11 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getProfileByUsername } from "@/services/accounts/account-service";
+import { getProfileByUsername } from "@/services/accounts/accountService";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { UserProfile } from "@/types/user";
+import { UserProfile } from "@/types/account";
 
 const getRoleStyle = (role: string) => {
   switch (role) {
@@ -41,9 +41,10 @@ export function PersonalPage() {
       try {
         const data = await getProfileByUsername(username);
         setProfile(data);
-      } catch (err: any) {
-        if (err.name === "AbortError") return;
-        setError(err.message || "Không thể tải hồ sơ. Vui lòng thử lại.");
+      } catch (err: unknown) {
+        const error = err as Error;
+        if (error.name === "AbortError") return;
+        setError(error.message || "Không thể tải hồ sơ. Vui lòng thử lại.");
       } finally {
         setLoading(false);
       }
@@ -62,9 +63,11 @@ export function PersonalPage() {
     // }
   };
 
-  if (loading) return <div className="p-6 text-center">Đang tải dữ liệu...</div>;
+  if (loading)
+    return <div className="p-6 text-center">Đang tải dữ liệu...</div>;
   if (error) return <div className="p-6 text-center text-red-500">{error}</div>;
-  if (!profile) return <div className="p-6 text-center">Không tìm thấy hồ sơ</div>;
+  if (!profile)
+    return <div className="p-6 text-center">Không tìm thấy hồ sơ</div>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -74,12 +77,16 @@ export function PersonalPage() {
             {/* Info */}
             <div className="space-y-1 w-[55%]">
               <div className="flex items-center gap-1">
-                <p className="text-xl font-semibold leading-none">{profile.full_name}</p>
+                <p className="text-xl font-semibold leading-none">
+                  {profile.full_name}
+                </p>
                 {profile.email_verified && (
                   <span className="text-blue-500 text-xs">✔</span>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">@{profile.username}</p>
+              <p className="text-sm text-muted-foreground">
+                @{profile.username}
+              </p>
               <p className="text-sm text-muted-foreground">{profile.email}</p>
               <p>{profile.bio || "Chưa có tiểu sử"}</p>
               <p>
@@ -115,7 +122,9 @@ export function PersonalPage() {
                     getStatusStyle(profile.status)
                   )}
                 >
-                  {profile.status === "active" ? "Hoạt động" : "Không hoạt động"}
+                  {profile.status === "active"
+                    ? "Hoạt động"
+                    : "Không hoạt động"}
                 </Badge>
               </div>
 
