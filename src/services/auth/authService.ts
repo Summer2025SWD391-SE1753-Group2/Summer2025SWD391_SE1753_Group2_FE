@@ -1,11 +1,11 @@
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/api/axios";
 import type {
   ApiResponse,
   AuthResponse,
   LoginRequest,
   RegisterRequest,
   UserInfo,
-} from "@/types/api";
+} from "@/types/auth";
 
 const setCookie = (name: string, value: string, days: number = 7) => {
   const expires = new Date(Date.now() + days * 864e5).toUTCString();

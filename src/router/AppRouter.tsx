@@ -1,58 +1,87 @@
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
-import HomePage from "@/pages/user/HomePage";
-import { LoginPage } from "@/pages/auth/LoginPage";
-import { RegisterPage } from "@/pages/auth/RegisterPage";
-import { GoogleCallbackPage } from "@/pages/auth/GoogleCallbackPage";
-import NotFound from "@/pages/NotFound";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import ProfilePage from "@/pages/user/profile/ProfilePage";
-import TagManagerPage from "@/pages/user/tag-manager/TagManagerPage";
-import { CreatePostPage } from "@/pages/posts/CreatePostPage";
-import { PostDetailPage } from "@/pages/posts/PostDetailPage";
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+
+
+import MainLayout from '@/components/layout/main-layout/main-layout';
+import DashboardLayout from '@/components/layout/dashboard-layout/dashboard-layout';
+import TagManagementPage from '@/pages/private/management/TagManagementPage';
+import MaterialManagementPage from '@/pages/private/management/MaterialManagementPage';
+import TopicManagementPage from '@/pages/private/management/TopicManagementPage';
+import ApprovePostPage from '@/pages/private/management/ApprovePostPage';
+import PublicRoute from './public-route';
+import ProtectedRoute from './protected-route';
+import { paths } from '@/utils/constant/path';
+import LoginPage from '@/pages/publicPage/auth/LoginPage';
+import RegisterPage from '@/pages/publicPage/auth/RegisterPage';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { CreatePostPage } from '@/pages/publicPage/posts/CreatePostPage';
+import { PostDetailPage } from '@/pages/publicPage/posts/PostDetailPage';
+import HomePage from '@/pages/publicPage/HomePage';
+import ProfilePage from '@/pages/publicPage/ProfilePage';
+import DashboardPage from '@/pages/private/Dashboard';
+import NotFound from '@/pages/publicPage/NotFound';
+
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <LayoutWrapper />,
-    errorElement: <div>Route Error</div>,
+    path: paths.home,
+    element: <MainLayout />,
     children: [
+      { index: true, element: <HomePage /> },
       {
-        index: true,
-        element: <HomePage />,
-      },
-      {
-        path: "/profile",
-        element: <ProfilePage />,
-      },
-      {
-        path: "/tag-manager",
-        element: <TagManagerPage />,
-      },
-      {
-        path: "/posts/create",
-        element: <CreatePostPage />,
-      },
-      {
-        path: "/posts/:postId",
-        element: <PostDetailPage />,
+        element: <PublicRoute />,
+        children: [
+          { path: paths.login, element: <LoginPage /> },
+          { path: paths.register, element: <RegisterPage /> },
+        ],
       },
     ],
   },
   {
-    path: "/auth/login",
-    element: <LoginPage />,
+    path: paths.home,
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <HomePage /> },
+      { path: paths.profile, element: <ProfilePage /> },
+      { path: paths.createPost, element: <CreatePostPage /> },
+      { path: paths.postDetail, element: <PostDetailPage /> },
+      //login 
+    ],
   },
   {
-    path: "/auth/register",
-    element: <RegisterPage />,
+    path: paths.moderator.dashboard,
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <DashboardPage /> },
+      { path: paths.moderator.profile, element: <ProfilePage /> },
+      { path: paths.moderator.approvePost, element: <ApprovePostPage /> },
+      { path: paths.moderator.materialManagement, element: <MaterialManagementPage /> },
+      { path: paths.moderator.tagManagement, element: <TagManagementPage /> },
+      { path: paths.moderator.topicManagement, element: <TopicManagementPage /> },
+      //login  moderator
+    ],
   },
   {
-    path: "/auth/google/callback",
-    element: <GoogleCallbackPage />,
+    path: paths.admin.dashboard,
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <DashboardPage /> },
+      //login  admin
+    ],
   },
   {
-    path: "*",
+    path: paths.notFound,
     element: <NotFound />,
   },
 ]);

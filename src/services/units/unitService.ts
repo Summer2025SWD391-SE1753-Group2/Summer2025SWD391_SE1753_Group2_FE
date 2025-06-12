@@ -1,5 +1,7 @@
-import { Unit } from "@/types/post";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/api/axios";
+import { Unit } from "@/types/unit";
+
+
 
 export const getAllUnits = async (): Promise<Unit[]> => {
   try {
