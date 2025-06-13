@@ -25,12 +25,12 @@ interface SidebarLink {
 }
 
 const sidebarLinks: SidebarLink[] = [
-  // {
-  //   title: 'Trang chủ',
-  //   href: paths.moderator.dashboard,
-  //   icon: <LayoutDashboard className='h-5 w-5' />,
-  //   roles: ['moderator', 'admin'],
-  // },
+  {
+    title: 'Trang chủ',
+    href: paths.home,
+    icon: <LayoutDashboard className='h-5 w-5' />,
+    roles: ['moderator', 'admin'],
+  },
   {
     title: "Tổng quan",
     href: paths.moderator.dashboard,
