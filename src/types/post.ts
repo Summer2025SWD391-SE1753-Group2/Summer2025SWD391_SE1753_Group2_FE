@@ -3,6 +3,10 @@ export interface Tag {
   name: string;
   description?: string;
   status: "active" | "inactive";
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  updated_by: string;
 }
 
 export interface Topic {
@@ -10,6 +14,8 @@ export interface Topic {
   name: string;
   description?: string;
   status: "active" | "inactive";
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Unit {
@@ -65,6 +71,7 @@ export interface Post {
   created_at: string;
   updated_at: string;
   created_by: string;
+  updated_by: string;
   creator?: {
     username: string;
     full_name: string;
