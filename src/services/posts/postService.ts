@@ -123,22 +123,137 @@ const searchPostsByTitle = async (
 };
 
 export { searchPostsByTopic, searchPostsByTag, searchPostsByTitle };
-export interface ReviewPostPayload {
+
+// Moderate post (approve or reject)
+export interface PostModerationRequest {
   status: "approved" | "rejected";
   rejection_reason?: string;
   approved_by: string;
 }
 
-export const reviewPost = async (
-  post_id: string,
-  data: ReviewPostPayload
+export const moderatePost = async (
+  postId: string,
+  data: PostModerationRequest
 ): Promise<Post> => {
-  const response = await axiosInstance.put<Post>(
-    `/api/v1/posts/${post_id}/review`,
-    data
-  );
-  return response.data;
+  try {
+    const response = await axiosInstance.put(
+      `/api/v1/posts/${postId}/review`,
+      data
+    );
+    return response.data;
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as {
+        response: { status: number; data?: { message?: string } };
+      };
+      if (axiosError.response?.status === 401) {
+        throw new Error("Không tìm thấy token đăng nhập");
+      }
+      if (axiosError.response?.status === 403) {
+        throw new Error("Bạn không có quyền duyệt bài viết này");
+      }
+      if (axiosError.response?.status === 404) {
+        throw new Error("Không tìm thấy bài viết");
+      }
+      throw new Error(
+        axiosError.response?.data?.message || "Không thể duyệt bài viết"
+      );
+    }
+    throw new Error("Không thể duyệt bài viết");
+  }
 };
 
-export const moderatePost = reviewPost;
-export type ModeratePostPayload = ReviewPostPayload;
+export interface UpdatePostRequest {
+  title?: string;
+  content?: string;
+  tag_ids?: string[];
+  topic_ids?: string[];
+  materials?: {
+    material_id: string;
+    quantity: number;
+  }[];
+  images?: string[];
+  steps?: {
+    order_number: number;
+    content: string;
+  }[];
+}
+
+export const updatePost = async (
+  postId: string,
+  data: UpdatePostRequest
+): Promise<Post> => {
+  try {
+    const response = await axiosInstance.put(`/api/v1/posts/${postId}`, data);
+    return response.data;
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as {
+        response: { status: number; data?: { message?: string } };
+      };
+      if (axiosError.response?.status === 401) {
+        throw new Error("Không tìm thấy token đăng nhập");
+      }
+      if (axiosError.response?.status === 403) {
+        throw new Error("Bạn không có quyền chỉnh sửa bài viết này");
+      }
+      if (axiosError.response?.status === 404) {
+        throw new Error("Không tìm thấy bài viết");
+      }
+      throw new Error(
+        axiosError.response?.data?.message || "Không thể cập nhật bài viết"
+      );
+    }
+    throw new Error("Không thể cập nhật bài viết");
+  }
+};
+
+// Get approved posts only
+export const getApprovedPosts = async (
+  skip: number = 0,
+  limit: number = 10
+): Promise<Post[]> => {
+  try {
+    const response = await axiosInstance.get("/api/v1/posts/approved/", {
+      params: { skip, limit },
+    });
+    return response.data;
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as {
+        response: { status: number; data?: { message?: string } };
+      };
+      throw new Error(
+        axiosError.response?.data?.message ||
+          "Không thể tải danh sách bài viết đã duyệt"
+      );
+    }
+    throw new Error("Không thể tải danh sách bài viết đã duyệt");
+  }
+};
+
+// Get current user's posts
+export const getMyPosts = async (
+  skip: number = 0,
+  limit: number = 10
+): Promise<Post[]> => {
+  try {
+    const response = await axiosInstance.get("/api/v1/posts/my-posts/", {
+      params: { skip, limit },
+    });
+    return response.data;
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as {
+        response: { status: number; data?: { message?: string } };
+      };
+      if (axiosError.response?.status === 401) {
+        throw new Error("Không tìm thấy token đăng nhập");
+      }
+      throw new Error(
+        axiosError.response?.data?.message || "Không thể tải bài viết của bạn"
+      );
+    }
+    throw new Error("Không thể tải bài viết của bạn");
+  }
+};

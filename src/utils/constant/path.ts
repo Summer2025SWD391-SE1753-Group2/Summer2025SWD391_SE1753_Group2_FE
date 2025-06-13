@@ -10,12 +10,16 @@ export const paths = {
   googleCallback: "/auth/google/callback",
 
   // Posts
-  createPost: "/posts/create",
+  createPost: "/user/posts/create",
+  editPost: "/user/posts/edit/:postId",
   postDetail: "/posts/:postId",
 
   // Favorites
   favorites: "/favorites",
   favoritesDetail: "/favorites/:favouriteId",
+
+  // My Posts
+  myPosts: "/user/my-posts",
 
   // Moderator
   moderator: {
@@ -36,13 +40,13 @@ export const paths = {
 
 export const getDefaultRouteByRole = (role_name?: UserRole) => {
   switch (role_name) {
-    case 'admin':
+    case "admin":
       return paths.admin.dashboard;
-    case 'moderator':
+    case "moderator":
       return paths.moderator.dashboard;
-    case 'user':
+    case "user":
       return paths.home;
-    case 'guest':
+    case "guest":
     default:
       return paths.login;
   }

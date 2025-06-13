@@ -8,17 +8,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getAllPosts, getPostById, moderatePost } from "@/services/posts/postService";
+import {
+  getAllPosts,
+  getPostById,
+  moderatePost,
+} from "@/services/posts/postService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { PopupDetail } from "@/components/posts/PopupDetail";
 import { PopupReject } from "@/components/posts/PopupReject";
 import { useAuthStore } from "@/stores/auth";
@@ -34,29 +32,13 @@ const ApprovePostPage = () => {
   const moderatorId = user?.account_id || "";
 
   const handleView = async (postId: string) => {
-  try {
-    const post = await getPostById(postId);
-    setSelectedPost(post);
-  } catch (err) {
-    alert("Không thể tải bài viết: " + (err as Error).message);
-  }
-};
-
-  const fetchPosts = async () => {
-    setLoading(true);
     try {
-      const data = await getAllPosts();
-      setPosts(data);
+      const post = await getPostById(postId);
+      setSelectedPost(post);
     } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
+      alert("Không thể tải bài viết: " + (err as Error).message);
     }
   };
-
-  useEffect(() => {
-    fetchPosts();
-  }, []);
 
   const handleApprove = async (post: Post) => {
     try {
@@ -74,6 +56,22 @@ const ApprovePostPage = () => {
       alert("Duyệt thất bại: " + (err as Error).message);
     }
   };
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const data = await getAllPosts();
+      setPosts(data);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
   if (loading) {
     return (
@@ -114,21 +112,21 @@ const ApprovePostPage = () => {
                   className={cn(
                     "font-medium",
                     post.status === "waiting"
-                      ? "text-yellow-600"
+                      ? "text-yellow-500"
                       : post.status === "approved"
-                        ? "text-green-600"
-                        : post.status === "rejected"
-                          ? "text-red-500"
-                          : "text-muted-foreground"
+                      ? "text-green-600"
+                      : post.status === "rejected"
+                      ? "text-red-600"
+                      : "text-gray-600"
                   )}
                 >
                   {post.status === "waiting"
                     ? "Chờ duyệt"
                     : post.status === "approved"
-                      ? "Đã duyệt"
-                      : post.status === "rejected"
-                        ? "Đã từ chối"
-                        : post.status}
+                    ? "Đã duyệt"
+                    : post.status === "rejected"
+                    ? "Bị từ chối"
+                    : "Không xác định"}
                 </TableCell>
                 <TableCell>
                   {new Date(post.created_at).toLocaleDateString()}
@@ -138,17 +136,17 @@ const ApprovePostPage = () => {
                     className="text-red-400"
                     onClick={() => setRejectingPost(post)}
                   >
-                    Chặn
+                    Từ chối
                   </Button>
                   <Button
-                    className="text-green-400"
+                    className="text-green-600"
                     onClick={() => handleApprove(post)}
                   >
                     Duyệt
                   </Button>
                   <Button
                     className="text-blue-500"
-                    onClick={() => setSelectedPost(post)}
+                    onClick={() => handleView(post.post_id)}
                   >
                     Xem
                   </Button>
@@ -159,16 +157,25 @@ const ApprovePostPage = () => {
         </Table>
 
         {/* Popup xem chi tiết */}
-        <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
+        <Dialog
+          open={!!selectedPost}
+          onOpenChange={() => setSelectedPost(null)}
+        >
           <DialogContent className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
             {selectedPost && (
-              <PopupDetail post={selectedPost} onClose={() => setSelectedPost(null)} />
+              <PopupDetail
+                post={selectedPost}
+                onClose={() => setSelectedPost(null)}
+              />
             )}
           </DialogContent>
         </Dialog>
 
         {/* Popup từ chối */}
-        <Dialog open={!!rejectingPost} onOpenChange={() => setRejectingPost(null)}>
+        <Dialog
+          open={!!rejectingPost}
+          onOpenChange={() => setRejectingPost(null)}
+        >
           <DialogContent className="max-w-md">
             {rejectingPost && (
               <PopupReject

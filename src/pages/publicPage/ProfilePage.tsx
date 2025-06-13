@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { getOwnProfile } from "@/services/accounts/accountService";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { UserProfile } from "@/types/account";
-import { Role, UserRole } from "@/types/user-role";
 
 const getInitials = (name: string = "") =>
   name
@@ -52,8 +51,7 @@ const ProfilePage = () => {
     return <p className="p-6 text-center">Đang tải dữ liệu...</p>;
   }
 
-  const roleName =profile?.role?.role_name;
-
+  const roleName = profile?.role?.role_name;
 
   return (
     <div className="max-w-3xl mx-auto p-6">
@@ -69,7 +67,9 @@ const ProfilePage = () => {
 
           {/* Info */}
           <div className="flex-1 space-y-1">
-            <p className="text-xl font-semibold leading-none">{profile.full_name}</p>
+            <p className="text-xl font-semibold leading-none">
+              {profile.full_name}
+            </p>
             <p className="text-sm text-muted-foreground">@{profile.username}</p>
             <p className="text-sm text-muted-foreground">{profile.email}</p>
             <p>{profile.bio}</p>
@@ -92,8 +92,8 @@ const ProfilePage = () => {
                 {roleName === "admin"
                   ? "Quản trị viên"
                   : roleName === "moderator"
-                    ? "Kiểm duyệt viên"
-                    : "Thành viên"}
+                  ? "Kiểm duyệt viên"
+                  : "Thành viên"}
               </Badge>
 
               {/* Status badge */}

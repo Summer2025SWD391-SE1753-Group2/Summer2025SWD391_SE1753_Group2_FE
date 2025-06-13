@@ -7,30 +7,34 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuthStore } from '@/stores/auth';
-import { paths } from '@/utils/constant/path';
-import { ChevronDown, Heart, LogOut, User, Sliders, Home } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { Link, NavLink } from 'react-router-dom';
-import { searchPostsByTitle, searchPostsByTag } from "@/services/posts/postService";
+import { useAuthStore } from "@/stores/auth";
+import { paths } from "@/utils/constant/path";
+import { ChevronDown, Heart, LogOut, User, Sliders, Home } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Link, NavLink } from "react-router-dom";
+import {
+  searchPostsByTitle,
+  searchPostsByTag,
+} from "@/services/posts/postService";
 import { Post } from "@/types/post";
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
-  const [isServiceMenuOpen, setIsServiceMenuOpen] = useState(false);
-  const [query, setQuery] = useState('');
+
+  const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tags, setTags] = useState<{ name: string; tag_id: string; status: string }[]>([]);
+  const [tags, setTags] = useState<
+    { name: string; tag_id: string; status: string }[]
+  >([]);
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
 
-  
   const handleLogout = () => {
     logout();
   };
 
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (!query.trim()) {
       setSuggestions([]);
       setError(null);
@@ -42,13 +46,13 @@ const Header = () => {
       const postTitleResults = await searchPostsByTitle(query, 0, 5);
       setSuggestions(postTitleResults);
     } catch (error) {
-      console.error('Search error:', error);
-      setError('Không tìm thấy kết quả. Vui lòng thử lại!');
+      console.error("Search error:", error);
+      setError("Không tìm thấy kết quả. Vui lòng thử lại!");
       setSuggestions([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [query]);
 
   const handleTagSelect = async (tagName: string) => {
     setQuery(tagName);
@@ -58,8 +62,8 @@ const Header = () => {
       const postTagResults = await searchPostsByTag(tagName, 0, 5);
       setSuggestions(postTagResults);
     } catch (error) {
-      console.error('Tag search error:', error);
-      setError('Không tìm thấy bài viết với thẻ này!');
+      console.error("Tag search error:", error);
+      setError("Không tìm thấy bài viết với thẻ này!");
       setSuggestions([]);
     } finally {
       setIsLoading(false);
@@ -71,7 +75,7 @@ const Header = () => {
       handleSearch();
     }, 500);
     return () => clearTimeout(delayDebounce);
-  }, [query]);
+  }, [query, handleSearch]);
 
   const clearSearch = () => {
     setSuggestions([]);
@@ -81,11 +85,13 @@ const Header = () => {
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/v1/tags/?skip=0&limit=100');
+        const response = await fetch(
+          "http://localhost:8000/api/v1/tags/?skip=0&limit=100"
+        );
         const data = await response.json();
         setTags(data);
       } catch (error) {
-        console.error('Error fetching tags:', error);
+        console.error("Error fetching tags:", error);
       }
     };
     fetchTags();
@@ -99,18 +105,26 @@ const Header = () => {
         </Link>
 
         <div className="relative flex items-center w-full max-w-md mx-4">
-          <DropdownMenu open={isTagDropdownOpen} onOpenChange={setIsTagDropdownOpen}>
+          <DropdownMenu
+            open={isTagDropdownOpen}
+            onOpenChange={setIsTagDropdownOpen}
+          >
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="mr-2">
                 <Sliders className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48">
-              {tags.filter(tag => tag.status === 'active').map((tag) => (
-                <DropdownMenuItem key={tag.tag_id} onClick={() => handleTagSelect(tag.name)}>
-                  {tag.name}
-                </DropdownMenuItem>
-              ))}
+              {tags
+                .filter((tag) => tag.status === "active")
+                .map((tag) => (
+                  <DropdownMenuItem
+                    key={tag.tag_id}
+                    onClick={() => handleTagSelect(tag.name)}
+                  >
+                    {tag.name}
+                  </DropdownMenuItem>
+                ))}
             </DropdownMenuContent>
           </DropdownMenu>
           <input
@@ -119,12 +133,12 @@ const Header = () => {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Tìm kiếm bài viết..."
             className="w-full p-2 pl-4 pr-10 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground placeholder-muted-foreground"
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
           />
           {query && (
             <button
               onClick={() => {
-                setQuery('');
+                setQuery("");
                 clearSearch();
               }}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -132,15 +146,19 @@ const Header = () => {
               <span className="text-xl">×</span>
             </button>
           )}
-          {isLoading && <span className="absolute right-10 top-1/2 transform -translate-y-1/2 text-muted-foreground">Loading...</span>}
+          {isLoading && (
+            <span className="absolute right-10 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+              Loading...
+            </span>
+          )}
           {(error || suggestions.length > 0) && (
             <div className="absolute top-full mt-1 w-full bg-background border border-gray-200 rounded shadow-lg z-50 max-h-96 overflow-y-auto">
-              {error && (
-                <div className="p-2 text-red-500 text-sm">{error}</div>
-              )}
+              {error && <div className="p-2 text-red-500 text-sm">{error}</div>}
               {suggestions.length > 0 && (
                 <div className="p-2 border-b">
-                  <span className="text-sm font-semibold text-muted-foreground">Bài viết</span>
+                  <span className="text-sm font-semibold text-muted-foreground">
+                    Bài viết
+                  </span>
                   {suggestions.map((post) => (
                     <Link
                       key={post.post_id}
@@ -172,7 +190,7 @@ const Header = () => {
             to={paths.home}
             className={({ isActive }: { isActive: boolean }) =>
               `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${
-                isActive ? 'text-primary' : 'text-muted-foreground'
+                isActive ? "text-primary" : "text-muted-foreground"
               }`
             }
           >
@@ -183,7 +201,7 @@ const Header = () => {
             to={paths.favorites}
             className={({ isActive }: { isActive: boolean }) =>
               `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${
-                isActive ? 'text-primary' : 'text-muted-foreground'
+                isActive ? "text-primary" : "text-muted-foreground"
               }`
             }
           >
