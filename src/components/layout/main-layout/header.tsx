@@ -1,5 +1,4 @@
 import BrandLogo from "@/components/common/brand-logo";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,20 +7,89 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import { useAuthStore } from "@/stores/auth";
-import { paths } from "@/utils/constant/path";
-import { ChevronDown, LogOut, User } from "lucide-react";
-import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { useAuthStore } from '@/stores/auth';
+import { paths } from '@/utils/constant/path';
+import { ChevronDown, Heart, LogOut, User, Sliders, Home } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, NavLink } from 'react-router-dom';
+import { searchPostsByTitle, searchPostsByTag } from "@/services/posts/postService";
+import { Post } from "@/types/post";
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
   const [isServiceMenuOpen, setIsServiceMenuOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tags, setTags] = useState<{ name: string; tag_id: string; status: string }[]>([]);
+  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
 
+  
   const handleLogout = () => {
     logout();
   };
+
+  const handleSearch = async () => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      setError(null);
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const postTitleResults = await searchPostsByTitle(query, 0, 5);
+      setSuggestions(postTitleResults);
+    } catch (error) {
+      console.error('Search error:', error);
+      setError('Không tìm thấy kết quả. Vui lòng thử lại!');
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTagSelect = async (tagName: string) => {
+    setQuery(tagName);
+    setIsLoading(true);
+    setError(null);
+    try {
+      const postTagResults = await searchPostsByTag(tagName, 0, 5);
+      setSuggestions(postTagResults);
+    } catch (error) {
+      console.error('Tag search error:', error);
+      setError('Không tìm thấy bài viết với thẻ này!');
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      handleSearch();
+    }, 500);
+    return () => clearTimeout(delayDebounce);
+  }, [query]);
+
+  const clearSearch = () => {
+    setSuggestions([]);
+    setError(null);
+  };
+
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/tags/?skip=0&limit=100');
+        const data = await response.json();
+        setTags(data);
+      } catch (error) {
+        console.error('Error fetching tags:', error);
+      }
+    };
+    fetchTags();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -30,55 +98,98 @@ const Header = () => {
           <BrandLogo />
         </Link>
 
+        <div className="relative flex items-center w-full max-w-md mx-4">
+          <DropdownMenu open={isTagDropdownOpen} onOpenChange={setIsTagDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="mr-2">
+                <Sliders className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-48">
+              {tags.filter(tag => tag.status === 'active').map((tag) => (
+                <DropdownMenuItem key={tag.tag_id} onClick={() => handleTagSelect(tag.name)}>
+                  {tag.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Tìm kiếm bài viết..."
+            className="w-full p-2 pl-4 pr-10 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground placeholder-muted-foreground"
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          {query && (
+            <button
+              onClick={() => {
+                setQuery('');
+                clearSearch();
+              }}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <span className="text-xl">×</span>
+            </button>
+          )}
+          {isLoading && <span className="absolute right-10 top-1/2 transform -translate-y-1/2 text-muted-foreground">Loading...</span>}
+          {(error || suggestions.length > 0) && (
+            <div className="absolute top-full mt-1 w-full bg-background border border-gray-200 rounded shadow-lg z-50 max-h-96 overflow-y-auto">
+              {error && (
+                <div className="p-2 text-red-500 text-sm">{error}</div>
+              )}
+              {suggestions.length > 0 && (
+                <div className="p-2 border-b">
+                  <span className="text-sm font-semibold text-muted-foreground">Bài viết</span>
+                  {suggestions.map((post) => (
+                    <Link
+                      key={post.post_id}
+                      to={`/posts/${post.post_id}`}
+                      onClick={clearSearch}
+                      className="block p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                    >
+                      <span className="font-medium">{post.title}</span>
+                      <span className="text-muted-foreground text-sm">
+                        {new Date(post.created_at).toLocaleDateString()}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+              <Link
+                to={`/search?q=${encodeURIComponent(query)}`}
+                onClick={clearSearch}
+                className="block p-2 text-center text-primary hover:bg-gray-100 cursor-pointer"
+              >
+                Xem thêm kết quả
+              </Link>
+            </div>
+          )}
+        </div>
+
         <nav className="hidden md:flex items-center space-x-6">
           <NavLink
             to={paths.home}
-            className={({ isActive }) =>
-              `text-sm font-medium transition-colors hover:text-primary ${
-                isActive ? "text-primary" : "text-muted-foreground"
+            className={({ isActive }: { isActive: boolean }) =>
+              `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${
+                isActive ? 'text-primary' : 'text-muted-foreground'
               }`
             }
           >
-            Trang chủ
+            <Home className="w-7 h-10" />
+            <span className="sr-only">Trang chủ</span>
           </NavLink>
-
-          <div
-            className="relative"
-            onMouseEnter={() => setIsServiceMenuOpen(true)}
-            onMouseLeave={() => setIsServiceMenuOpen(false)}
+          <NavLink
+            to={paths.favorites}
+            className={({ isActive }: { isActive: boolean }) =>
+              `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${
+                isActive ? 'text-primary' : 'text-muted-foreground'
+              }`
+            }
           >
-            <button className="text-sm font-medium text-muted-foreground hover:text-primary flex items-center gap-1">
-              Dịch vụ
-              <ChevronDown
-                className={`h-4 w-4 transition-transform duration-300 ease-in-out ${
-                  isServiceMenuOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            {isServiceMenuOpen && (
-              <div className="absolute top-full left-0 h-2 w-full"></div>
-            )}
-            <div
-              className={`absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-2 w-48 z-50 origin-top transition-all duration-300 ease-in-out ${
-                isServiceMenuOpen
-                  ? "opacity-100 scale-y-100 translate-y-0"
-                  : "opacity-0 scale-y-0 -translate-y-2 pointer-events-none"
-              }`}
-            ></div>
-          </div>
-
-          <a
-            href="#about"
-            className="text-sm font-medium text-muted-foreground hover:text-primary"
-          >
-            Về chúng tôi
-          </a>
-          <a
-            href="#"
-            className="text-sm font-medium text-muted-foreground hover:text-primary"
-          >
-            Liên hệ
-          </a>
+            <Heart className="w-7 h-10" />
+            <span className="sr-only">Yêu thích</span>
+          </NavLink>
         </nav>
 
         <div className="flex items-center space-x-4">
@@ -91,6 +202,10 @@ const Header = () => {
                     <AvatarFallback>
                       {user?.full_name
                         ? user.full_name
+                            .split(" ")
+                            .map((word) => word[0])
+                            .join("")
+                            .toUpperCase()
                             .split(" ")
                             .map((word) => word[0])
                             .join("")
@@ -129,18 +244,6 @@ const Header = () => {
                     Hồ sơ
                   </Link>
                 </DropdownMenuItem>
-                {/* <DropdownMenuItem className='flex flex-col items-start w-full'>
-                  <Link to={paths.bookingHistory} className='flex items-center gap-2 w-full'>
-                    <Clock className='h-4 w-4' />
-                    lịch sử đặt lịch
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className='flex flex-col items-start w-full'>
-                  <Link to={paths.result} className='flex items-center gap-2 w-full'>
-                    <Clock className='h-4 w-4' />
-                    xem kết quả
-                  </Link>
-                </DropdownMenuItem> */}
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="text-red-600"
