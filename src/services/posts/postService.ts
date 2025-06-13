@@ -79,3 +79,19 @@ export const getPostById = async (postId: string): Promise<Post> => {
     throw new Error("Không thể tải bài viết");
   }
 };
+export interface ModeratePostPayload {
+  status: "approved" | "rejected";
+  rejection_reason?: string;
+  approved_by: string;
+}
+
+export const moderatePost = async (
+  post_id: string,
+  data: ModeratePostPayload
+): Promise<Post> => {
+  const response = await axiosInstance.put<Post>(
+    `/api/v1/posts/${post_id}/moderate`,
+    data
+  );
+  return response.data;
+};

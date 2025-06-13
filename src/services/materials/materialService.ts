@@ -1,6 +1,5 @@
 import axiosInstance from "@/lib/api/axios";
-import { Material } from "@/types/material";
-
+import type { Material } from "@/types/material";
 
 // Lấy tất cả nguyên liệu
 export const getAllMaterials = async (): Promise<Material[]> => {
@@ -12,10 +11,8 @@ export const getAllMaterials = async (): Promise<Material[]> => {
   }
 };
 
-// Lấy theo ID
-export const getMaterialById = async (
-  material_id: string
-): Promise<Material> => {
+// Lấy nguyên liệu theo ID
+export const getMaterialById = async (material_id: string): Promise<Material> => {
   try {
     const response = await axiosInstance.get(`/api/v1/materials/${material_id}`);
     return response.data;
@@ -24,9 +21,10 @@ export const getMaterialById = async (
   }
 };
 
-// Tạo mới
+// Tạo nguyên liệu mới
 export const createMaterial = async (data: {
   name: string;
+  unit: string;
   status: "active" | "inactive";
   image_url: string;
   created_by: string;
@@ -35,16 +33,16 @@ export const createMaterial = async (data: {
   return response.data;
 };
 
-// Cập nhật
+// Cập nhật nguyên liệu
 export const updateMaterial = async (
   material_id: string,
-  data: Partial<Pick<Material, "name" | "status" | "image_url" | "updated_by">>
+  data: Partial<Pick<Material, "name" | "unit" | "status" | "image_url" | "updated_by">>
 ): Promise<Material> => {
   const response = await axiosInstance.put(`/api/v1/materials/${material_id}`, data);
   return response.data;
 };
 
-// Xoá
+// Xoá nguyên liệu
 export const deleteMaterial = async (material_id: string): Promise<void> => {
   await axiosInstance.delete(`/api/v1/materials/${material_id}`);
 };
