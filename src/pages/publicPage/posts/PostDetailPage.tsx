@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,93 +18,67 @@ import {
   Bookmark,
 } from "lucide-react";
 import { ImageLightbox } from "@/components/posts/ImageLightbox";
+import { CommentItem } from "@/components/posts/CommentItem";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { formatRelativeTime } from "@/utils/dateUtils";
 import { getPostById } from "@/services/posts/postService";
+import {
+  createComment,
+  getCommentsByPost,
+  deleteComment,
+} from "@/services/comments/commentService";
 import type { Post } from "@/types/post";
-
-interface Comment {
-  comment_id: string;
-  content: string;
-  created_at: string;
-  author: {
-    username: string;
-    full_name: string;
-    avatar?: string;
-  };
-  replies?: Comment[];
-}
+import type { Comment } from "@/types/comment";
 
 export const PostDetailPage = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(
+    new Set()
+  );
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [deletingComments, setDeletingComments] = useState<Set<string>>(
+    new Set()
+  );
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  // Mock comments data
-  const mockComments: Comment[] = [
-    {
-      comment_id: "1",
-      content:
-        "Công thức này nhìn rất ngon! Mình sẽ thử làm cuối tuần này. Cảm ơn bạn đã chia sẻ!",
-      created_at: "2024-01-18T10:30:00Z",
-      author: {
-        username: "food_lover_123",
-        full_name: "Nguyễn Minh Hạnh",
-        avatar:
-          "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-      },
-    },
-    {
-      comment_id: "2",
-      content:
-        "Mình đã thử làm theo công thức này rồi, rất thành công! Gia đình ai cũng khen ngon. Tips nhỏ: nên ướp thịt kỹ hơn khoảng 30 phút thì sẽ đậm đà hơn.",
-      created_at: "2024-01-18T14:15:00Z",
-      author: {
-        username: "chef_mom",
-        full_name: "Trần Thị Lan",
-        avatar:
-          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-      },
-      replies: [
-        {
-          comment_id: "2.1",
-          content:
-            "Cảm ơn bạn đã chia sẻ kinh nghiệm! Mình sẽ ghi nhớ tip này.",
-          created_at: "2024-01-18T15:00:00Z",
-          author: {
-            username: "cooking_newbie",
-            full_name: "Lê Văn Nam",
-            avatar:
-              "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-          },
-        },
-      ],
-    },
-    {
-      comment_id: "3",
-      content:
-        "Nguyên liệu này có thể thay thế bằng gì khác không ạ? Ở chỗ mình khó mua lắm.",
-      created_at: "2024-01-18T16:45:00Z",
-      author: {
-        username: "home_cook",
-        full_name: "Phạm Thị Mai",
-        avatar:
-          "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=150&h=150&fit=crop&crop=face",
-      },
-    },
-  ];
+  const fetchComments = useCallback(async () => {
+    if (!postId) return;
+
+    try {
+      setCommentsLoading(true);
+      const commentsData = await getCommentsByPost(postId);
+      setComments(commentsData);
+      setCommentsLoaded(true);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Không thể tải bình luận";
+      toast.error(errorMessage);
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [postId]);
 
   useEffect(() => {
     if (!postId) {
       navigate("/");
       return;
     }
+
+    // Reset comments state when postId changes
+    setComments([]);
+    setCommentsLoaded(false);
 
     const fetchPost = async () => {
       try {
@@ -124,12 +98,108 @@ export const PostDetailPage = () => {
     fetchPost();
   }, [postId, navigate]);
 
-  const handleSubmitComment = () => {
-    if (!newComment.trim()) return;
+  // Separate useEffect for loading comments after post is loaded
+  useEffect(() => {
+    if (post && post.status === "approved" && !commentsLoaded) {
+      fetchComments();
+    }
+    // Clear comments if post is not approved
+    else if (post && post.status !== "approved") {
+      setComments([]);
+      setCommentsLoaded(false);
+    }
+  }, [post, fetchComments, commentsLoaded]);
 
-    // Simulate comment submission
-    toast.success("Đã thêm bình luận!");
-    setNewComment("");
+  // Auto-refresh comments every 30 seconds
+  useEffect(() => {
+    if (!post || post.status !== "approved" || !commentsLoaded) return;
+
+    const intervalId = setInterval(() => {
+      fetchComments();
+      setLastRefresh(new Date());
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, [post, commentsLoaded, fetchComments]);
+
+  // Force re-render every 60 seconds to update relative time display
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setLastRefresh(new Date());
+    }, 60000); // 60 seconds for time display update
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const handleSubmitComment = async () => {
+    if (!newComment.trim() || !postId) return;
+
+    try {
+      await createComment({
+        content: newComment,
+        post_id: postId,
+      });
+      toast.success("Đã thêm bình luận!");
+      setNewComment("");
+      // Refresh comments after creating new one
+      await fetchComments();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Không thể tạo bình luận";
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleSubmitReply = async (
+    parentCommentId: string,
+    content: string
+  ) => {
+    if (!content.trim() || !postId) return;
+
+    try {
+      await createComment({
+        content: content,
+        post_id: postId,
+        parent_comment_id: parentCommentId,
+      });
+      toast.success("Đã thêm phản hồi!");
+      // Refresh comments after creating new reply
+      await fetchComments();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Không thể tạo phản hồi";
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      setDeletingComments((prev) => new Set(prev).add(commentId));
+      await deleteComment(commentId);
+      toast.success("Đã xóa bình luận!");
+      // Refresh comments after deleting
+      await fetchComments();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Không thể xóa bình luận";
+      toast.error(errorMessage);
+    } finally {
+      setDeletingComments((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(commentId);
+        return newSet;
+      });
+    }
+  };
+
+  const toggleExpandComment = (commentId: string) => {
+    const newExpanded = new Set(expandedComments);
+    if (newExpanded.has(commentId)) {
+      newExpanded.delete(commentId);
+    } else {
+      newExpanded.add(commentId);
+    }
+    setExpandedComments(newExpanded);
   };
 
   const getStatusIcon = (status: Post["status"]) => {
@@ -172,14 +242,8 @@ export const PostDetailPage = () => {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    // Use lastRefresh to trigger re-calculation of relative time
+    return formatRelativeTime(dateString, lastRefresh);
   };
 
   const getInitials = (name: string) => {
@@ -425,7 +489,7 @@ export const PostDetailPage = () => {
               <Button variant="ghost" size="sm">
                 <MessageCircle className="h-4 w-4" />
                 <span className="ml-1 text-sm">
-                  Bình luận ({mockComments.length})
+                  Bình luận ({comments.length})
                 </span>
               </Button>
               <Button variant="ghost" size="sm">
@@ -451,99 +515,66 @@ export const PostDetailPage = () => {
       <Card>
         <CardHeader>
           <h3 className="text-lg font-semibold">
-            Bình luận ({mockComments.length})
+            Bình luận ({comments.length})
           </h3>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Add Comment Form */}
-          <div className="space-y-3">
-            <Textarea
-              placeholder="Viết bình luận của bạn..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="min-h-20"
-            />
-            <div className="flex justify-end">
-              <Button
-                onClick={handleSubmitComment}
-                disabled={!newComment.trim()}
-              >
-                Gửi bình luận
-              </Button>
+          {/* Add Comment Form - Only show for approved posts */}
+          {post?.status === "approved" && (
+            <div className="space-y-3">
+              <Textarea
+                placeholder="Viết bình luận của bạn..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="min-h-20"
+              />
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleSubmitComment}
+                  disabled={!newComment.trim()}
+                >
+                  Gửi bình luận
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Comments List */}
-          <div className="space-y-4">
-            {mockComments.map((comment) => (
-              <div
-                key={comment.comment_id}
-                className="border-l-2 border-muted pl-4"
-              >
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={comment.author.avatar}
-                      alt={comment.author.full_name}
-                    />
-                    <AvatarFallback>
-                      {getInitials(comment.author.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-2">
-                    <div className="bg-muted rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-medium text-sm">
-                          {comment.author.full_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDate(comment.created_at)}
-                        </p>
-                      </div>
-                      <p className="text-sm leading-relaxed">
-                        {comment.content}
-                      </p>
-                    </div>
-
-                    {/* Replies */}
-                    {comment.replies && comment.replies.length > 0 && (
-                      <div className="ml-4 space-y-2">
-                        {comment.replies.map((reply) => (
-                          <div
-                            key={reply.comment_id}
-                            className="flex items-start gap-3"
-                          >
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage
-                                src={reply.author.avatar}
-                                alt={reply.author.full_name}
-                              />
-                              <AvatarFallback className="text-xs">
-                                {getInitials(reply.author.full_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="bg-muted/70 rounded-lg p-2 flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <p className="font-medium text-xs">
-                                  {reply.author.full_name}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {formatDate(reply.created_at)}
-                                </p>
-                              </div>
-                              <p className="text-xs leading-relaxed">
-                                {reply.content}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+          {commentsLoading ? (
+            <div className="flex justify-center items-center p-4">
+              <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
+              <span className="ml-2">Đang tải bình luận...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {comments.map((comment: Comment) => (
+                <CommentItem
+                  key={comment.comment_id}
+                  comment={comment}
+                  depth={0}
+                  onReply={handleSubmitReply}
+                  onDelete={handleDeleteComment}
+                  replyingTo={replyingTo}
+                  setReplyingTo={setReplyingTo}
+                  expandedComments={expandedComments}
+                  toggleExpandComment={toggleExpandComment}
+                  deletingComments={deletingComments}
+                  formatDate={formatDate}
+                  getInitials={getInitials}
+                />
+              ))}
+              {comments.length === 0 && (
+                <div className="text-center py-8">
+                  <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">
+                    {post?.status === "approved"
+                      ? "Chưa có bình luận nào. Hãy là người đầu tiên bình luận!"
+                      : "Bài viết này chưa được duyệt nên không thể xem bình luận."}
+                  </p>
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
