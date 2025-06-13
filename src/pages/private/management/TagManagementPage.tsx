@@ -176,8 +176,8 @@ export default function TagManagementPage() {
                   <SelectValue placeholder="Trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">active</SelectItem>
-                  <SelectItem value="inactive">inactive</SelectItem>
+                  <SelectItem value="active">Hoạt động</SelectItem>
+                  <SelectItem value="inactive">Không hoạt động</SelectItem>
                 </SelectContent>
               </Select>
               <DialogFooter>
@@ -226,14 +226,18 @@ export default function TagManagementPage() {
                             <SelectValue placeholder="Trạng thái" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="active">active</SelectItem>
-                            <SelectItem value="inactive">inactive</SelectItem>
+                            <SelectItem value="active">Hoạt động</SelectItem>
+                            <SelectItem value="inactive">
+                              Không hoạt động
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex justify-center gap-2">
-                          <Button size="sm" onClick={handleSave}>Lưu</Button>
+                          <Button size="sm" onClick={handleSave}>
+                            Lưu
+                          </Button>
                           <Button
                             size="sm"
                             variant="secondary"
@@ -247,22 +251,32 @@ export default function TagManagementPage() {
                   ) : (
                     <>
                       <TableCell>{tag.name}</TableCell>
-                      <TableCell className={cn(
-                        "font-medium",
-                        tag.status === "active" ? "text-green-600" : "text-red-500"
-                      )}>
+                      <TableCell
+                        className={cn(
+                          "font-medium",
+                          tag.status === "active"
+                            ? "text-green-600"
+                            : "text-red-500"
+                        )}
+                      >
                         {tag.status}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex justify-center gap-2">
-                          <Button size="sm" onClick={() => handleEdit(tag)}>Sửa</Button>
+                          <Button size="sm" onClick={() => handleEdit(tag)}>
+                            Sửa
+                          </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="destructive">Xoá</Button>
+                              <Button size="sm" variant="destructive">
+                                Xoá
+                              </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Bạn có chắc không?</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  Bạn có chắc không?
+                                </AlertDialogTitle>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Huỷ</AlertDialogCancel>

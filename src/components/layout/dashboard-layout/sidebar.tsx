@@ -10,6 +10,8 @@ import {
   Package,
   Settings,
   Users,
+  PlusCircle,
+  Edit3,
 } from "lucide-react";
 import BrandLogo from "@/components/common/brand-logo";
 import { paths } from "@/utils/constant/path";
@@ -31,6 +33,22 @@ const sidebarLinks: SidebarLink[] = [
   //   icon: <LayoutDashboard className='h-5 w-5' />,
   //   roles: ['moderator', 'admin'],
   // },
+
+  // User links
+  {
+    title: "Thêm bài viết",
+    href: paths.createPost,
+    icon: <PlusCircle className="h-5 w-5" />,
+    roles: ["user"],
+  },
+  {
+    title: "Quản lý bài viết",
+    href: paths.myPosts,
+    icon: <Edit3 className="h-5 w-5" />,
+    roles: ["user"],
+  },
+
+  // Moderator & Admin links
   {
     title: "Tổng quan",
     href: paths.moderator.dashboard,
@@ -117,7 +135,7 @@ const DashboardSidebar = () => {
     <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
       {/* Sidebar header */}
       <div className="h-16 flex items-center justify-center border-b border-gray-200 dark:border-gray-700">
-        <Link to={paths.moderator.dashboard}>
+        <Link to={role === "user" ? paths.home : paths.moderator.dashboard}>
           <BrandLogo />
         </Link>
       </div>
@@ -132,32 +150,38 @@ const DashboardSidebar = () => {
 
             return (
               <div key={link.href}>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-between",
-                    isActive && "bg-gray-100 dark:bg-gray-700"
-                  )}
-                  onClick={() => hasSubLinks && toggleExpand(link.href)}
-                >
-                  <Link
-                    to={hasSubLinks ? "#" : link.href}
-                    className="w-full flex justify-between"
+                {hasSubLinks ? (
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-between",
+                      isActive && "bg-gray-100 dark:bg-gray-700"
+                    )}
+                    onClick={() => toggleExpand(link.href)}
                   >
                     <div className="flex items-center gap-2">
                       {link.icon}
                       {link.title}
                     </div>
-                    {hasSubLinks && (
-                      <ChevronDown
-                        className={cn(
-                          "h-4 w-4",
-                          isExpandedLink && "rotate-180"
-                        )}
-                      />
+                    <ChevronDown
+                      className={cn("h-4 w-4", isExpandedLink && "rotate-180")}
+                    />
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    asChild
+                    className={cn(
+                      "w-full justify-start",
+                      isActive && "bg-gray-100 dark:bg-gray-700"
                     )}
-                  </Link>
-                </Button>
+                  >
+                    <Link to={link.href} className="flex items-center gap-2">
+                      {link.icon}
+                      {link.title}
+                    </Link>
+                  </Button>
+                )}
 
                 {hasSubLinks && isExpandedLink && (
                   <div className="ml-6 space-y-1 mt-1">

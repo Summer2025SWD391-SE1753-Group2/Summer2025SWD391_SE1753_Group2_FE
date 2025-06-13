@@ -45,7 +45,6 @@ export default function MaterialManagementPage() {
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
-  const [editUnit, setEditUnit] = useState("");
 
   const [newName, setNewName] = useState("");
   const [newUnit, setNewUnit] = useState("");
@@ -97,7 +96,6 @@ export default function MaterialManagementPage() {
   const handleEdit = (material: Material) => {
     setEditingId(material.material_id);
     setEditName(material.name);
-
   };
 
   const handleSave = async () => {
@@ -208,7 +206,10 @@ export default function MaterialManagementPage() {
                       <TableCell>{material.name}</TableCell>
                       <TableCell className="text-end">
                         <div className="flex justify-end gap-2">
-                          <Button size="sm" onClick={() => handleEdit(material)}>
+                          <Button
+                            size="sm"
+                            onClick={() => handleEdit(material)}
+                          >
                             Sửa
                           </Button>
                           <AlertDialog>
@@ -219,7 +220,9 @@ export default function MaterialManagementPage() {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Bạn có chắc không?</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  Bạn có chắc không?
+                                </AlertDialogTitle>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Huỷ</AlertDialogCancel>

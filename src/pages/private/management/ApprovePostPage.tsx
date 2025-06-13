@@ -76,9 +76,11 @@ const ApprovePostPage = () => {
                   className={cn(
                     "font-medium",
                     post.status === "waiting"
-                      ? "text-red-600"
+                      ? "text-yellow-500"
                       : post.status === "approved"
                       ? "text-green-600"
+                      : post.status === "rejected"
+                      ? "text-red-600"
                       : "text-gray-600"
                   )}
                 >
@@ -86,14 +88,16 @@ const ApprovePostPage = () => {
                     ? "Chờ duyệt"
                     : post.status === "approved"
                     ? "Đã duyệt"
-                    : post.status}
+                    : post.status === "rejected"
+                    ? "Bị từ chối"
+                    : "Không xác định"}
                 </TableCell>
                 <TableCell>
                   {new Date(post.created_at).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="text-right space-x-1">
-                  <Button className="text-red-400 ">Chặn</Button>
-                  <Button className="text-green-400 ">Duyệt</Button>
+                  <Button className="text-red-400 ">Từ chối</Button>
+                  <Button className="text-green-600 ">Duyệt</Button>
                   <Button
                     className="text-blue-500"
                     onClick={() => setSelectedPost(post)}
