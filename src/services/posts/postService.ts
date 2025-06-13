@@ -1,4 +1,3 @@
-
 import axiosInstance from "@/lib/api/axios";
 import type { Post } from "@/types/post";
 
@@ -11,6 +10,10 @@ export interface CreatePostApiRequest {
   materials: {
     material_id: string;
     quantity: number;
+  }[];
+  steps: {
+    order_number: number;
+    content: string;
   }[];
 }
 

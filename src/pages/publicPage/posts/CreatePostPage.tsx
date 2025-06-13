@@ -9,9 +9,10 @@ import { Separator } from "@/components/ui/separator";
 import { FileUpload } from "@/components/posts/FileUpload";
 import { MultiSelect } from "@/components/posts/MultiSelect";
 import { SimpleMaterialInput } from "@/components/posts/SimpleMaterialInput";
-import { ArrowLeft, Send, AlertCircle, Clock, CheckCircle } from "lucide-react";
+import { StepsInput } from "@/components/posts/StepsInput";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import type { Tag, Topic, Material, PostMaterial } from "@/types/post";
+import type { Tag, Topic, Material, PostMaterial, Step } from "@/types/post";
 import { createPost, CreatePostApiRequest } from "@/services/posts/postService";
 
 import { getAllTopics } from "@/services/topics/topicService";
@@ -20,15 +21,8 @@ import { getAllTags } from "@/services/tags/tagsService";
 
 interface FileUploadItem {
   file: File;
-  progress?: {
-    progress: number;
-    status: "uploading" | "completed" | "error";
-  };
-  result?: {
-    url: string;
-    fileName: string;
-  };
-  previewUrl?: string;
+  previewUrl: string;
+  id: string;
 }
 
 interface FormData {
@@ -37,6 +31,7 @@ interface FormData {
   selectedTags: Tag[];
   selectedTopics: Topic[];
   selectedMaterials: PostMaterial[];
+  steps: Step[];
 }
 
 export function CreatePostPage() {
@@ -55,10 +50,10 @@ export function CreatePostPage() {
     selectedTags: [],
     selectedTopics: [],
     selectedMaterials: [],
+    steps: [],
   });
 
   const [uploadedFiles, setUploadedFiles] = useState<FileUploadItem[]>([]);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   // Load data from API
   useEffect(() => {
@@ -99,9 +94,60 @@ export function CreatePostPage() {
       return;
     }
 
+    if (formData.steps.length < 2) {
+      toast.error("Vui lòng thêm ít nhất 2 bước thực hiện");
+      return;
+    }
+
+    const emptySteps = formData.steps.filter((step) => !step.content.trim());
+    if (emptySteps.length > 0) {
+      toast.error("Vui lòng điền đầy đủ nội dung cho tất cả các bước");
+      return;
+    }
+
+    if (formData.selectedMaterials.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một nguyên liệu");
+      return;
+    }
+
+    if (formData.selectedTags.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một tag");
+      return;
+    }
+
+    if (formData.selectedTopics.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một chủ đề");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      // Upload images to Firebase first
+      const uploadedImageUrls: string[] = [];
+
+      if (uploadedFiles.length > 0) {
+        toast.info("Đang tải ảnh lên...");
+
+        const { uploadFile } = await import(
+          "@/services/firebase/uploadService"
+        );
+
+        for (const fileItem of uploadedFiles) {
+          try {
+            const result = await uploadFile(fileItem.file, "posts");
+            uploadedImageUrls.push(result.url);
+          } catch (uploadError) {
+            console.error(
+              `Failed to upload ${fileItem.file.name}:`,
+              uploadError
+            );
+            toast.error(`Không thể tải ảnh ${fileItem.file.name}`);
+            return;
+          }
+        }
+      }
+
       const requestData: CreatePostApiRequest = {
         title: formData.title,
         content: formData.content,
@@ -111,7 +157,11 @@ export function CreatePostPage() {
           material_id: pm.material_id,
           quantity: pm.quantity,
         })),
-        images: imageUrls, // URLs từ Firebase
+        images: uploadedImageUrls, // URLs từ Firebase
+        steps: formData.steps.map((step) => ({
+          order_number: step.order_number,
+          content: step.content,
+        })),
       };
 
       await createPost(requestData);
@@ -184,55 +234,78 @@ export function CreatePostPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="xl:col-span-2 space-y-6">
           {/* Basic Info */}
           <Card>
             <CardHeader>
               <CardTitle>Thông tin cơ bản</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {/* Title */}
-              <div>
-                <Label htmlFor="title">Tiêu đề bài viết *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-sm font-medium">
+                  Tiêu đề bài viết
+                  {/* <span className="text-red-500">*</span> */}
+                </Label>
                 <Input
                   id="title"
                   placeholder="VD: Cách làm phở bò ngon đúng điệu..."
                   value={formData.title}
                   onChange={(e) => handleInputChange("title", e.target.value)}
-                  className="mt-1"
                 />
+                {/* {formData.title.trim() === "" && (
+                  <p className="text-xs text-red-600">
+                    Tiêu đề không được để trống
+                  </p>
+                )} */}
               </div>
 
               {/* Content */}
-              <div>
-                <Label htmlFor="content">Nội dung bài viết *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="content" className="text-sm font-medium">
+                  Mô tả món ăn
+                  {/* <span className="text-red-500">*</span> */}
+                </Label>
                 <Textarea
                   id="content"
-                  placeholder="Chia sẻ công thức, cách làm, mẹo vặt hay những trải nghiệm của bạn về món ăn này..."
+                  placeholder="Chia sẻ về món ăn, nguồn gốc, đặc điểm, cách chế biến tổng quát..."
                   value={formData.content}
                   onChange={(e) => handleInputChange("content", e.target.value)}
-                  rows={8}
-                  className="mt-1"
+                  rows={6}
                 />
+                {/* {formData.content.trim() === "" && (
+                  <p className="text-xs text-red-600">
+                    Mô tả không được để trống
+                  </p>
+                )} */}
               </div>
             </CardContent>
           </Card>
+
+          {/* Steps */}
+          <StepsInput
+            steps={formData.steps}
+            onChange={(steps) => handleInputChange("steps", steps)}
+          />
 
           {/* Media Upload */}
           <Card>
             <CardHeader>
               <CardTitle>Hình ảnh món ăn</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Thêm tối đa 5 ảnh chất lượng cao để minh họa món ăn
+              </p>
             </CardHeader>
             <CardContent>
               <FileUpload
                 files={uploadedFiles}
                 onFilesChange={setUploadedFiles}
-                onUrlsChange={setImageUrls}
+                onUrlsChange={() => {}} // Empty function since we don't need URLs anymore
                 accept="image/*"
                 maxSize={10}
-                maxFiles={1}
+                maxFiles={5}
               />
             </CardContent>
           </Card>
@@ -240,15 +313,38 @@ export function CreatePostPage() {
 
         {/* Sidebar */}
         <div className="flex flex-col space-y-6 h-fit">
+          {/* Materials */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Nguyên liệu</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Chọn nguyên liệu và ghi rõ số lượng cần thiết
+              </p>
+            </CardHeader>
+            <CardContent>
+              <SimpleMaterialInput
+                materials={materials}
+                selectedMaterials={formData.selectedMaterials}
+                onSelectionChange={(materials) =>
+                  handleInputChange("selectedMaterials", materials)
+                }
+                maxItems={20}
+              />
+            </CardContent>
+          </Card>
+
           {/* Tags */}
           <Card>
             <CardHeader>
               <CardTitle>Phân loại</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Chọn tags và chủ đề để dễ dàng tìm kiếm
+              </p>
             </CardHeader>
             <CardContent className="space-y-6">
               <MultiSelect
                 label="Tags"
-                placeholder="Tìm tag..."
+                placeholder="Tìm kiếm tag..."
                 items={tags.map((tag) => ({
                   id: tag.tag_id,
                   name: tag.name,
@@ -277,7 +373,7 @@ export function CreatePostPage() {
 
               <MultiSelect
                 label="Chủ đề"
-                placeholder="Tìm chủ đề..."
+                placeholder="Tìm kiếm chủ đề..."
                 items={topics.map((topic) => ({
                   id: topic.topic_id,
                   name: topic.name,
@@ -304,52 +400,111 @@ export function CreatePostPage() {
             </CardContent>
           </Card>
 
-          {/* Materials */}
-          <SimpleMaterialInput
-            materials={materials}
-            selectedMaterials={formData.selectedMaterials}
-            onSelectionChange={(materials) =>
-              handleInputChange("selectedMaterials", materials)
-            }
-            maxItems={20}
-          />
-
-          {/* Actions - Flex grow để fill hết không gian còn lại */}
-          <Card className="flex-grow flex flex-col">
+          {/* Actions */}
+          <Card className="sticky top-6">
             <CardHeader>
-              <CardTitle>Hành động</CardTitle>
+              <CardTitle>Kiểm tra trước khi gửi</CardTitle>
             </CardHeader>
-            <CardContent className="flex-grow flex flex-col justify-between space-y-3">
-              <div className="space-y-3">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="w-full"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Clock className="w-4 h-4 mr-2 animate-spin" />
-                      Đang gửi...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Gửi bài để duyệt
-                    </>
-                  )}
-                </Button>
+            <CardContent className="space-y-4">
+              {/* Validation Summary */}
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span>Tiêu đề:</span>
+                  <span
+                    className={
+                      formData.title.trim() ? "text-green-600" : "text-red-600"
+                    }
+                  >
+                    {formData.title.trim() ? "✓" : "✗"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Mô tả:</span>
+                  <span
+                    className={
+                      formData.content.trim()
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
+                    {formData.content.trim() ? "✓" : "✗"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Các bước:</span>
+                  <span
+                    className={
+                      formData.steps.length >= 2
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
+                    {formData.steps.length >= 2 ? "✓" : "✗"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Nguyên liệu:</span>
+                  <span
+                    className={
+                      formData.selectedMaterials.length > 0
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
+                    {formData.selectedMaterials.length > 0 ? "✓" : "✗"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Tags:</span>
+                  <span
+                    className={
+                      formData.selectedTags.length > 0
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
+                    {formData.selectedTags.length > 0 ? "✓" : "✗"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Chủ đề:</span>
+                  <span
+                    className={
+                      formData.selectedTopics.length > 0
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
+                    {formData.selectedTopics.length > 0 ? "✓" : "✗"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Hình ảnh:</span>
+                  <span
+                    className={
+                      uploadedFiles.length > 0
+                        ? "text-green-600"
+                        : "text-gray-500"
+                    }
+                  >
+                    {uploadedFiles.length}/5
+                  </span>
+                </div>
               </div>
 
-              {/* Post Info - Đẩy xuống dưới */}
-              <div className="pt-3 space-y-2 text-xs text-muted-foreground mt-auto">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-3 w-3" />
-                  Thời gian duyệt: 1-2 giờ
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-3 w-3" />
-                  Tự động thông báo kết quả
-                </div>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full h-12"
+                size="lg"
+              >
+                {isSubmitting ? "Đang gửi..." : "Gửi bài để duyệt"}
+              </Button>
+
+              {/* Post Info */}
+              <div className="pt-2 space-y-1 text-xs text-muted-foreground border-t">
+                <div>• Thời gian duyệt: 1-2 giờ</div>
+                <div>• Tự động thông báo kết quả</div>
               </div>
             </CardContent>
           </Card>

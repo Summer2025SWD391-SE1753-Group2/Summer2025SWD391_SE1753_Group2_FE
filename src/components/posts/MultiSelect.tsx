@@ -21,6 +21,8 @@ interface MultiSelectProps<T extends SelectItem> {
   onSelectionChange: (items: T[]) => void;
   className?: string;
   maxItems?: number;
+  badgeVariant?: "default" | "secondary" | "destructive" | "outline";
+  badgeColor?: string;
 }
 
 export function MultiSelect<T extends SelectItem>({
@@ -31,6 +33,8 @@ export function MultiSelect<T extends SelectItem>({
   onSelectionChange,
   className,
   maxItems = 10,
+  badgeVariant = "secondary",
+  badgeColor,
 }: MultiSelectProps<T>) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -75,8 +79,12 @@ export function MultiSelect<T extends SelectItem>({
           {selectedItems.map((item) => (
             <Badge
               key={item.id}
-              variant="secondary"
-              className="flex items-center gap-1 text-sm"
+              variant={badgeVariant}
+              className={cn(
+                "flex items-center gap-1 text-sm",
+                badgeColor &&
+                  `bg-${badgeColor}-100 text-${badgeColor}-800 border-${badgeColor}-200`
+              )}
             >
               <span className="truncate max-w-[120px]">{item.name}</span>
               <Button
@@ -84,7 +92,7 @@ export function MultiSelect<T extends SelectItem>({
                 variant="ghost"
                 size="sm"
                 onClick={() => handleRemoveItem(item.id)}
-                className="h-auto p-0 ml-1 hover:bg-transparent text-muted-foreground hover:text-destructive"
+                className="h-auto p-0 ml-1 hover:bg-red-50 text-muted-foreground hover:text-red-600"
               >
                 <X className="h-3 w-3" />
               </Button>

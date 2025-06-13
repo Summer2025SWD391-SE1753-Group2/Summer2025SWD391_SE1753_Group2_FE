@@ -44,6 +44,12 @@ export interface PostImage {
   caption?: string;
 }
 
+export interface Step {
+  step_id?: string;
+  order_number: number;
+  content: string;
+}
+
 export interface Post {
   post_id: string;
   title: string;
@@ -55,6 +61,7 @@ export interface Post {
   topics: Topic[];
   materials: PostMaterial[];
   images: PostImage[];
+  steps: Step[];
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -75,6 +82,10 @@ export interface CreatePostRequest {
     quantity: number;
   }>;
   images: string[]; // Firebase URLs
+  steps: Array<{
+    order_number: number;
+    content: string;
+  }>;
 }
 
 export interface PostFormData {
@@ -84,4 +95,5 @@ export interface PostFormData {
   selectedTopics: Topic[];
   selectedMaterials: PostMaterial[];
   images: File[];
+  steps: Step[];
 }
