@@ -262,7 +262,7 @@ const RegisterPage: React.FC = () => {
       if (errorData?.response?.data?.detail) {
         toast.error(`Đăng ký thất bại: ${errorData.response.data.detail}`);
       } else {
-        toast.error("Đăng ký thất bại. Vui lòng kiểm tra lại.");
+        toast.error("Đăng ký thất bại. tên người dùng hoặc email đã tồn tại!.");
       }
     } finally {
       setLoading(false);

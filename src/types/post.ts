@@ -61,7 +61,7 @@ export interface Post {
   title: string;
   content: string;
   status: "waiting" | "approved" | "rejected";
-  rejection_reason?: string;
+  rejection_reason: string;
   approved_by?: string;
   tags: Tag[];
   topics: Topic[];

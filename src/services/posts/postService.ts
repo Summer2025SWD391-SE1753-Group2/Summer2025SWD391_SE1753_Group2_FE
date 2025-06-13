@@ -91,6 +91,16 @@ const searchPostsByTopic = async (
       topicName
     )}&skip=${skip}&limit=${limit}`
   );
+const searchPostsByTopic = async (
+  topicName: string,
+  skip: number = 0,
+  limit: number = 100
+): Promise<Post[]> => {
+  const response = await axiosInstance.get<Post[]>(
+    `/api/v1/posts/search/by-topic/?topic_name=${encodeURIComponent(
+      topicName
+    )}&skip=${skip}&limit=${limit}`
+  );
   return response.data;
 };
 
@@ -105,10 +115,30 @@ const searchPostsByTag = async (
       tagName
     )}&skip=${skip}&limit=${limit}`
   );
+const searchPostsByTag = async (
+  tagName: string,
+  skip: number = 0,
+  limit: number = 100
+): Promise<Post[]> => {
+  const response = await axiosInstance.get<Post[]>(
+    `/api/v1/posts/search/by-tag/?tag_name=${encodeURIComponent(
+      tagName
+    )}&skip=${skip}&limit=${limit}`
+  );
   return response.data;
 };
 
 // Search posts by title
+const searchPostsByTitle = async (
+  title: string,
+  skip: number = 0,
+  limit: number = 100
+): Promise<Post[]> => {
+  const response = await axiosInstance.get<Post[]>(
+    `/api/v1/posts/search/?title=${encodeURIComponent(
+      title
+    )}&skip=${skip}&limit=${limit}`
+  );
 const searchPostsByTitle = async (
   title: string,
   skip: number = 0,
