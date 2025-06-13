@@ -81,7 +81,7 @@ export function SimpleMaterialInput({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <Label className="text-sm font-medium">Nguyên liệu</Label>
+      {/* <Label className="text-sm font-medium">Nguyên liệu</Label> */}
 
       {/* Add Material Section */}
       <div className="relative">
