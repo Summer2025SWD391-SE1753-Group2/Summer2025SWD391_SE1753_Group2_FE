@@ -13,6 +13,10 @@ export const paths = {
   createPost: "/posts/create",
   postDetail: "/posts/:postId",
 
+  // Favorites
+  favorites: "/favorites",
+  favoritesDetail: "/favorites/:favouriteId",
+
   // Moderator
   moderator: {
     dashboard: "/moderator",
@@ -29,6 +33,7 @@ export const paths = {
   // Not found
   notFound: "*",
 };
+
 export const getDefaultRouteByRole = (role_name?: UserRole) => {
   switch (role_name) {
     case 'admin':

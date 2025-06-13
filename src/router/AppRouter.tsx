@@ -18,6 +18,8 @@ import HomePage from "@/pages/publicPage/HomePage";
 import ProfilePage from "@/pages/publicPage/ProfilePage";
 import DashboardPage from "@/pages/private/Dashboard";
 import NotFound from "@/pages/publicPage/NotFound";
+import FavoritesPage from "@/pages/user/favorites/FavoritesPage"; // Import trang Favorites
+import DetailFavoritePage from "@/pages/user/favorites/DetailFavoritePage";
 
 const router = createBrowserRouter([
   {
@@ -30,6 +32,7 @@ const router = createBrowserRouter([
         children: [
           { path: paths.login, element: <LoginPage /> },
           { path: paths.register, element: <RegisterPage /> },
+          { path: paths.googleCallback, element: <LoginPage /> }, // Giả định callback dùng LoginPage
         ],
       },
     ],
@@ -46,7 +49,8 @@ const router = createBrowserRouter([
       { path: paths.profile, element: <ProfilePage /> },
       { path: paths.createPost, element: <CreatePostPage /> },
       { path: paths.postDetail, element: <PostDetailPage /> },
-      //login
+      { path: paths.favorites, element: <FavoritesPage /> }, // Thêm route cho Favorites
+      { path: paths.favoritesDetail, element: <DetailFavoritePage /> },
     ],
   },
   {
@@ -69,7 +73,6 @@ const router = createBrowserRouter([
         path: paths.moderator.topicManagement,
         element: <TopicManagementPage />,
       },
-      //login  moderator
     ],
   },
   {
@@ -81,7 +84,6 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <DashboardPage /> },
-      //login  admin
     ],
   },
   {
