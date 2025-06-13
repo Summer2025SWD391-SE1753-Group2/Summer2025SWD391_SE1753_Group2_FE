@@ -123,19 +123,22 @@ const searchPostsByTitle = async (
 };
 
 export { searchPostsByTopic, searchPostsByTag, searchPostsByTitle };
-export interface ModeratePostPayload {
+export interface ReviewPostPayload {
   status: "approved" | "rejected";
   rejection_reason?: string;
   approved_by: string;
 }
 
-export const moderatePost = async (
+export const reviewPost = async (
   post_id: string,
-  data: ModeratePostPayload
+  data: ReviewPostPayload
 ): Promise<Post> => {
   const response = await axiosInstance.put<Post>(
-    `/api/v1/posts/${post_id}/moderate`,
+    `/api/v1/posts/${post_id}/review`,
     data
   );
   return response.data;
 };
+
+export const moderatePost = reviewPost;
+export type ModeratePostPayload = ReviewPostPayload;
