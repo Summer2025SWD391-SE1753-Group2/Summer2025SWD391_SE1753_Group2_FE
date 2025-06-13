@@ -20,6 +20,8 @@ import DashboardPage from "@/pages/private/Dashboard";
 import NotFound from "@/pages/publicPage/NotFound";
 import FavoritesPage from "@/pages/user/favorites/FavoritesPage"; // Import trang Favorites
 import DetailFavoritePage from "@/pages/user/favorites/DetailFavoritePage";
+import MyPostsPage from "@/pages/user/posts/MyPostsPage";
+import EditPostPage from "@/pages/user/posts/EditPostPage";
 
 const router = createBrowserRouter([
   {
@@ -47,10 +49,22 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: paths.profile, element: <ProfilePage /> },
-      { path: paths.createPost, element: <CreatePostPage /> },
       { path: paths.postDetail, element: <PostDetailPage /> },
       { path: paths.favorites, element: <FavoritesPage /> }, // Thêm route cho Favorites
       { path: paths.favoritesDetail, element: <DetailFavoritePage /> },
+    ],
+  },
+  {
+    path: "/user",
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { path: paths.createPost, element: <CreatePostPage /> },
+      { path: paths.myPosts, element: <MyPostsPage /> },
+      { path: "/user/posts/edit/:postId", element: <EditPostPage /> },
     ],
   },
   {
@@ -82,9 +96,7 @@ const router = createBrowserRouter([
         <DashboardLayout />
       </ProtectedRoute>
     ),
-    children: [
-      { index: true, element: <DashboardPage /> },
-    ],
+    children: [{ index: true, element: <DashboardPage /> }],
   },
   {
     path: paths.notFound,

@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+
 import type { Post } from "@/types/post";
 import { useState } from "react";
 
@@ -39,7 +39,9 @@ export const PopupDetail = ({ post, onClose }: PopupDetailProps) => {
       <Dialog open={!!post} onOpenChange={onClose}>
         <DialogContent className="w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-xl px-6 py-8 space-y-6">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-semibold">{post.title}</DialogTitle>
+            <DialogTitle className="text-2xl font-semibold">
+              {post.title}
+            </DialogTitle>
           </DialogHeader>
 
           {/* Trạng thái */}
@@ -91,9 +93,16 @@ export const PopupDetail = ({ post, onClose }: PopupDetailProps) => {
               {post.steps
                 .sort((a, b) => a.order_number - b.order_number)
                 .map((step) => (
-                  <div key={step.step_id} className="bg-white p-4 rounded border">
-                    <h4 className="font-medium mb-2">Bước {step.order_number}:</h4>
-                    <p className="text-gray-700 leading-relaxed">{step.content}</p>
+                  <div
+                    key={step.step_id}
+                    className="bg-white p-4 rounded border"
+                  >
+                    <h4 className="font-medium mb-2">
+                      Bước {step.order_number}:
+                    </h4>
+                    <p className="text-gray-700 leading-relaxed">
+                      {step.content}
+                    </p>
                   </div>
                 ))}
             </div>
@@ -148,7 +157,10 @@ export const PopupDetail = ({ post, onClose }: PopupDetailProps) => {
       </Dialog>
 
       {/* Dialog xem ảnh to */}
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+      <Dialog
+        open={!!selectedImage}
+        onOpenChange={() => setSelectedImage(null)}
+      >
         <DialogContent className="max-w-3xl p-0 overflow-hidden">
           {selectedImage && (
             <img

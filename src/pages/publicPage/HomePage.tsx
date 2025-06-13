@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
-import { getAllPosts } from "@/services/posts/postService";
+import { getApprovedPosts } from "@/services/posts/postService";
 import type { Post } from "@/types/post";
 import { useAuthStore } from "@/stores/auth";
-import { PostCard } from "@/components/posts/PostCard";
+import { HomePostCard } from "@/components/posts/HomePostCard";
+import { paths } from "@/utils/constant/path";
 
 export const HomePage = () => {
   const { user, isAuthenticated } = useAuthStore();
@@ -18,7 +19,7 @@ export const HomePage = () => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        const response = await getAllPosts(0, 20); // Get first 20 posts
+        const response = await getApprovedPosts(0, 20); // Get first 20 approved posts
         setPosts(response || []); // API trả về array trực tiếp
       } catch (err) {
         const errorMessage =
@@ -52,17 +53,22 @@ export const HomePage = () => {
             : "Đăng nhập để tham gia cộng đồng chia sẻ công thức nấu ăn!"}
         </p>
         {isAuthenticated && user && (
-          <Button asChild className="bg-orange-600 hover:bg-orange-700">
-            <Link to="/posts/create">
-              <PlusCircle className="w-4 h-4 mr-2" />
-              Đăng công thức mới
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild className="bg-orange-600 hover:bg-orange-700">
+              <Link to={paths.createPost}>
+                <PlusCircle className="w-4 h-4 mr-2" />
+                Đăng công thức mới
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={paths.myPosts}>Quản lý bài viết</Link>
+            </Button>
+          </div>
         )}
       </div>
 
       {/* Posts Feed */}
-        <h2 className="text-xl font-semibold">Bài viết mới nhất</h2>
+
       <div className="flex space-y-6 px-100">
         {loading ? (
           <div className="flex justify-center items-center p-8">
@@ -80,7 +86,7 @@ export const HomePage = () => {
         ) : (
           <div className="space-y-6">
             {posts.map((post) => (
-              <PostCard
+              <HomePostCard
                 key={post.post_id}
                 post={post}
                 onLike={() => handlePostAction("Đã thích", post.post_id)}

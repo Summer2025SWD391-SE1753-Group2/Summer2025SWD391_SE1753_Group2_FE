@@ -55,6 +55,7 @@ export default function MaterialManagementPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editUnit, setEditUnit] = useState("");
+
   const [newName, setNewName] = useState("");
   const [newUnit, setNewUnit] = useState("");
 
@@ -109,7 +110,7 @@ export default function MaterialManagementPage() {
   const handleEdit = (material: Material) => {
     setEditingId(material.material_id);
     setEditName(material.name);
-    setEditUnit(material.unit);
+    setEditUnit(material.unit || "");
   };
 
   const handleSave = async () => {
@@ -216,19 +217,13 @@ export default function MaterialManagementPage() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Select
-                          value={editUnit}
-                          onValueChange={setEditUnit}
-                        >
+                        <Select value={editUnit} onValueChange={setEditUnit}>
                           <SelectTrigger>
                             <SelectValue placeholder="Chọn đơn vị" />
                           </SelectTrigger>
                           <SelectContent>
                             {units.map((unit) => (
-                              <SelectItem
-                                key={unit.unit_id}
-                                value={unit.name}
-                              >
+                              <SelectItem key={unit.unit_id} value={unit.name}>
                                 {unit.name}
                               </SelectItem>
                             ))}
@@ -253,9 +248,8 @@ export default function MaterialManagementPage() {
                   ) : (
                     <>
                       <TableCell>{material.name}</TableCell>
-                      <TableCell>{material.unit}</TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center gap-2">
+                      <TableCell className="text-end">
+                        <div className="flex justify-end gap-2">
                           <Button
                             size="sm"
                             onClick={() => handleEdit(material)}
@@ -270,6 +264,9 @@ export default function MaterialManagementPage() {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Bạn có chắc không?
+                                </AlertDialogTitle>
                                 <AlertDialogTitle>
                                   Bạn có chắc không?
                                 </AlertDialogTitle>
