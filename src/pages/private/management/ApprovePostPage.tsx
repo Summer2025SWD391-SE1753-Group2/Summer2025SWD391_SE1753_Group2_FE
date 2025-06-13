@@ -16,13 +16,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { PopupDetail } from "@/components/posts/PopupDetail";
 import { PopupReject } from "@/components/posts/PopupReject";
 import { useAuthStore } from "@/stores/auth";
@@ -46,22 +40,6 @@ const ApprovePostPage = () => {
     }
   };
 
-  const fetchPosts = async () => {
-    setLoading(true);
-    try {
-      const data = await getAllPosts();
-      setPosts(data);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPosts();
-  }, []);
-
   const handleApprove = async (post: Post) => {
     try {
       await moderatePost(post.post_id, {
@@ -78,6 +56,22 @@ const ApprovePostPage = () => {
       alert("Duyệt thất bại: " + (err as Error).message);
     }
   };
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const data = await getAllPosts();
+      setPosts(data);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
   if (loading) {
     return (
@@ -138,11 +132,21 @@ const ApprovePostPage = () => {
                   {new Date(post.created_at).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="text-right space-x-1">
-                  <Button className="text-red-400 ">Từ chối</Button>
-                  <Button className="text-green-600 ">Duyệt</Button>
+                  <Button
+                    className="text-red-400"
+                    onClick={() => setRejectingPost(post)}
+                  >
+                    Từ chối
+                  </Button>
+                  <Button
+                    className="text-green-600"
+                    onClick={() => handleApprove(post)}
+                  >
+                    Duyệt
+                  </Button>
                   <Button
                     className="text-blue-500"
-                    onClick={() => setSelectedPost(post)}
+                    onClick={() => handleView(post.post_id)}
                   >
                     Xem
                   </Button>

@@ -91,30 +91,10 @@ const searchPostsByTopic = async (
       topicName
     )}&skip=${skip}&limit=${limit}`
   );
-const searchPostsByTopic = async (
-  topicName: string,
-  skip: number = 0,
-  limit: number = 100
-): Promise<Post[]> => {
-  const response = await axiosInstance.get<Post[]>(
-    `/api/v1/posts/search/by-topic/?topic_name=${encodeURIComponent(
-      topicName
-    )}&skip=${skip}&limit=${limit}`
-  );
   return response.data;
 };
 
 // Search posts by tag
-const searchPostsByTag = async (
-  tagName: string,
-  skip: number = 0,
-  limit: number = 100
-): Promise<Post[]> => {
-  const response = await axiosInstance.get<Post[]>(
-    `/api/v1/posts/search/by-tag/?tag_name=${encodeURIComponent(
-      tagName
-    )}&skip=${skip}&limit=${limit}`
-  );
 const searchPostsByTag = async (
   tagName: string,
   skip: number = 0,
@@ -139,20 +119,49 @@ const searchPostsByTitle = async (
       title
     )}&skip=${skip}&limit=${limit}`
   );
-const searchPostsByTitle = async (
-  title: string,
-  skip: number = 0,
-  limit: number = 100
-): Promise<Post[]> => {
-  const response = await axiosInstance.get<Post[]>(
-    `/api/v1/posts/search/?title=${encodeURIComponent(
-      title
-    )}&skip=${skip}&limit=${limit}`
-  );
   return response.data;
 };
 
 export { searchPostsByTopic, searchPostsByTag, searchPostsByTitle };
+
+// Moderate post (approve or reject)
+export interface PostModerationRequest {
+  status: "approved" | "rejected";
+  rejection_reason?: string;
+  approved_by: string;
+}
+
+export const moderatePost = async (
+  postId: string,
+  data: PostModerationRequest
+): Promise<Post> => {
+  try {
+    const response = await axiosInstance.put(
+      `/api/v1/posts/${postId}/review`,
+      data
+    );
+    return response.data;
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as {
+        response: { status: number; data?: { message?: string } };
+      };
+      if (axiosError.response?.status === 401) {
+        throw new Error("Không tìm thấy token đăng nhập");
+      }
+      if (axiosError.response?.status === 403) {
+        throw new Error("Bạn không có quyền duyệt bài viết này");
+      }
+      if (axiosError.response?.status === 404) {
+        throw new Error("Không tìm thấy bài viết");
+      }
+      throw new Error(
+        axiosError.response?.data?.message || "Không thể duyệt bài viết"
+      );
+    }
+    throw new Error("Không thể duyệt bài viết");
+  }
+};
 
 export interface UpdatePostRequest {
   title?: string;

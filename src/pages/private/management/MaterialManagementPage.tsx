@@ -54,6 +54,7 @@ export default function MaterialManagementPage() {
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editUnit, setEditUnit] = useState("");
 
   const [newName, setNewName] = useState("");
   const [newUnit, setNewUnit] = useState("");
@@ -109,6 +110,7 @@ export default function MaterialManagementPage() {
   const handleEdit = (material: Material) => {
     setEditingId(material.material_id);
     setEditName(material.name);
+    setEditUnit(material.unit || "");
   };
 
   const handleSave = async () => {
