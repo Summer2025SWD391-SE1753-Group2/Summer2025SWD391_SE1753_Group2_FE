@@ -6,18 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  AlertCircle,
+  Clock,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  ArrowLeft,
   Heart,
   MessageCircle,
   Share2,
   Bookmark,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  ArrowLeft,
-  Send,
-  Loader2,
 } from "lucide-react";
+import { ImageLightbox } from "@/components/posts/ImageLightbox";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getPostById } from "@/services/posts/postService";
@@ -43,6 +43,8 @@ export const PostDetailPage = () => {
   const [newComment, setNewComment] = useState("");
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   // Mock comments data
   const mockComments: Comment[] = [
@@ -268,6 +270,46 @@ export const PostDetailPage = () => {
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Images Gallery - Moved to top, removed title */}
+          {post.images && post.images.length > 0 && (
+            <div>
+              {post.images.length === 1 ? (
+                <div
+                  className="relative aspect-video bg-muted rounded-lg overflow-hidden cursor-pointer"
+                  onClick={() => {
+                    setLightboxIndex(0);
+                    setLightboxOpen(true);
+                  }}
+                >
+                  <img
+                    src={post.images[0].image_url}
+                    alt={post.images[0].caption || "Post image"}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                  />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {post.images.map((image, index) => (
+                    <div
+                      key={image.image_id}
+                      className="relative aspect-square bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => {
+                        setLightboxIndex(index);
+                        setLightboxOpen(true);
+                      }}
+                    >
+                      <img
+                        src={image.image_url}
+                        alt={image.caption || `Ảnh ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Content */}
           <div className="prose max-w-none">
             <p className="text-base leading-relaxed whitespace-pre-wrap">
@@ -275,47 +317,26 @@ export const PostDetailPage = () => {
             </p>
           </div>
 
-          {/* Images */}
-          {post.images && post.images.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {post.images.map((image) => (
-                <div
-                  key={image.image_id}
-                  className="relative aspect-video bg-muted rounded-lg overflow-hidden"
-                >
-                  <img
-                    src={image.image_url}
-                    alt={image.caption || "Post image"}
-                    className="w-full h-full object-cover"
-                  />
-                  {image.caption && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-2">
-                      <p className="text-sm">{image.caption}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Materials */}
           {post.materials && post.materials.length > 0 && (
-            <div className="bg-muted/50 rounded-lg p-4">
-              <h3 className="font-semibold mb-3">Nguyên liệu cần thiết:</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="bg-gray-50 border rounded-lg p-6">
+              <h3 className="font-semibold text-lg mb-4">
+                Nguyên liệu cần thiết
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {post.materials.map((material, index) => (
                   <div
                     key={`${material.material_id}-${index}`}
-                    className="flex items-center justify-between py-1"
+                    className="flex items-center justify-between py-2 px-3 bg-white rounded border"
                   >
-                    <span className="text-sm">
+                    <span className="text-sm font-medium">
                       {material.material?.name ||
                         material.material_name ||
                         `Material ${material.material_id}`}
                     </span>
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-semibold bg-gray-100 px-2 py-1 rounded">
                       {material.quantity}{" "}
-                      {material.unit || material.material?.unit || "đơn vị"}
+                      {material.unit || material.material?.unit || "đv"}
                     </span>
                   </div>
                 ))}
@@ -323,73 +344,104 @@ export const PostDetailPage = () => {
             </div>
           )}
 
+          {/* Steps */}
+          {post.steps && post.steps.length > 0 && (
+            <div className="bg-gray-50 border rounded-lg p-6">
+              <h3 className="font-semibold text-lg mb-6">Các bước thực hiện</h3>
+              <div className="space-y-4">
+                {post.steps
+                  .sort((a, b) => a.order_number - b.order_number)
+                  .map((step) => (
+                    <div
+                      key={step.step_id}
+                      className="bg-white p-4 rounded border"
+                    >
+                      <h4 className="font-medium mb-2">
+                        Bước {step.order_number}:
+                      </h4>
+                      <p className="text-gray-700 leading-relaxed">
+                        {step.content}
+                      </p>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
           {/* Tags & Topics */}
           {(post.tags.length > 0 || post.topics.length > 0) && (
-            <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <Badge key={tag.tag_id} variant="secondary" className="text-xs">
-                  #{tag.name}
-                </Badge>
-              ))}
-              {post.topics.map((topic) => (
-                <Badge
-                  key={topic.topic_id}
-                  variant="outline"
-                  className="text-xs"
-                >
-                  {topic.name}
-                </Badge>
-              ))}
+            <div className="space-y-3">
+              {post.tags.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                    Tags:
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {post.tags.map((tag) => (
+                      <Badge
+                        key={tag.tag_id}
+                        variant="secondary"
+                        className="text-xs"
+                      >
+                        #{tag.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {post.topics.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                    Chủ đề:
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {post.topics.map((topic) => (
+                      <Badge
+                        key={topic.topic_id}
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        {topic.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-4 border-t">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsLiked(!isLiked)}
-                className={cn(
-                  "hover:bg-red-50 hover:text-red-600",
-                  isLiked && "text-red-600 bg-red-50"
-                )}
+                className={isLiked ? "text-red-600" : ""}
               >
-                <Heart
-                  className={cn("w-4 h-4 mr-2", isLiked && "fill-current")}
-                />
-                Thích
+                <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
+                <span className="ml-1 text-sm">Thích</span>
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="hover:bg-blue-50 hover:text-blue-600"
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Bình luận ({mockComments.length})
+              <Button variant="ghost" size="sm">
+                <MessageCircle className="h-4 w-4" />
+                <span className="ml-1 text-sm">
+                  Bình luận ({mockComments.length})
+                </span>
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="hover:bg-green-50 hover:text-green-600"
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Chia sẻ
+              <Button variant="ghost" size="sm">
+                <Share2 className="h-4 w-4" />
+                <span className="ml-1 text-sm">Chia sẻ</span>
               </Button>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsBookmarked(!isBookmarked)}
-              className={cn(
-                "hover:bg-yellow-50 hover:text-yellow-600",
-                isBookmarked && "text-yellow-600 bg-yellow-50"
-              )}
+              className={isBookmarked ? "text-yellow-600" : ""}
             >
               <Bookmark
-                className={cn("w-4 h-4 mr-2", isBookmarked && "fill-current")}
+                className={cn("h-4 w-4", isBookmarked && "fill-current")}
               />
-              Lưu
             </Button>
           </div>
         </CardContent>
@@ -416,7 +468,6 @@ export const PostDetailPage = () => {
                 onClick={handleSubmitComment}
                 disabled={!newComment.trim()}
               >
-                <Send className="w-4 h-4 mr-2" />
                 Gửi bình luận
               </Button>
             </div>
@@ -495,6 +546,22 @@ export const PostDetailPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Image Lightbox */}
+      {post?.images && (
+        <ImageLightbox
+          images={post.images}
+          currentIndex={lightboxIndex}
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+          onNext={() =>
+            setLightboxIndex((prev) =>
+              Math.min(prev + 1, post.images.length - 1)
+            )
+          }
+          onPrev={() => setLightboxIndex((prev) => Math.max(prev - 1, 0))}
+        />
+      )}
     </div>
   );
 };

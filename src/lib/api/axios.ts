@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_API_URL  ;
+const baseURL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // Cookie utilities
 const getCookie = (name: string): string | null => {
@@ -34,7 +34,12 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = getCookie("access_token");
-     console.log("Access Token:", token); 
+    console.log(
+      " API Request - Token:",
+      token ? "Present" : "None",
+      "| URL:",
+      config.url
+    );
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

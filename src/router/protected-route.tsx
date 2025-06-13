@@ -15,11 +15,14 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     return <Navigate to={paths.login} replace />;
   }
 
-if (allowedRoles && user?.role.role_name && !allowedRoles.includes(user.role.role_name)) {
-  const fallback = getDefaultRouteByRole(user.role.role_name);
-  return <Navigate to={fallback} replace />;
-}
-
+  if (
+    allowedRoles &&
+    user?.role.role_name &&
+    !allowedRoles.includes(user.role.role_name)
+  ) {
+    const fallback = getDefaultRouteByRole(user.role.role_name);
+    return <Navigate to={fallback} replace />;
+  }
 
   return <>{children}</>;
 };

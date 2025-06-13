@@ -93,34 +93,6 @@ export function PostCard({
       .toUpperCase();
   };
 
-  const getCookingUnitAbbr = (unit: string) => {
-    const units: Record<string, string> = {
-      gram: "g",
-      kg: "kg",
-      mg: "mg",
-      lit: "l",
-      ml: "ml",
-      muong_cafe: "mcf",
-      muong_canh: "mc",
-      coc: "cốc",
-      chen: "chén",
-      thia: "thìa",
-      qua: "quả",
-      cu: "củ",
-      la: "lá",
-      bo: "bó",
-      canh: "cành",
-      thai: "thái",
-      mieng: "miếng",
-      lon: "lon",
-      chai: "chai",
-      goi: "gói",
-      tui: "túi",
-      hop: "hộp",
-    };
-    return units[unit] || unit;
-  };
-
   return (
     <Card className={cn("overflow-hidden", className)}>
       <CardHeader className="pb-3">
@@ -167,26 +139,38 @@ export function PostCard({
 
         {/* Images Preview */}
         {post.images && post.images.length > 0 && (
-          <div className="grid grid-cols-2 gap-2">
-            {post.images.slice(0, 4).map((image, index) => (
-              <div
-                key={image.image_id}
-                className="relative aspect-video bg-muted rounded-lg overflow-hidden"
-              >
+          <div>
+            {post.images.length === 1 ? (
+              <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
                 <img
-                  src={image.image_url}
-                  alt={image.caption || "Post image"}
+                  src={post.images[0].image_url}
+                  alt={post.images[0].caption || "Post image"}
                   className="w-full h-full object-cover"
                 />
-                {index === 3 && post.images.length > 4 && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <span className="text-white font-medium">
-                      +{post.images.length - 4} ảnh
-                    </span>
-                  </div>
-                )}
               </div>
-            ))}
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {post.images.slice(0, 4).map((image, index) => (
+                  <div
+                    key={image.image_id}
+                    className="relative aspect-square bg-muted rounded-lg overflow-hidden"
+                  >
+                    <img
+                      src={image.image_url}
+                      alt={image.caption || "Post image"}
+                      className="w-full h-full object-cover"
+                    />
+                    {index === 3 && post.images.length > 4 && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="text-white font-medium">
+                          +{post.images.length - 4} ảnh
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -229,12 +213,6 @@ export function PostCard({
                       postMaterial.material_name ||
                       "Nguyên liệu"}
                   </span>
-                  {postMaterial.quantity && (
-                    <span className="text-muted-foreground">
-                      ({postMaterial.quantity}{" "}
-                      {getCookingUnitAbbr(postMaterial.unit || "")}))
-                    </span>
-                  )}
                 </Badge>
               ))}
               {post.materials.length > 6 && (
