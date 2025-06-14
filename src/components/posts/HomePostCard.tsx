@@ -12,13 +12,13 @@ import {
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import type { Post } from "@/types/post";
+import { BookmarkModal } from "./BookmarkModal";
 
 interface HomePostCardProps {
   post: Post;
   onLike?: () => void;
   onComment?: () => void;
   onShare?: () => void;
-  onBookmark?: () => void;
   className?: string;
 }
 
@@ -27,7 +27,6 @@ export function HomePostCard({
   onLike,
   onComment,
   onShare,
-  onBookmark,
   className,
 }: HomePostCardProps) {
   const formatDate = (dateString: string) => {
@@ -196,15 +195,16 @@ export function HomePostCard({
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-3 text-muted-foreground hover:text-orange-500"
-              onClick={onBookmark}
-            >
-              <Bookmark className="h-4 w-4 mr-1" />
-              Lưu
-            </Button>
+            <BookmarkModal postId={post.post_id}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 text-muted-foreground hover:text-orange-500"
+              >
+                <Bookmark className="h-4 w-4 mr-1" />
+                Lưu
+              </Button>
+            </BookmarkModal>
             <Button variant="ghost" size="sm" className="h-8 px-3" asChild>
               <Link to={`/posts/${post.post_id}`}>
                 <ExternalLink className="h-4 w-4 mr-1" />

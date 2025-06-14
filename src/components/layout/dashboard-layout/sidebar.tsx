@@ -12,6 +12,7 @@ import {
   Users,
   PlusCircle,
   Edit3,
+  Bookmark,
 } from "lucide-react";
 import BrandLogo from "@/components/common/brand-logo";
 import { paths } from "@/utils/constant/path";
@@ -45,6 +46,12 @@ const sidebarLinks: SidebarLink[] = [
     title: "Quản lý bài viết",
     href: paths.myPosts,
     icon: <Edit3 className="h-5 w-5" />,
+    roles: ["user"],
+  },
+  {
+    title: "Bài viết yêu thích",
+    href: paths.favorites,
+    icon: <Bookmark className="h-5 w-5" />,
     roles: ["user"],
   },
 
