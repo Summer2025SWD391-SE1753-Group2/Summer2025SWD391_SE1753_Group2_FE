@@ -58,7 +58,29 @@ const removeFavoritePost = async (
   favourite_id: string,
   post_id: string
 ): Promise<void> => {
-  await axiosInstance.delete(`/api/v1/favourites/${favourite_id}/posts/${post_id}`);
+  await axiosInstance.delete(
+    `/api/v1/favourites/${favourite_id}/posts/${post_id}`
+  );
+};
+
+// Add a post to a favorite folder
+const addPostToFavorite = async (
+  favourite_id: string,
+  post_id: string
+): Promise<void> => {
+  await axiosInstance.post(
+    `/api/v1/favourites/${favourite_id}/posts/${post_id}`
+  );
+};
+
+// Add a post to a favorite folder by name
+const addPostToFavoriteByName = async (
+  favourite_name: string,
+  post_id: string
+): Promise<void> => {
+  await axiosInstance.post(
+    `/api/v1/favourites/name/${favourite_name}/posts/${post_id}`
+  );
 };
 
 export {
@@ -68,4 +90,6 @@ export {
   deleteFavoriteFolder,
   getFavoritePosts,
   removeFavoritePost,
+  addPostToFavorite,
+  addPostToFavoriteByName,
 };

@@ -92,7 +92,6 @@ export const HomePage = () => {
                 onLike={() => handlePostAction("Đã thích", post.post_id)}
                 onComment={() => handlePostAction("Đã bình luận", post.post_id)}
                 onShare={() => handlePostAction("Đã chia sẻ", post.post_id)}
-                onBookmark={() => handlePostAction("Đã lưu", post.post_id)}
               />
             ))}
           </div>

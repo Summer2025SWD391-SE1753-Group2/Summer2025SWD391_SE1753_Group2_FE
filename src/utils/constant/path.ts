@@ -15,8 +15,8 @@ export const paths = {
   postDetail: "/posts/:postId",
 
   // Favorites
-  favorites: "/favorites",
-  favoritesDetail: "/favorites/:favouriteId",
+  favorites: "/user/favorites",
+  favoritesDetail: "/user/favorites/:favouriteId",
 
   // My Posts
   myPosts: "/user/my-posts",
