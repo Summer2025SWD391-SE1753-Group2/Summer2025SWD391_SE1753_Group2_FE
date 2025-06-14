@@ -16,13 +16,13 @@ import {
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import type { Post } from "@/types/post";
+import { BookmarkModal } from "./BookmarkModal";
 
 interface PostCardProps {
   post: Post;
   onLike?: () => void;
   onComment?: () => void;
   onShare?: () => void;
-  onBookmark?: () => void;
   className?: string;
 }
 
@@ -31,7 +31,6 @@ export function PostCard({
   onLike,
   onComment,
   onShare,
-  onBookmark,
   className,
 }: PostCardProps) {
   const getStatusIcon = (status: Post["status"]) => {
@@ -255,9 +254,11 @@ export function PostCard({
               </Link>
             </Button>
           </div>
-          <Button variant="ghost" size="sm" onClick={onBookmark}>
-            <Bookmark className="h-4 w-4" />
-          </Button>
+          <BookmarkModal postId={post.post_id}>
+            <Button variant="ghost" size="sm">
+              <Bookmark className="h-4 w-4" />
+            </Button>
+          </BookmarkModal>
         </div>
       </CardContent>
     </Card>
