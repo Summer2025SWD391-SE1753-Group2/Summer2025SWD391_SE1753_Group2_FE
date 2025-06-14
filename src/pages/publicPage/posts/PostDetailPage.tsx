@@ -22,6 +22,7 @@ import { CommentItem } from "@/components/posts/CommentItem";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatRelativeTime } from "@/utils/dateUtils";
+import { useAuthStore } from "@/stores/auth";
 import { getPostById } from "@/services/posts/postService";
 import {
   createComment,
@@ -34,6 +35,7 @@ import type { Comment } from "@/types/comment";
 export const PostDetailPage = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -52,6 +54,22 @@ export const PostDetailPage = () => {
     new Set()
   );
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [showDeletedComments, setShowDeletedComments] =
+    useState<boolean>(false);
+
+  // Count deleted comments to show in toggle button
+  const countDeletedComments = (commentsList: Comment[]): number => {
+    let count = 0;
+    for (const comment of commentsList) {
+      if (comment.status === "deleted") count++;
+      if (comment.replies && comment.replies.length > 0) {
+        count += countDeletedComments(comment.replies);
+      }
+    }
+    return count;
+  };
+
+  const deletedCommentsCount = countDeletedComments(comments);
 
   const fetchComments = useCallback(async () => {
     if (!postId) return;
@@ -163,6 +181,8 @@ export const PostDetailPage = () => {
         parent_comment_id: parentCommentId,
       });
       toast.success("Đã thêm phản hồi!");
+      // Cancel reply mode to avoid duplicate
+      setReplyingTo(null);
       // Refresh comments after creating new reply
       await fetchComments();
     } catch (err) {
@@ -177,6 +197,10 @@ export const PostDetailPage = () => {
       setDeletingComments((prev) => new Set(prev).add(commentId));
       await deleteComment(commentId);
       toast.success("Đã xóa bình luận!");
+      // Cancel any active reply to the deleted comment
+      if (replyingTo === commentId) {
+        setReplyingTo(null);
+      }
       // Refresh comments after deleting
       await fetchComments();
     } catch (err) {
@@ -514,9 +538,24 @@ export const PostDetailPage = () => {
       {/* Comments Section */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold">
-            Bình luận ({comments.length})
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">
+              Bình luận ({comments.length})
+            </h3>
+            {/* Toggle deleted comments visibility - only show if there are deleted comments */}
+            {deletedCommentsCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDeletedComments(!showDeletedComments)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                {showDeletedComments
+                  ? "Ẩn comment đã xóa"
+                  : `Hiện ${deletedCommentsCount} comment đã xóa`}
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Add Comment Form - Only show for approved posts */}
@@ -552,6 +591,7 @@ export const PostDetailPage = () => {
                   key={comment.comment_id}
                   comment={comment}
                   depth={0}
+                  currentUser={user}
                   onReply={handleSubmitReply}
                   onDelete={handleDeleteComment}
                   replyingTo={replyingTo}
@@ -561,6 +601,7 @@ export const PostDetailPage = () => {
                   deletingComments={deletingComments}
                   formatDate={formatDate}
                   getInitials={getInitials}
+                  showDeletedComments={showDeletedComments}
                 />
               ))}
               {comments.length === 0 && (

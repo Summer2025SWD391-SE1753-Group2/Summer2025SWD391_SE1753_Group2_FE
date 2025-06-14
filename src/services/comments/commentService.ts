@@ -59,7 +59,10 @@ export const getCommentById = async (commentId: string): Promise<Comment> => {
 
 export const getCommentsByPost = async (postId: string): Promise<Comment[]> => {
   try {
-    const response = await axiosInstance.get(`/api/v1/comments/post/${postId}`);
+    // Use the nested endpoint for better structure
+    const response = await axiosInstance.get(
+      `/api/v1/comments/post/${postId}/nested`
+    );
     return response.data;
   } catch (error: unknown) {
     if (error && typeof error === "object" && "response" in error) {

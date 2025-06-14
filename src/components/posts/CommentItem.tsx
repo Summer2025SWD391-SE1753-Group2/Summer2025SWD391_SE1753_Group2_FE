@@ -4,10 +4,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Reply, Trash2, Loader2 } from "lucide-react";
 import type { Comment } from "@/types/comment";
+import type { UserInfo } from "@/types/auth";
 
 interface CommentItemProps {
   comment: Comment;
   depth: number;
+  currentUser: UserInfo | null;
   onReply: (commentId: string, content: string) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
   replyingTo: string | null;
@@ -17,11 +19,13 @@ interface CommentItemProps {
   deletingComments: Set<string>;
   formatDate: (dateString: string) => string;
   getInitials: (name: string) => string;
+  showDeletedComments: boolean;
 }
 
 export const CommentItem: React.FC<CommentItemProps> = ({
   comment,
   depth,
+  currentUser,
   onReply,
   onDelete,
   replyingTo,
@@ -31,6 +35,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
   deletingComments,
   formatDate,
   getInitials,
+  showDeletedComments,
 }) => {
   const [replyContent, setReplyContent] = useState("");
 
@@ -38,6 +43,21 @@ export const CommentItem: React.FC<CommentItemProps> = ({
   const shouldCollapse = depth >= 3 && hasReplies;
   const isExpanded = expandedComments.has(comment.comment_id);
   const isDeleting = deletingComments.has(comment.comment_id);
+  const isDeleted = comment.status === "deleted";
+
+  // If comment is deleted and has no replies, hide it completely unless showDeletedComments is true
+  if (isDeleted && !hasReplies && !showDeletedComments) {
+    return null;
+  }
+
+  // Check if current user can delete this comment
+  const canDelete =
+    currentUser &&
+    !isDeleted &&
+    // Owner can delete their own comment
+    (comment.account?.account_id === currentUser.account_id ||
+      // Admin and moderator can delete any comment
+      ["admin", "moderator"].includes(currentUser.role.role_name));
 
   const countNestedReplies = (comment: Comment): number => {
     if (!comment.replies || comment.replies.length === 0) return 0;
@@ -79,52 +99,84 @@ export const CommentItem: React.FC<CommentItemProps> = ({
           </AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <div
-            className={`bg-muted rounded-lg p-3 ${
-              depth > 0 ? "bg-muted/70" : ""
-            } ${isDeleting ? "opacity-50" : ""}`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <p className={`font-medium ${depth > 0 ? "text-xs" : "text-sm"}`}>
-                @{comment.account?.username || "user"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {formatDate(comment.created_at)}
-              </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 text-xs text-red-500 hover:text-red-700 ml-auto"
-                onClick={() => onDelete(comment.comment_id)}
-                disabled={isDeleting}
-                title="Xóa bình luận"
-              >
-                {isDeleting ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Trash2 className="h-3 w-3" />
-                )}
-              </Button>
+          {isDeleted && hasReplies ? (
+            /* Compact deleted comment with replies */
+            <div className="bg-gray-50 border-l-4 border-gray-300 rounded p-2 mb-2">
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-gray-500 italic">
+                  Bình luận đã bị xóa • {formatDate(comment.created_at)}
+                </p>
+                <span className="text-xs text-gray-400">
+                  ({totalReplies} phản hồi)
+                </span>
+              </div>
             </div>
-            <p
-              className={`leading-relaxed ${depth > 0 ? "text-xs" : "text-sm"}`}
+          ) : isDeleted && !hasReplies ? (
+            /* This will be hidden by the return null logic above when showDeletedComments is false */
+            <div className="bg-gray-50 border-l-4 border-gray-300 rounded p-2 mb-2">
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-gray-500 italic">
+                  Bình luận đã bị xóa • {formatDate(comment.created_at)}
+                </p>
+              </div>
+            </div>
+          ) : (
+            /* Normal active comment */
+            <div
+              className={`bg-muted rounded-lg p-3 ${
+                depth > 0 ? "bg-muted/70" : ""
+              } ${isDeleting ? "opacity-50" : ""}`}
             >
-              {comment.content}
-            </p>
-          </div>
+              <div className="flex items-center gap-2 mb-1">
+                <p
+                  className={`font-medium ${depth > 0 ? "text-xs" : "text-sm"}`}
+                >
+                  @{comment.account?.username || "user"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDate(comment.created_at)}
+                </p>
+                {canDelete && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-xs text-red-500 hover:text-red-700 ml-auto"
+                    onClick={() => onDelete(comment.comment_id)}
+                    disabled={isDeleting}
+                    title="Xóa bình luận"
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3 w-3" />
+                    )}
+                  </Button>
+                )}
+              </div>
+              <p
+                className={`leading-relaxed ${
+                  depth > 0 ? "text-xs" : "text-sm"
+                }`}
+              >
+                {comment.content}
+              </p>
+            </div>
+          )}
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 mt-1 px-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => setReplyingTo(comment.comment_id)}
-              disabled={isDeleting}
-            >
-              <Reply className="h-3 w-3 mr-1" />
-              Trả lời
-            </Button>
+            {!isDeleted && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setReplyingTo(comment.comment_id)}
+                disabled={isDeleting}
+              >
+                <Reply className="h-3 w-3 mr-1" />
+                Trả lời
+              </Button>
+            )}
             {shouldCollapse && totalReplies > 0 && (
               <Button
                 variant="ghost"
@@ -172,6 +224,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
                   key={reply.comment_id}
                   comment={reply}
                   depth={depth + 1}
+                  currentUser={currentUser}
                   onReply={onReply}
                   onDelete={onDelete}
                   replyingTo={replyingTo}
@@ -181,6 +234,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
                   deletingComments={deletingComments}
                   formatDate={formatDate}
                   getInitials={getInitials}
+                  showDeletedComments={showDeletedComments}
                 />
               ))}
             </div>
