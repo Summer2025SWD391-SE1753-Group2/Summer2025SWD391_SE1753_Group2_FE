@@ -177,8 +177,8 @@ export default function TopicManagementPage() {
                   <SelectValue placeholder="Trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">active</SelectItem>
-                  <SelectItem value="inactive">inactive</SelectItem>
+                  <SelectItem value="active">Hoạt động</SelectItem>
+                  <SelectItem value="inactive">Không hoạt động</SelectItem>
                 </SelectContent>
               </Select>
               <DialogFooter>
@@ -227,8 +227,8 @@ export default function TopicManagementPage() {
                             <SelectValue placeholder="Trạng thái" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="active">active</SelectItem>
-                            <SelectItem value="inactive">inactive</SelectItem>
+                            <SelectItem value="active">Hoạt động</SelectItem>
+                            <SelectItem value="inactive">Không hoạt động</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -254,7 +254,7 @@ export default function TopicManagementPage() {
                           topic.status === "active" ? "text-green-600" : "text-red-500"
                         )}
                       >
-                        {topic.status}
+                        {topic.status === "active" ? "Hoạt động" : "Không hoạt động"}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex justify-center gap-2">

@@ -57,6 +57,7 @@ export const PostDetailPage = () => {
   const [showDeletedComments, setShowDeletedComments] =
     useState<boolean>(false);
 
+  const role = user?.role?.role_name || "user";
   // Count deleted comments to show in toggle button
   const countDeletedComments = (commentsList: Comment[]): number => {
     let count = 0;
@@ -102,6 +103,21 @@ export const PostDetailPage = () => {
       try {
         setLoading(true);
         const postData = await getPostById(postId);
+
+        // Check quyền truy cập nếu bài viết chưa được duyệt
+        const isAuthor = user?.account_id === postData.created_by;
+        const isModerator = user?.role.role_name === "moderator" || user?.role.role_name === "admin";
+
+        if (
+          (postData.status === "waiting" || postData.status === "rejected") &&
+          !isAuthor &&
+          !isModerator
+        ) {
+          toast.warning("Bạn không có quyền truy cập bài viết này.");
+          navigate("/");
+          return;
+        }
+
         setPost(postData);
       } catch (err) {
         const errorMessage =
@@ -310,7 +326,7 @@ export const PostDetailPage = () => {
       {/* Back Button */}
       <Button
         variant="ghost"
-        onClick={() => navigate("/")}
+        onClick={() => navigate(`/${role}`)}
         className="mb-6 hover:bg-muted"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />

@@ -129,7 +129,7 @@ const MyPostsPage = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Quản lý bài viết của tôi</h1>
         <Button asChild>
-          <Link to={paths.createPost}>Tạo bài viết mới</Link>
+          <Link to={paths.user.createPost}>Tạo bài viết mới</Link>
         </Button>
       </div>
 

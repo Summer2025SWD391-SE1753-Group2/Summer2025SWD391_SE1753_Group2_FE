@@ -22,6 +22,9 @@ import FavoritesPage from "@/pages/private/FavoritesPage";
 import DetailFavoritePage from "@/pages/private/DetailFavoritePage";
 import MyPostsPage from "@/pages/user/posts/MyPostsPage";
 import EditPostPage from "@/pages/user/posts/EditPostPage";
+import UnitManagementPage from "@/pages/private/management/UnitManagementPage";
+import SettingPage from "@/pages/private/management/SettingPage";
+
 
 const router = createBrowserRouter([
   {
@@ -34,7 +37,7 @@ const router = createBrowserRouter([
         children: [
           { path: paths.login, element: <LoginPage /> },
           { path: paths.register, element: <RegisterPage /> },
-          { path: paths.googleCallback, element: <LoginPage /> }, // Giả định callback dùng LoginPage
+          { path: paths.googleCallback, element: <LoginPage /> },
         ],
       },
     ],
@@ -52,51 +55,76 @@ const router = createBrowserRouter([
       { path: paths.postDetail, element: <PostDetailPage /> },
     ],
   },
+  //user
   {
-    path: "/user",
+    path: paths.user.home,
     element: (
       <ProtectedRoute>
         <DashboardLayout />
       </ProtectedRoute>
     ),
     children: [
-      { path: paths.createPost, element: <CreatePostPage /> },
-      { path: paths.myPosts, element: <MyPostsPage /> },
-      { path: "/user/posts/edit/:postId", element: <EditPostPage /> },
-      { path: "/user/favorites", element: <FavoritesPage /> },
-      { path: "/user/favorites/:favouriteId", element: <DetailFavoritePage /> },
+      { index: true, element: <HomePage /> },
+      { path: paths.user.dashboard, element: <MyPostsPage /> },
+
+
+      { path: paths.user.createPost, element: <CreatePostPage /> },
+      { path: paths.user.editPost, element: <EditPostPage /> },
+      { path: paths.user.postDetail, element: <PostDetailPage /> },
+      { path: paths.user.favorites, element: <FavoritesPage /> },
+      { path: paths.user.favoritesDetail, element: <DetailFavoritePage /> },
+
+      { path: paths.user.profile, element: <ProfilePage /> },
+      { path: paths.user.setting, element: <SettingPage /> },
+
     ],
   },
+  //moderator
   {
-    path: paths.moderator.dashboard,
+    path: paths.moderator.home,
     element: (
       <ProtectedRoute>
         <DashboardLayout />
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <DashboardPage /> },
+      { index: true, element: <HomePage /> },
+      { path: paths.moderator.postDetail, element: <PostDetailPage /> },
       { path: paths.moderator.profile, element: <ProfilePage /> },
+      { path: paths.moderator.setting, element: <SettingPage /> },
+
+      { path: paths.moderator.dashboard, element: <DashboardPage /> },
+
       { path: paths.moderator.approvePost, element: <ApprovePostPage /> },
-      {
-        path: paths.moderator.materialManagement,
-        element: <MaterialManagementPage />,
-      },
+      { path: paths.moderator.materialManagement, element: <MaterialManagementPage />, },
       { path: paths.moderator.tagManagement, element: <TagManagementPage /> },
-      {
-        path: paths.moderator.topicManagement,
-        element: <TopicManagementPage />,
-      },
+      { path: paths.moderator.topicManagement, element: <TopicManagementPage />, },
+      { path: paths.moderator.unitManagement, element: <UnitManagementPage />, },
     ],
   },
+  //admin
   {
-    path: paths.admin.dashboard,
+    path: paths.admin.home,
     element: (
       <ProtectedRoute>
         <DashboardLayout />
       </ProtectedRoute>
     ),
-    children: [{ index: true, element: <DashboardPage /> }],
+    children: [
+      { index: true, element: <HomePage /> },
+      { path: paths.admin.postDetail, element: <PostDetailPage /> },
+      { path: paths.admin.profile, element: <ProfilePage /> },
+      { path: paths.admin.setting, element: <SettingPage /> },
+
+      { path: paths.admin.dashboard, element: <DashboardPage /> },
+
+      { path: paths.admin.approvePost, element: <ApprovePostPage /> },
+      { path: paths.admin.materialManagement, element: <MaterialManagementPage />, },
+      { path: paths.admin.tagManagement, element: <TagManagementPage /> },
+      { path: paths.admin.topicManagement, element: <TopicManagementPage />, },
+      { path: paths.admin.unitManagement, element: <UnitManagementPage />, },
+    ],
+
   },
   {
     path: paths.notFound,
