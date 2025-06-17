@@ -23,10 +23,11 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
   const [newFolderName, setNewFolderName] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showAllFolders, setShowAllFolders] = useState(false); // State mới để toggle hiển thị folder
   const {
     folders,
     isLoading,
-    initializeFavorites, // Sử dụng initializeFavorites thay vì loadFavorites
+    initializeFavorites,
     addPost,
     removePost,
     createFolder,
@@ -107,35 +108,40 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
                 <div className="space-y-2">
                   <Label>Chọn thư mục:</Label>
                   <div className="space-y-2">
-                    {folders.slice(0, 4).map((folder) => (
-                      <Button
-                        key={folder.favourite_id}
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() =>
-                          handleToggleFavorite(
-                            folder.favourite_id,
-                            folder.favourite_name
-                          )
-                        }
-                        disabled={isProcessing}
-                      >
-                        {savedFolders.has(folder.favourite_id) ? (
-                          <Trash2 className="h-4 w-4 mr-2 text-red-500" />
-                        ) : (
-                          <Bookmark className="h-4 w-4 mr-2" />
-                        )}
-                        {folder.favourite_name}
-                        <span className="ml-auto text-sm text-muted-foreground">
-                          {folder.post_count || 0} bài viết
-                        </span>
-                      </Button>
-                    ))}
+                    {folders
+                      .slice(0, showAllFolders ? undefined : 4) // Hiển thị tất cả nếu showAllFolders, ngược lại chỉ 4
+                      .map((folder) => (
+                        <Button
+                          key={folder.favourite_id}
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() =>
+                            handleToggleFavorite(
+                              folder.favourite_id,
+                              folder.favourite_name
+                            )
+                          }
+                          disabled={isProcessing}
+                        >
+                          {savedFolders.has(folder.favourite_id) ? (
+                            <Trash2 className="h-4 w-4 mr-2 text-red-500" />
+                          ) : (
+                            <Bookmark className="h-4 w-4 mr-2" />
+                          )}
+                          {folder.favourite_name}
+                          <span className="ml-auto text-sm text-muted-foreground">
+                            {folder.post_count || 0} bài viết
+                          </span>
+                        </Button>
+                      ))}
                     {folders.length > 4 && (
-                      <p className="text-xs text-muted-foreground text-center">
-                        +{folders.length - 4} thư mục khác. Vào trang quản lý
-                        để xem tất cả.
-                      </p>
+                      <Button
+                        variant="ghost"
+                        className="w-full text-sm text-muted-foreground"
+                        onClick={() => setShowAllFolders(!showAllFolders)}
+                      >
+                        {showAllFolders ? "Thu gọn" : `Xem thêm (${folders.length - 4} thư mục)`}
+                      </Button>
                     )}
                   </div>
                 </div>
