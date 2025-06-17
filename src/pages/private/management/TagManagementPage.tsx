@@ -259,8 +259,9 @@ export default function TagManagementPage() {
                             : "text-red-500"
                         )}
                       >
-                        {tag.status}
+                        {tag.status === "active" ? "Hoạt động" : "Không hoạt động"}
                       </TableCell>
+
                       <TableCell className="text-center">
                         <div className="flex justify-center gap-2">
                           <Button size="sm" onClick={() => handleEdit(tag)}>
