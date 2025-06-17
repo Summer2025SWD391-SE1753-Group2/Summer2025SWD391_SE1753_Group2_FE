@@ -134,7 +134,7 @@ export default function UnitManagementPage() {
       toast.success("Đã xoá đơn vị");
     } catch {
       toast.dismiss();
-      toast.error("Không thể xoá đơn vị.");
+      toast.error("Tài Khoản không đủ quyền hạn, không thể xoá đơn vị.");
     }
   };
 

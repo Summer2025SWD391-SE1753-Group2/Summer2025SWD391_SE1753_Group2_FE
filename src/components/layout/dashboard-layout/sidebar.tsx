@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth";
@@ -15,6 +15,11 @@ import {
   Bookmark,
   ListCheck,
   Home,
+  Tag,
+  Weight,
+  Ham,
+  Package2,
+  LogOut,
 } from "lucide-react";
 import BrandLogo from "@/components/common/brand-logo";
 import { paths } from "@/utils/constant/path";
@@ -72,25 +77,25 @@ const sidebarLinks: SidebarLink[] = [
       {
         title: "Quản lý thẻ",
         href: paths.moderator.tagManagement,
-        icon: <Package className="h-5 w-5" />,
+        icon: <Tag className="h-5 w-5" />,
         roles: ["moderator"],
       },
       {
         title: "Quản lý chủ đề",
         href: paths.moderator.topicManagement,
-        icon: <Package className="h-5 w-5" />,
+        icon: <Package2 className="h-5 w-5" />,
         roles: ["moderator"],
       },
       {
         title: "Quản lý nguyên liệu",
         href: paths.moderator.materialManagement,
-        icon: <Package className="h-5 w-5" />,
+        icon: <Ham className="h-5 w-5" />,
         roles: ["moderator"],
       },
       {
         title: "Quản lý định lượng",
         href: paths.moderator.unitManagement,
-        icon: <Package className="h-5 w-5" />,
+        icon: <Weight className="h-5 w-5" />,
         roles: ["moderator"],
       },
     ],
@@ -105,7 +110,7 @@ const sidebarLinks: SidebarLink[] = [
   {
     title: "Duyệt bài viết",
     href: paths.admin.approvePost,
-    icon: <ListCheck className="h-5 w-5" />,
+    icon: <Tag className="h-5 w-5" />,
     roles: ["admin"],
   },
   {
@@ -121,21 +126,21 @@ const sidebarLinks: SidebarLink[] = [
         roles: ["admin"],
       },
       {
-        title: "Quản lý nguyên liệu",
-        href: paths.admin.materialManagement,
-        icon: <Package className="h-5 w-5" />,
+        title: "Quản lý chủ đề",
+        href: paths.admin.topicManagement,
+        icon: <Package2 className="h-5 w-5" />,
         roles: ["admin"],
       },
       {
-        title: "Quản lý chủ đề",
-        href: paths.admin.topicManagement,
-        icon: <Package className="h-5 w-5" />,
+        title: "Quản lý nguyên liệu",
+        href: paths.admin.materialManagement,
+        icon: <Ham className="h-5 w-5" />,
         roles: ["admin"],
       },
       {
         title: "Quản lý định lượng",
         href: paths.admin.unitManagement,
-        icon: <Package className="h-5 w-5" />,
+        icon: <Weight className="h-5 w-5" />,
         roles: ["admin"],
       },
     ],
@@ -146,21 +151,21 @@ const sidebarLinks: SidebarLink[] = [
 const bottomLinks: SidebarLink[] = [
   {
     title: "Trang chủ",
-    href: "/",
+    href: paths.home,
     icon: <Home className="h-5 w-5" />,
-    roles: ["admin"],
+    roles: ["user","moderator","admin"],
   },
   {
     title: "Người dùng",
     href: paths.profile,
     icon: <Users className="h-5 w-5" />,
-    roles: ["admin"],
+    roles: ["user","moderator","admin"],
   },
   {
     title: "Cài đặt",
     href: paths.setting,
     icon: <Settings className="h-5 w-5" />,
-    roles: ["admin"],
+    roles: ["user","moderator","admin"],
   },
 ];
 
@@ -188,6 +193,13 @@ const DashboardSidebar = () => {
       ...prev,
       [href]: !prev[href],
     }));
+  };
+  const { logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate(paths.login);
   };
 
   return (
@@ -288,6 +300,17 @@ const DashboardSidebar = () => {
               </Link>
             </Button>
           ))}
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-red-600"
+            onClick={handleLogout}
+          >
+            <div className="flex items-center gap-2">
+              <LogOut className="h-5 w-5" />
+              Đăng xuất
+            </div>
+          </Button>
+
         </div>
       </div>
     </div>

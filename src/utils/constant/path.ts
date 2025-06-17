@@ -1,21 +1,24 @@
 import { UserRole } from "@/types/user-role";
 
 export const paths = {
-  home: "/",
+  home: "",
   profile: "profile",
   setting: "setting",
   login: "/auth/login",
   register: "/auth/register",
   googleCallback: "/auth/google/callback",
-
   postDetail: "/posts/:postId",
+
+
   //user
   user: {
+    home: "/user/",
     dashboard: "/user/my-posts",
     createPost: "/user/posts/create",
-    profile: "user/profile",
-    setting: "user/setting",
+    profile: "/user/profile",
+    setting: "/user/setting",
     editPost: "/user/posts/edit/:postId",
+    postDetail: "/user/posts/:postId",
     favorites: "/user/favorites",
     favoritesDetail: "/user/favorites/:favouriteId",
 
@@ -23,9 +26,11 @@ export const paths = {
 
   // Moderator
   moderator: {
-    dashboard: "/moderator",
+    home: "/moderator/",
+    dashboard: "/moderator/dashboard",
     profile: "/moderator/profile",
     setting: "/moderator/setting",
+    postDetail: "/moderator/posts/:postId",
     approvePost: "/moderator/approvepost",
     tagManagement: "/moderator/tag-management",
     materialManagement: "/moderator/material-management",
@@ -34,9 +39,11 @@ export const paths = {
   },
   //admin
   admin: {
-    dashboard: "/admin",
+    home: "/admin/",
+    dashboard: "/admin/dashboard",
     profile: "/admin/profile",
     setting: "/admin/settings",
+    postDetail: "/admin/posts/:postId",
     approvePost: "/admin/approvepost",
     tagManagement: "/admin/tag-management",
     materialManagement: "/admin/material-management",
@@ -51,11 +58,11 @@ export const paths = {
 export const getDefaultRouteByRole = (role_name?: UserRole) => {
   switch (role_name) {
     case "admin":
-      return paths.admin.dashboard;
+      return paths.admin.home;
     case "moderator":
-      return paths.moderator.dashboard;
+      return paths.moderator.home;
     case "user":
-      return paths.home;
+      return paths.user.home;
     case "guest":
     default:
       return paths.login;

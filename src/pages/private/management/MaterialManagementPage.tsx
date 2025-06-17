@@ -144,7 +144,7 @@ export default function MaterialManagementPage() {
       toast.success("Đã xoá nguyên liệu");
     } catch {
       toast.dismiss();
-      toast.error("Không thể xoá nguyên liệu.");
+      toast.error("Tài Khoản không đủ quyền hạn, không thể xoá nguyên liệu.");
     }
   };
 

@@ -57,6 +57,7 @@ export const PostDetailPage = () => {
   const [showDeletedComments, setShowDeletedComments] =
     useState<boolean>(false);
 
+  const role = user?.role?.role_name || "user";
   // Count deleted comments to show in toggle button
   const countDeletedComments = (commentsList: Comment[]): number => {
     let count = 0;
@@ -325,7 +326,7 @@ export const PostDetailPage = () => {
       {/* Back Button */}
       <Button
         variant="ghost"
-        onClick={() => navigate("/")}
+        onClick={() => navigate(`/${role}`)}
         className="mb-6 hover:bg-muted"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />

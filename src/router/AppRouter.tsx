@@ -23,7 +23,8 @@ import DetailFavoritePage from "@/pages/private/DetailFavoritePage";
 import MyPostsPage from "@/pages/user/posts/MyPostsPage";
 import EditPostPage from "@/pages/user/posts/EditPostPage";
 import UnitManagementPage from "@/pages/private/management/UnitManagementPage";
-import SettingPage from "@/pages/SettingPage";
+import SettingPage from "@/pages/private/management/SettingPage";
+
 
 const router = createBrowserRouter([
   {
@@ -56,32 +57,44 @@ const router = createBrowserRouter([
   },
   //user
   {
-    path: "/user",
+    path: paths.user.home,
     element: (
       <ProtectedRoute>
         <DashboardLayout />
       </ProtectedRoute>
     ),
     children: [
-      { path: paths.user.createPost, element: <CreatePostPage /> },
+      { index: true, element: <HomePage /> },
       { path: paths.user.dashboard, element: <MyPostsPage /> },
+
+
+      { path: paths.user.createPost, element: <CreatePostPage /> },
       { path: paths.user.editPost, element: <EditPostPage /> },
+      { path: paths.user.postDetail, element: <PostDetailPage /> },
       { path: paths.user.favorites, element: <FavoritesPage /> },
       { path: paths.user.favoritesDetail, element: <DetailFavoritePage /> },
+
+      { path: paths.user.profile, element: <ProfilePage /> },
+      { path: paths.user.setting, element: <SettingPage /> },
+
     ],
   },
   //moderator
   {
-    path: paths.moderator.dashboard,
+    path: paths.moderator.home,
     element: (
       <ProtectedRoute>
         <DashboardLayout />
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <DashboardPage /> },
+      { index: true, element: <HomePage /> },
+      { path: paths.moderator.postDetail, element: <PostDetailPage /> },
       { path: paths.moderator.profile, element: <ProfilePage /> },
       { path: paths.moderator.setting, element: <SettingPage /> },
+
+      { path: paths.moderator.dashboard, element: <DashboardPage /> },
+
       { path: paths.moderator.approvePost, element: <ApprovePostPage /> },
       { path: paths.moderator.materialManagement, element: <MaterialManagementPage />, },
       { path: paths.moderator.tagManagement, element: <TagManagementPage /> },
@@ -91,16 +104,20 @@ const router = createBrowserRouter([
   },
   //admin
   {
-    path: paths.admin.dashboard,
+    path: paths.admin.home,
     element: (
       <ProtectedRoute>
         <DashboardLayout />
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <DashboardPage /> },
+      { index: true, element: <HomePage /> },
+      { path: paths.admin.postDetail, element: <PostDetailPage /> },
       { path: paths.admin.profile, element: <ProfilePage /> },
       { path: paths.admin.setting, element: <SettingPage /> },
+
+      { path: paths.admin.dashboard, element: <DashboardPage /> },
+
       { path: paths.admin.approvePost, element: <ApprovePostPage /> },
       { path: paths.admin.materialManagement, element: <MaterialManagementPage />, },
       { path: paths.admin.tagManagement, element: <TagManagementPage /> },

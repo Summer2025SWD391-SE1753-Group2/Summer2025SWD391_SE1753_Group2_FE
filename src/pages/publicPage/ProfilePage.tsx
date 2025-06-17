@@ -5,9 +5,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { UserProfile } from "@/types/account";
+import { Check, Crown, Shield, User } from "lucide-react";
 
 // Icons
-import { ShieldCheck, ShieldHalf, UserRound } from "lucide-react";
 
 const getInitials = (name: string = "") =>
   name
@@ -23,19 +23,19 @@ const getRoleInfo = (role: string) => {
       return {
         label: "Quản trị viên",
         className: "bg-red-100 text-red-700",
-        icon: <ShieldCheck className="w-4 h-4 mr-1" />,
+        icon: <Crown className="w-4 h-4 mr-1" />,
       };
     case "moderator":
       return {
         label: "Kiểm duyệt viên",
         className: "bg-blue-100 text-blue-700",
-        icon: <ShieldHalf className="w-4 h-4 mr-1" />,
+        icon: <Shield className="w-4 h-4 mr-1" />,
       };
     default:
       return {
         label: "Thành viên",
         className: "bg-green-100 text-green-700",
-        icon: <UserRound className="w-4 h-4 mr-1" />,
+        icon: <User className="w-4 h-4 mr-1" />,
       };
   }
 };
@@ -106,12 +106,20 @@ const ProfilePage = () => {
               {/* Status badge */}
               <Badge
                 className={cn(
-                  "px-4 py-1.5 text-sm font-semibold",
+                  "px-4 py-1.5 text-sm font-semibold flex items-center gap-1",
                   getStatusStyle(profile.status)
                 )}
               >
-                {profile.status === "active" ? "Hoạt động" : "Không hoạt động"}
+                {profile.status === "active" ? (
+                  <>
+                    Hoạt động
+                    <Check />
+                  </>
+                ) : (
+                  <>Không hoạt động</>
+                )}
               </Badge>
+
             </div>
           </div>
         </div>
