@@ -137,7 +137,7 @@ export const authService = {
     params.append("password", data.password);
     params.append("scope", "");
 
-    console.log("🚀 Login attempt:", { loginValue, password: "***" });
+    console.log("Login attempt:", { loginValue, password: "***" });
 
     try {
       const res = await axiosInstance.post<AuthResponse>(
