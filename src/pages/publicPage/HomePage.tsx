@@ -55,13 +55,13 @@ export const HomePage = () => {
         {isAuthenticated && user && (
           <div className="flex gap-2">
             <Button asChild className="bg-orange-600 hover:bg-orange-700">
-              <Link to={paths.createPost}>
+              <Link to={paths.user.createPost}>
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Đăng công thức mới
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link to={paths.myPosts}>Quản lý bài viết</Link>
+              <Link to={paths.user.dashboard}>Quản lý bài viết</Link>
             </Button>
           </div>
         )}

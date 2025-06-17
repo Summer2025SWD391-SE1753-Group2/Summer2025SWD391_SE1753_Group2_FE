@@ -2,36 +2,46 @@ import { UserRole } from "@/types/user-role";
 
 export const paths = {
   home: "/",
-  profile: "/profile",
-
-  // Auth
+  profile: "profile",
+  setting: "setting",
   login: "/auth/login",
   register: "/auth/register",
   googleCallback: "/auth/google/callback",
 
-  // Posts
-  createPost: "/user/posts/create",
-  editPost: "/user/posts/edit/:postId",
   postDetail: "/posts/:postId",
+  //user
+  user: {
+    dashboard: "/user/my-posts",
+    createPost: "/user/posts/create",
+    profile: "user/profile",
+    setting: "user/setting",
+    editPost: "/user/posts/edit/:postId",
+    favorites: "/user/favorites",
+    favoritesDetail: "/user/favorites/:favouriteId",
 
-  // Favorites
-  favorites: "/user/favorites",
-  favoritesDetail: "/user/favorites/:favouriteId",
-
-  // My Posts
-  myPosts: "/user/my-posts",
+  },
 
   // Moderator
   moderator: {
     dashboard: "/moderator",
     profile: "/moderator/profile",
+    setting: "/moderator/setting",
     approvePost: "/moderator/approvepost",
     tagManagement: "/moderator/tag-management",
     materialManagement: "/moderator/material-management",
     topicManagement: "/moderator/topic-management",
+    unitManagement: "/moderator/unit-management",
   },
+  //admin
   admin: {
     dashboard: "/admin",
+    profile: "/admin/profile",
+    setting: "/admin/settings",
+    approvePost: "/admin/approvepost",
+    tagManagement: "/admin/tag-management",
+    materialManagement: "/admin/material-management",
+    topicManagement: "/admin/topic-management",
+    unitManagement: "/admin/unit-management",
   },
 
   // Not found

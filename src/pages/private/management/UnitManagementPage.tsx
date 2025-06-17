@@ -1,41 +1,29 @@
 import React, { useEffect, useState } from "react";
+import {
+  getAllUnits,
+  createUnit,
+  updateUnit,
+  deleteUnit,
+} from "@/services/units/unitService";
 import { toast } from "sonner";
-import {
-  getAllMaterials,
-  createMaterial,
-  updateMaterial,
-  deleteMaterial,
-} from "@/services/materials/materialService";
-import { getAllUnits } from "@/services/units/unitService";
-import type { Material } from "@/types/material";
-import type { Unit } from "@/types/unit";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
-  AlertDialogCancel,
+  AlertDialogTrigger,
   AlertDialogContent,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogFooter,
+  AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import {
@@ -45,120 +33,122 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
-import { UnitCombobox } from "@/components/common/UnitCombobox";
+import { Unit } from "@/types/unit";
 
-export default function MaterialManagementPage() {
-  const [materials, setMaterials] = useState<Material[]>([]);
+export default function UnitManagementPage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
-  const [editUnit, setEditUnit] = useState("");
-
+  const [editStatus, setEditStatus] = useState<"active" | "inactive">("active");
   const [newName, setNewName] = useState("");
-  const [newUnit, setNewUnit] = useState("");
+  const [newStatus, setNewStatus] = useState<"active" | "inactive">("active");
 
   const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
-    const fetchData = async () => {
-      toast.loading("Đang tải nguyên liệu...");
+    const fetchUnits = async () => {
+      toast.loading("Đang tải đơn vị...");
       try {
-        const [materialsData, unitsData] = await Promise.all([
-          getAllMaterials(),
-          getAllUnits(),
-        ]);
-        setMaterials(materialsData);
-        setUnits(unitsData);
+        const data = await getAllUnits();
+        setUnits(data);
         toast.dismiss();
       } catch {
         toast.dismiss();
-        toast.error("Không thể tải dữ liệu.");
+        toast.error("Không thể tải đơn vị.");
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+
+    fetchUnits();
   }, []);
 
   const handleCreate = async () => {
-    if (!newName.trim() || !newUnit || !user?.account_id) return;
+    if (!newName.trim() || !user?.account_id) return;
+
     try {
       setCreating(true);
-      toast.loading("Đang tạo nguyên liệu...");
-      const newMaterial = await createMaterial({
+      toast.loading("Đang tạo đơn vị...");
+      const newUnit = await createUnit({
         name: newName,
-        unit: newUnit,
-        status: "active",
-        image_url: "",
+        status: newStatus,
         created_by: user.account_id,
       });
-      setMaterials((prev) => [newMaterial, ...prev]);
+      setUnits((prev) => [newUnit, ...prev]);
       setNewName("");
-      setNewUnit("");
+      setNewStatus("active");
       toast.dismiss();
-      toast.success("Đã tạo nguyên liệu");
+      toast.success(`Đã tạo đơn vị '${newUnit.name}'`);
     } catch {
       toast.dismiss();
-      toast.error("Không thể tạo nguyên liệu.");
+      toast.error("Không thể tạo đơn vị.");
     } finally {
       setCreating(false);
     }
   };
 
-  const handleEdit = (material: Material) => {
-    setEditingId(material.material_id);
-    setEditName(material.name);
-    setEditUnit(material.unit || "");
+  const handleEdit = (unit: Unit) => {
+    setEditingId(unit.unit_id);
+    setEditName(unit.name);
+    setEditStatus(unit.status);
   };
 
   const handleSave = async () => {
     if (!editingId || !user?.account_id) return;
+
     try {
-      toast.loading("Đang cập nhật...");
-      const updated = await updateMaterial(editingId, {
+      toast.loading("Đang cập nhật đơn vị...");
+      const updated = await updateUnit(editingId, {
         name: editName,
-        unit: editUnit,
+        status: editStatus,
         updated_by: user.account_id,
       });
-      setMaterials((prev) =>
-        prev.map((m) => (m.material_id === editingId ? updated : m))
-      );
+      setUnits((prev) => prev.map((u) => (u.unit_id === editingId ? updated : u)));
       setEditingId(null);
       toast.dismiss();
-      toast.success("Đã cập nhật nguyên liệu.");
+      toast.success(`Đơn vị '${updated.name}' đã được cập nhật.`);
     } catch {
       toast.dismiss();
-      toast.error("Cập nhật thất bại.");
+      toast.error("Không thể cập nhật đơn vị.");
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
-      toast.loading("Đang xoá...");
-      await deleteMaterial(id);
-      setMaterials((prev) => prev.filter((m) => m.material_id !== id));
+      toast.loading("Đang xoá đơn vị...");
+      await deleteUnit(id);
+      setUnits((prev) => prev.filter((u) => u.unit_id !== id));
       toast.dismiss();
-      toast.success("Đã xoá nguyên liệu");
+      toast.success("Đã xoá đơn vị");
     } catch {
       toast.dismiss();
-      toast.error("Không thể xoá nguyên liệu.");
+      toast.error("Không thể xoá đơn vị.");
     }
   };
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Quản lý Nguyên liệu</h1>
+        <h1 className="text-2xl font-bold">Quản lý Đơn vị</h1>
         <Dialog>
           <DialogTrigger asChild>
-            <Button size="sm">+ Thêm Nguyên liệu</Button>
+            <Button size="sm">+ Thêm Đơn vị</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Thêm nguyên liệu mới</DialogTitle>
+              <DialogTitle>Tạo đơn vị mới</DialogTitle>
             </DialogHeader>
             <form
               onSubmit={(e) => {
@@ -168,16 +158,22 @@ export default function MaterialManagementPage() {
               className="space-y-4"
             >
               <Input
-                placeholder="Tên nguyên liệu"
+                placeholder="Tên đơn vị"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
               />
-              <UnitCombobox
-                units={units}
-                value={newUnit}
-                onChange={setNewUnit}
-              />
-
+              <Select
+                value={newStatus}
+                onValueChange={(val) => setNewStatus(val as "active" | "inactive")}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Đang sử dụng</SelectItem>
+                  <SelectItem value="inactive">Ngưng sử dụng</SelectItem>
+                </SelectContent>
+              </Select>
               <DialogFooter>
                 <Button type="submit" disabled={creating}>
                   {creating ? "Đang tạo..." : "Tạo"}
@@ -190,20 +186,22 @@ export default function MaterialManagementPage() {
 
       {loading ? (
         <p>Đang tải dữ liệu...</p>
+      ) : units.length === 0 ? (
+        <p>Không có đơn vị nào</p>
       ) : (
-        <div className="rounded-xl border shadow-sm overflow-auto">
+        <div className="rounded-xl border shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-1/3">Tên nguyên liệu</TableHead>
-                <TableHead className="w-1/4">Đơn vị</TableHead>
-                <TableHead className="text-center pr-6">Hành động</TableHead>
+                <TableHead className="w-1/3">Tên đơn vị</TableHead>
+                <TableHead className="w-1/3">Trạng thái</TableHead>
+                <TableHead className="text-center">Hành động</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {materials.map((material) => (
-                <TableRow key={material.material_id}>
-                  {editingId === material.material_id ? (
+              {units.map((unit) => (
+                <TableRow key={unit.unit_id}>
+                  {editingId === unit.unit_id ? (
                     <>
                       <TableCell>
                         <Input
@@ -212,19 +210,24 @@ export default function MaterialManagementPage() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Select value={editUnit} onValueChange={setEditUnit}>
-                          <UnitCombobox
-                            units={units}
-                            value={editUnit}
-                            onChange={setEditUnit}
-                          />
+                        <Select
+                          value={editStatus}
+                          onValueChange={(val) =>
+                            setEditStatus(val as "active" | "inactive")
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Trạng thái" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">Đang sử dụng</SelectItem>
+                            <SelectItem value="inactive">Ngưng sử dụng</SelectItem>
+                          </SelectContent>
                         </Select>
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex justify-center gap-2">
-                          <Button size="sm" onClick={handleSave}>
-                            Lưu
-                          </Button>
+                          <Button size="sm" onClick={handleSave}>Lưu</Button>
                           <Button
                             size="sm"
                             variant="secondary"
@@ -237,35 +240,29 @@ export default function MaterialManagementPage() {
                     </>
                   ) : (
                     <>
-                      <TableCell>{material.name}</TableCell>
-                      <TableCell>{material.unit}</TableCell>
+                      <TableCell>{unit.name}</TableCell>
+                      <TableCell
+                        className={cn(
+                          "font-medium",
+                          unit.status === "active" ? "text-green-600" : "text-red-500"
+                        )}
+                      >
+                        {unit.status === "active" ? "Đang sử dụng" : "Ngưng sử dụng"}
+                      </TableCell>
                       <TableCell className="text-center">
                         <div className="flex justify-center gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleEdit(material)}
-                          >
-                            Sửa
-                          </Button>
+                          <Button size="sm" onClick={() => handleEdit(unit)}>Sửa</Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="destructive">
-                                Xoá
-                              </Button>
+                              <Button size="sm" variant="destructive">Xoá</Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Bạn có chắc không?
-                                </AlertDialogTitle>
+                                <AlertDialogTitle>Bạn có chắc không?</AlertDialogTitle>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Huỷ</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() =>
-                                    handleDelete(material.material_id)
-                                  }
-                                >
+                                <AlertDialogAction onClick={() => handleDelete(unit.unit_id)}>
                                   Xác nhận
                                 </AlertDialogAction>
                               </AlertDialogFooter>

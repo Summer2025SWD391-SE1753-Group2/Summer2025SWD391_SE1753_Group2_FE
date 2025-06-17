@@ -102,6 +102,21 @@ export const PostDetailPage = () => {
       try {
         setLoading(true);
         const postData = await getPostById(postId);
+
+        // Check quyền truy cập nếu bài viết chưa được duyệt
+        const isAuthor = user?.account_id === postData.created_by;
+        const isModerator = user?.role.role_name === "moderator" || user?.role.role_name === "admin";
+
+        if (
+          (postData.status === "waiting" || postData.status === "rejected") &&
+          !isAuthor &&
+          !isModerator
+        ) {
+          toast.warning("Bạn không có quyền truy cập bài viết này.");
+          navigate("/");
+          return;
+        }
+
         setPost(postData);
       } catch (err) {
         const errorMessage =
