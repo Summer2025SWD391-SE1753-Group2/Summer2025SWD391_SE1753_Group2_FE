@@ -57,13 +57,15 @@ export const PostDetailPage = () => {
     new Set()
   );
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [showDeletedComments, setShowDeletedComments] = useState<boolean>(false);
+  const [showDeletedComments, setShowDeletedComments] =
+    useState<boolean>(false);
 
   useEffect(() => {
     if (!postId) return;
     setIsBookmarked(isPostSaved(postId));
   }, [postId, isPostSaved]);
-
+  
+  // Count deleted comments to show in toggle button
   const countDeletedComments = (commentsList: Comment[]): number => {
     let count = 0;
     for (const comment of commentsList) {
@@ -100,6 +102,7 @@ export const PostDetailPage = () => {
       return;
     }
 
+    // Reset comments state when postId changes
     setComments([]);
     setCommentsLoaded(false);
 
@@ -121,6 +124,7 @@ export const PostDetailPage = () => {
     fetchPost();
   }, [postId, navigate]);
 
+  // Separate useEffect for loading comments after post is loaded
   useEffect(() => {
     if (post && post.status === "approved" && !commentsLoaded) {
       fetchComments();
@@ -131,21 +135,23 @@ export const PostDetailPage = () => {
     }
   }, [post, fetchComments, commentsLoaded]);
 
+  // Auto-refresh comments every 30 seconds
   useEffect(() => {
     if (!post || post.status !== "approved" || !commentsLoaded) return;
 
     const intervalId = setInterval(() => {
       fetchComments();
       setLastRefresh(new Date());
-    }, 30000);
+    }, 30000);// 30 seconds
 
     return () => clearInterval(intervalId);
   }, [post, commentsLoaded, fetchComments]);
 
+  // Force re-render every 60 seconds to update relative time display
   useEffect(() => {
     const intervalId = setInterval(() => {
       setLastRefresh(new Date());
-    }, 60000);
+    }, 60000);// 60 seconds for time display update
 
     return () => clearInterval(intervalId);
   }, []);
@@ -160,6 +166,8 @@ export const PostDetailPage = () => {
       });
       toast.success("Đã thêm bình luận!");
       setNewComment("");
+
+      // Refresh comments after creating new one
       await fetchComments();
     } catch (err) {
       const errorMessage =
@@ -181,7 +189,11 @@ export const PostDetailPage = () => {
         parent_comment_id: parentCommentId,
       });
       toast.success("Đã thêm phản hồi!");
+
+      // Cancel reply mode to avoid duplicate
       setReplyingTo(null);
+
+      // Refresh comments after creating new reply
       await fetchComments();
     } catch (err) {
       const errorMessage =
@@ -195,9 +207,13 @@ export const PostDetailPage = () => {
       setDeletingComments((prev) => new Set(prev).add(commentId));
       await deleteComment(commentId);
       toast.success("Đã xóa bình luận!");
+
+      // Cancel any active reply to the deleted comment
       if (replyingTo === commentId) {
         setReplyingTo(null);
       }
+
+      // Refresh comments after deleting
       await fetchComments();
     } catch (err) {
       const errorMessage =
@@ -262,6 +278,7 @@ export const PostDetailPage = () => {
   };
 
   const formatDate = (dateString: string) => {
+    // Use lastRefresh to trigger re-calculation of relative time
     return formatRelativeTime(dateString, lastRefresh);
   };
 
@@ -278,7 +295,7 @@ export const PostDetailPage = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center p-8">
-          <Loader2 className="w-8 w-8 animate-spin text-orange-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
           <span className="ml-2">Đang tải bài viết...</span>
         </div>
       </div>
@@ -304,15 +321,17 @@ export const PostDetailPage = () => {
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       <Button
         variant="ghost"
+        /* Back Button */
         onClick={() => navigate("/")}
         className="mb-6 hover:bg-muted"
       >
-        <ArrowLeft className="w-4 w-4 mr-2" />
+        <ArrowLeft className="w-4 h-4 mr-2" />
         Quay lại
       </Button>
-
+      {/* Post Content */}
       <Card className="mb-6">
         <CardHeader className="pb-4">
+          {/* Author Info */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Avatar className="h-12 w-12">
@@ -331,7 +350,7 @@ export const PostDetailPage = () => {
                 </p>
               </div>
             </div>
-
+            {/* Status Badge */}
             <Badge
               variant="outline"
               className={cn(
@@ -343,11 +362,12 @@ export const PostDetailPage = () => {
               {getStatusText(post.status)}
             </Badge>
           </div>
-
+          {/* Title */}
           <h1 className="text-2xl font-bold mt-4">{post.title}</h1>
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Images Gallery - Moved to top, removed title */}
           {post.images && post.images.length > 0 && (
             <div>
               {post.images.length === 1 ? (
@@ -386,13 +406,13 @@ export const PostDetailPage = () => {
               )}
             </div>
           )}
-
+          {/* Content */}
           <div className="prose max-w-none">
             <p className="text-base leading-relaxed whitespace-pre-wrap">
               {post.content}
             </p>
           </div>
-
+          {/* Materials */}
           {post.materials && post.materials.length > 0 && (
             <div className="bg-gray-50 border rounded-lg p-6">
               <h3 className="font-semibold text-lg mb-4">
@@ -418,7 +438,7 @@ export const PostDetailPage = () => {
               </div>
             </div>
           )}
-
+          {/* Steps */}
           {post.steps && post.steps.length > 0 && (
             <div className="bg-gray-50 border rounded-lg p-6">
               <h3 className="font-semibold text-lg mb-6">Các bước thực hiện</h3>
@@ -441,7 +461,7 @@ export const PostDetailPage = () => {
               </div>
             </div>
           )}
-
+          {/* Tags & Topics */}
           {(post.tags.length > 0 || post.topics.length > 0) && (
             <div className="space-y-3">
               {post.tags.length > 0 && (
@@ -482,7 +502,7 @@ export const PostDetailPage = () => {
               )}
             </div>
           )}
-
+          {/* Action Buttons */}
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="flex items-center gap-1">
               <Button
@@ -518,13 +538,14 @@ export const PostDetailPage = () => {
           </div>
         </CardContent>
       </Card>
-
+      {/* Comments Section */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">
               Bình luận ({comments.length})
             </h3>
+            {/* Toggle deleted comments visibility - only show if there are deleted comments */}
             {deletedCommentsCount > 0 && (
               <Button
                 variant="ghost"
@@ -540,6 +561,7 @@ export const PostDetailPage = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Add Comment Form - Only show for approved posts */}
           {post?.status === "approved" && (
             <div className="space-y-3">
               <Textarea
@@ -558,10 +580,10 @@ export const PostDetailPage = () => {
               </div>
             </div>
           )}
-
+          {/* Comments List */}
           {commentsLoading ? (
             <div className="flex justify-center items-center p-4">
-              <Loader2 className="w-6 w-6 animate-spin text-orange-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
               <span className="ml-2">Đang tải bình luận...</span>
             </div>
           ) : (
@@ -586,7 +608,7 @@ export const PostDetailPage = () => {
               ))}
               {comments.length === 0 && (
                 <div className="text-center py-8">
-                  <MessageCircle className="w-12 w-12 text-muted-foreground mx-auto mb-3" />
+                  <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                   <p className="text-muted-foreground">
                     {post?.status === "approved"
                       ? "Chưa có bình luận nào. Hãy là người đầu tiên bình luận!"
