@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const baseURL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 // Cookie utilities
 const getCookie = (name: string): string | null => {

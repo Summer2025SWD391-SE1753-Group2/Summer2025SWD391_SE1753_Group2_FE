@@ -19,7 +19,6 @@ export default defineConfig({
       "@/lib": resolve(__dirname, "src/lib"),
       "@/store": resolve(__dirname, "src/store"),
       "@/styles": resolve(__dirname, "src/styles"),
-      "@/assets": resolve(__dirname, "src/assets"),
       "@/features": resolve(__dirname, "src/features"),
       "@/router": resolve(__dirname, "src/router"),
     },
