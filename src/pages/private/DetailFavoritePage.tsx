@@ -86,11 +86,11 @@ export default function DetailFavoritePage() {
                   <div className="flex">
                     {/* Image preview */}
                     {post.images && post.images.length > 0 && (
-                      <div className="w-32 h-24 flex-shrink-0">
+                      <div className="w-40 h-32 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-md">
                         <img
                           src={post.images[0].image_url}
                           alt={post.images[0].caption || post.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover aspect-[4/3] transform transition-transform duration-300 hover:scale-105"
                         />
                       </div>
                     )}
@@ -99,17 +99,14 @@ export default function DetailFavoritePage() {
                     <div className="flex-1 p-4">
                       <div className="flex justify-between items-start">
                         <div className="flex-1 pr-4">
-                          <a
-                            href={paths.postDetail.replace(
-                              ":postId",
-                              post.post_id
-                            )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-lg font-semibold text-gray-900 hover:text-orange-600 transition-colors line-clamp-2"
+                          <div
+                            onClick={() =>
+                              navigate(paths.postDetail.replace(":postId", post.post_id))
+                            }
+                            className="text-lg font-semibold text-gray-900 hover:text-orange-600 transition-colors line-clamp-2 cursor-pointer"
                           >
                             {post.title}
-                          </a>
+                          </div>
 
                           {post.content && (
                             <p className="text-sm text-gray-600 mt-2 line-clamp-2">

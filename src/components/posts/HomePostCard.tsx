@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import type { Post } from "@/types/post";
-import { BookmarkModal } from "./BookmarkModal";
+import { BookmarkModal } from "@/components/posts/BookmarkModal";
+import { useFavoriteStore } from "@/stores/favoriteStore";
 
 interface HomePostCardProps {
   post: Post;
@@ -29,6 +31,13 @@ export function HomePostCard({
   onShare,
   className,
 }: HomePostCardProps) {
+  const { isPostSaved, initializeFavorites } = useFavoriteStore();
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  useEffect(() => {
+    setIsBookmarked(isPostSaved(post.post_id));
+  }, [post.post_id, isPostSaved]);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("vi-VN", {
@@ -52,7 +61,6 @@ export function HomePostCard({
   return (
     <Card className={cn("overflow-hidden", className)}>
       <CardHeader className="pb-3">
-        {/* Author Info */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
@@ -75,13 +83,9 @@ export function HomePostCard({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Title */}
         <h3 className="text-lg font-semibold line-clamp-2">{post.title}</h3>
-
-        {/* Content Preview */}
         <p className="text-muted-foreground line-clamp-3">{post.content}</p>
 
-        {/* Images Preview */}
         {post.images && post.images.length > 0 && (
           <div>
             {post.images.length === 1 ? (
@@ -118,7 +122,6 @@ export function HomePostCard({
           </div>
         )}
 
-        {/* Tags & Topics */}
         {(post.tags.length > 0 || post.topics.length > 0) && (
           <div className="flex flex-wrap gap-2">
             {post.tags.slice(0, 3).map((tag) => (
@@ -139,31 +142,6 @@ export function HomePostCard({
           </div>
         )}
 
-        {/* Materials Section */}
-        {/* {post.materials && post.materials.length > 0 && (
-          <div className="mt-4">
-            <h4 className="text-sm font-medium mb-2">Nguyên liệu:</h4>
-            <div className="flex flex-wrap gap-1">
-              {post.materials.slice(0, 4).map((material) => (
-                <Badge
-                  key={material.material_id}
-                  variant="outline"
-                  className="text-xs"
-                >
-                  {material.material?.name} ({material.quantity} {material.unit}
-                  )
-                </Badge>
-              ))}
-              {post.materials.length > 4 && (
-                <Badge variant="outline" className="text-xs">
-                  +{post.materials.length - 4} nguyên liệu khác
-                </Badge>
-              )}
-            </div>
-          </div>
-        )} */}
-
-        {/* Action Buttons */}
         <div className="flex items-center justify-between pt-2 border-t">
           <div className="flex items-center gap-4">
             <Button
@@ -199,7 +177,7 @@ export function HomePostCard({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-3 text-muted-foreground hover:text-orange-500"
+                className="h-8 px-3 text-muted-foreground"
               >
                 <Bookmark className="h-4 w-4 mr-1" />
                 Lưu
