@@ -95,17 +95,34 @@ const searchPostsByTopic = async (
 };
 
 // Search posts by tag
+// postService.ts
 const searchPostsByTag = async (
   tagName: string,
   skip: number = 0,
   limit: number = 100
 ): Promise<Post[]> => {
-  const response = await axiosInstance.get<Post[]>(
-    `/api/v1/posts/search/by-tag/?tag_name=${encodeURIComponent(
-      tagName
-    )}&skip=${skip}&limit=${limit}`
-  );
-  return response.data;
+  try {
+    const response = await axiosInstance.get<Post[]>(
+      `/api/v1/posts/search/by-tag/?tag_name=${encodeURIComponent(
+        tagName
+      )}&skip=${skip}&limit=${limit}`
+    );
+    return response.data || [];
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as {
+        response: { status: number; data?: { message?: string } };
+      };
+      if (axiosError.response?.status === 404) {
+        return [];
+      }
+      throw new Error(
+        axiosError.response?.data?.message ||
+          `Không tìm thấy bài viết với thẻ: ${tagName}`
+      );
+    }
+    throw new Error("Lỗi khi tìm kiếm bài viết theo thẻ");
+  }
 };
 
 // Search posts by title
@@ -122,7 +139,7 @@ const searchPostsByTitle = async (
   return response.data;
 };
 
-export { searchPostsByTopic, searchPostsByTag, searchPostsByTitle };
+export { searchPostsByTopic, searchPostsByTag, searchPostsByTitle, };
 
 // Moderate post (approve or reject)
 export interface PostModerationRequest {
