@@ -47,7 +47,6 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
       } else {
         await addPost(favoriteId, postId, favoriteName);
       }
-      setIsOpen(false);
     } catch (error) {
       console.error("Error toggling favorite:", error);
       toast.error(
