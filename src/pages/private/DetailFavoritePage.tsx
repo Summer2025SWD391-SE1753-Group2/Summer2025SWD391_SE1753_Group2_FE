@@ -55,7 +55,7 @@ export default function DetailFavoritePage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(paths.favorites)}
+            onClick={() => navigate(paths.user.favorites)}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />

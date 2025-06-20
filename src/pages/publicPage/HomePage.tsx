@@ -39,9 +39,9 @@ export const HomePage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 justify-start">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg p-6">
+      <div className="bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/20 dark:to-red-900/20 p-6">
         <h1 className="text-2xl font-bold text-orange-900 dark:text-orange-100 mb-2">
           {isAuthenticated && user
             ? `Chào mừng ${user.full_name}! 👋`
@@ -55,13 +55,13 @@ export const HomePage = () => {
         {isAuthenticated && user && (
           <div className="flex gap-2">
             <Button asChild className="bg-orange-600 hover:bg-orange-700">
-              <Link to={paths.createPost}>
+              <Link to={paths.user.createPost}>
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Đăng công thức mới
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link to={paths.myPosts}>Quản lý bài viết</Link>
+              <Link to={paths.user.dashboard}>Quản lý bài viết</Link>
             </Button>
           </div>
         )}
@@ -69,9 +69,9 @@ export const HomePage = () => {
 
       {/* Posts Feed */}
 
-      <div className="flex space-y-6 px-100">
+      <div className="max-w-3xl mx-auto px-4">
         {loading ? (
-          <div className="flex justify-center items-center p-8">
+          <div className="flex justify-center items-center  p-8">
             <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
             <span className="ml-2">Đang tải bài viết...</span>
           </div>
