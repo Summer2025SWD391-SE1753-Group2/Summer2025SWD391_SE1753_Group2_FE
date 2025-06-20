@@ -140,12 +140,12 @@ export const useAuthStore = create<AuthState>()(
         if (state.isInitialized) return;
 
         const isAuth = authService.isAuthenticated();
-        console.log("CheckAuth - isAuth:", isAuth);
+        // console.log("CheckAuth - isAuth:", isAuth);
 
         if (isAuth) {
           try {
             const userInfo = await authService.getCurrentUserProfile();
-            console.log("Fetched user info (live):", userInfo);
+            // console.log("Fetched user info (live):", userInfo);
             get().setUser(userInfo);
           } catch {
             console.warn("Failed to fetch user profile, fallback to cookie");

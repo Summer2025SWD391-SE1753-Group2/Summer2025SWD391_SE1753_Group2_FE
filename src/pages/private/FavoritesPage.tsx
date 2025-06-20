@@ -159,7 +159,7 @@ export default function FavoritesPage() {
                           className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-orange-600 transition-colors"
                           onClick={() =>
                             navigate(
-                              paths.favoritesDetail.replace(
+                              paths.user.favoritesDetail.replace(
                                 ":favouriteId",
                                 favorite.favourite_id
                               )
