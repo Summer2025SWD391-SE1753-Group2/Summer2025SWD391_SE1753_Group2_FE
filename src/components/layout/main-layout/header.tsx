@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/stores/auth";
 import { paths } from "@/utils/constant/path";
-import { ChevronDown, Heart, LogOut, User, Sliders, Home } from "lucide-react";
+import { ChevronDown, Heart, LogOut, User, Sliders, Home, LayoutDashboard } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Link, NavLink } from "react-router-dom";
 import {
@@ -164,7 +164,7 @@ const Header = () => {
                       key={post.post_id}
                       to={`/posts/${post.post_id}`}
                       onClick={clearSearch}
-                      className="block p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                      className="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
                     >
                       <span className="font-medium">{post.title}</span>
                       <span className="text-muted-foreground text-sm">
@@ -198,7 +198,7 @@ const Header = () => {
             <span className="sr-only">Trang chủ</span>
           </NavLink>
           <NavLink
-            to={paths.favorites}
+            to={paths.user.favorites}
             className={({ isActive }: { isActive: boolean }) =>
               `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${
                 isActive ? "text-primary" : "text-muted-foreground"
@@ -238,21 +238,21 @@ const Header = () => {
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
-                {(user?.role?.role_name === "moderator" ||
-                  user?.role?.role_name === "admin") && (
-                  <DropdownMenuItem className="flex items-center gap-2">
-                    <Link
-                      to={
-                        paths[user.role.role_name as "moderator" | "admin"]
-                          ?.dashboard || "/moderator"
-                      }
-                      className="flex items-center gap-2 w-full"
-                    >
-                      <User className="h-4 w-4" />
-                      Hồ sơ
-                    </Link>
-                  </DropdownMenuItem>
-                )}
+                {user?.role?.role_name && (
+  <DropdownMenuItem className="flex items-center gap-2">
+    <Link
+      to={
+        paths[user.role.role_name as "user" | "moderator" | "admin"]
+          ?.dashboard
+      }
+      className="flex items-center gap-2 w-full"
+    >
+      <LayoutDashboard className="h-4 w-4" />
+      Quay lại dashboard
+    </Link>
+  </DropdownMenuItem>
+)}
+
                 <DropdownMenuItem className="flex flex-col items-start w-full">
                   <Link
                     to={paths.profile}

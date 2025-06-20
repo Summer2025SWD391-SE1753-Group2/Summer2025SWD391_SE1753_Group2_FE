@@ -40,8 +40,12 @@ export const createUnit = async (data: {
   status: "active" | "inactive";
   created_by: string;
 }): Promise<Unit> => {
-  const response = await axiosInstance.post<Unit>("/api/v1/units/", data);
-  return response.data;
+  try {
+    const response = await axiosInstance.post<Unit>("/api/v1/units/", data);
+    return response.data;
+  } catch {
+    throw new Error("Không thể tạo đơn vị");
+  }
 };
 
 // Cập nhật đơn vị
@@ -49,11 +53,19 @@ export const updateUnit = async (
   unit_id: string,
   data: Partial<Pick<Unit, "name" | "description" | "status" | "updated_by">>
 ): Promise<Unit> => {
-  const response = await axiosInstance.put<Unit>(`/api/v1/units/${unit_id}`, data);
-  return response.data;
+  try {
+    const response = await axiosInstance.put<Unit>(`/api/v1/units/${unit_id}`, data);
+    return response.data;
+  } catch {
+    throw new Error("Không thể cập nhật đơn vị");
+  }
 };
 
 // Xoá đơn vị
 export const deleteUnit = async (unit_id: string): Promise<void> => {
-  await axiosInstance.delete(`/api/v1/units/${unit_id}`);
+  try {
+    await axiosInstance.delete(`/api/v1/units/${unit_id}`);
+  } catch {
+    throw new Error("Không thể xoá đơn vị");
+  }
 };
