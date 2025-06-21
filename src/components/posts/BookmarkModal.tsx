@@ -9,14 +9,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  getFavoriteFolders,
-  addPostToFavorite,
-  createFavoriteFolder,
-} from "@/services/favorites/favoriteService";
-import { Favorite } from "@/types/favorite";
+import { useFavoriteStore } from "@/stores/favoriteStore";
 import { toast } from "sonner";
-import { Bookmark, Plus, Loader2 } from "lucide-react";
+import { Bookmark, Plus, Loader2, Trash2 } from "lucide-react";
 
 interface BookmarkModalProps {
   postId: string;
@@ -25,84 +20,76 @@ interface BookmarkModalProps {
 
 export function BookmarkModal({ postId, children }: BookmarkModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [favorites, setFavorites] = useState<Favorite[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showAllFolders, setShowAllFolders] = useState(false); // State mới để toggle hiển thị folder
+  const {
+    folders,
+    isLoading,
+    initializeFavorites,
+    addPost,
+    removePost,
+    createFolder,
+    getSavedFoldersForPost,
+  } = useFavoriteStore();
+  const savedFolders = getSavedFoldersForPost(postId);
 
-  const fetchFavorites = async () => {
-    try {
-      setIsLoading(true);
-      const data = await getFavoriteFolders();
-      setFavorites(data);
-    } catch (error) {
-      console.error("Error fetching favorites:", error);
-      toast.error("Không thể tải danh sách thư mục");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAddToFavorite = async (
+  const handleToggleFavorite = async (
     favoriteId: string,
     favoriteName: string
   ) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
     try {
-      await addPostToFavorite(favoriteId, postId);
-      toast.success(`Đã thêm bài viết vào "${favoriteName}"`);
+      if (savedFolders.has(favoriteId)) {
+        await removePost(favoriteId, postId, favoriteName);
+      } else {
+        await addPost(favoriteId, postId, favoriteName);
+      }
       setIsOpen(false);
-      // Refresh favorites list to update post count
-      fetchFavorites();
     } catch (error) {
-      console.error("Error adding to favorite:", error);
-      toast.error("Không thể thêm bài viết vào thư mục");
+      console.error("Error toggling favorite:", error);
+      toast.error(
+        savedFolders.has(favoriteId)
+          ? "Không thể xóa bài viết khỏi thư mục"
+          : "Không thể thêm bài viết vào thư mục"
+      );
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleCreateAndAdd = async () => {
+    if (isProcessing) return;
     if (!newFolderName.trim()) {
       toast.error("Vui lòng nhập tên thư mục");
       return;
     }
-
+    setIsProcessing(true);
     try {
-      setIsCreating(true);
-      const newFolder = await createFavoriteFolder({
-        favourite_name: newFolderName,
-        account_id: "", // This will be handled by the backend from auth token
-      });
-
-      await addPostToFavorite(newFolder.favourite_id, postId);
-      toast.success(`Đã tạo thư mục "${newFolderName}" và thêm bài viết`);
+      await createFolder(newFolderName, postId);
       setIsOpen(false);
       setNewFolderName("");
       setShowCreateForm(false);
-      // Refresh favorites list to update post count
-      fetchFavorites();
     } catch (error) {
       console.error("Error creating folder:", error);
       toast.error("Không thể tạo thư mục mới");
     } finally {
-      setIsCreating(false);
+      setIsProcessing(false);
     }
   };
 
+  // Chỉ gọi initializeFavorites nếu chưa có dữ liệu và chỉ một lần
   useEffect(() => {
-    if (isOpen) {
-      fetchFavorites();
+    if (isOpen && folders.length === 0 && !isLoading) {
+      initializeFavorites();
     }
-  }, [isOpen]);
+  }, [isOpen, initializeFavorites, folders.length, isLoading]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {children || (
-          <Button variant="ghost" size="sm">
-            <Bookmark className="h-4 w-4" />
-          </Button>
-        )}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Lưu bài viết</DialogTitle>
@@ -117,34 +104,44 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
           ) : (
             <>
               {/* Existing Folders */}
-              {favorites.length > 0 && (
+              {folders.length > 0 && (
                 <div className="space-y-2">
                   <Label>Chọn thư mục:</Label>
                   <div className="space-y-2">
-                    {favorites.slice(0, 4).map((favorite) => (
+                    {folders
+                      .slice(0, showAllFolders ? undefined : 4) // Hiển thị tất cả nếu showAllFolders, ngược lại chỉ 4
+                      .map((folder) => (
+                        <Button
+                          key={folder.favourite_id}
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() =>
+                            handleToggleFavorite(
+                              folder.favourite_id,
+                              folder.favourite_name
+                            )
+                          }
+                          disabled={isProcessing}
+                        >
+                          {savedFolders.has(folder.favourite_id) ? (
+                            <Trash2 className="h-4 w-4 mr-2 text-red-500" />
+                          ) : (
+                            <Bookmark className="h-4 w-4 mr-2" />
+                          )}
+                          {folder.favourite_name}
+                          <span className="ml-auto text-sm text-muted-foreground">
+                            {folder.post_count || 0} bài viết
+                          </span>
+                        </Button>
+                      ))}
+                    {folders.length > 4 && (
                       <Button
-                        key={favorite.favourite_id}
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() =>
-                          handleAddToFavorite(
-                            favorite.favourite_id,
-                            favorite.favourite_name
-                          )
-                        }
+                        variant="ghost"
+                        className="w-full text-sm text-muted-foreground"
+                        onClick={() => setShowAllFolders(!showAllFolders)}
                       >
-                        <Bookmark className="h-4 w-4 mr-2" />
-                        {favorite.favourite_name}
-                        <span className="ml-auto text-sm text-muted-foreground">
-                          {favorite.post_count || 0} bài viết
-                        </span>
+                        {showAllFolders ? "Thu gọn" : `Xem thêm (${folders.length - 4} thư mục)`}
                       </Button>
-                    ))}
-                    {favorites.length > 4 && (
-                      <p className="text-xs text-muted-foreground text-center">
-                        +{favorites.length - 4} thư mục khác. Vào trang quản lý
-                        để xem tất cả.
-                      </p>
                     )}
                   </div>
                 </div>
@@ -157,6 +154,7 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
                     variant="outline"
                     className="w-full"
                     onClick={() => setShowCreateForm(true)}
+                    disabled={isProcessing}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Tạo thư mục mới
@@ -176,10 +174,10 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
                     <div className="flex gap-2">
                       <Button
                         onClick={handleCreateAndAdd}
-                        disabled={isCreating}
+                        disabled={isProcessing}
                         className="flex-1"
                       >
-                        {isCreating ? (
+                        {isProcessing ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : (
                           <Plus className="h-4 w-4 mr-2" />

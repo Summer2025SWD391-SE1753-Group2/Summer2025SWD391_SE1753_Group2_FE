@@ -256,7 +256,7 @@ const Header = () => {
               {postSuggestions.length > 0 && (
                 <div className="p-2 border-b">
                   <span className="text-sm font-semibold text-muted-foreground">
-                    Bài viết
+                    Bài viết theo thẻ
                   </span>
                   {postSuggestions.map((post) => (
                     <Link

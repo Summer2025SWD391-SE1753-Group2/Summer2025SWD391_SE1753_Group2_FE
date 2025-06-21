@@ -33,7 +33,9 @@ const searchUsersByUsername = async (
   limit: number = 100
 ): Promise<UserProfile[]> => {
   const response = await axiosInstance.get<UserProfile[]>(
-    `/api/v1/accounts/search/?name=${name}&skip=${skip}&limit=${limit}`
+    `/api/v1/accounts/search/?name=${encodeURIComponent(
+      name
+    )}&skip=${skip}&limit=${limit}`
   );
   return response.data;
 };

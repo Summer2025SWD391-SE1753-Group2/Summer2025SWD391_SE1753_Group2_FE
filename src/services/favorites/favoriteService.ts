@@ -5,7 +5,7 @@ import { Post } from "@/types/post";
 // Get all favorite folders
 const getFavoriteFolders = async (
   skip: number = 0,
-  limit: number = 100
+  limit: number = 50
 ): Promise<Favorite[]> => {
   const response = await axiosInstance.get<Favorite[]>(
     `/api/v1/favourites/?skip=${skip}&limit=${limit}`
@@ -45,7 +45,7 @@ const deleteFavoriteFolder = async (favourite_id: string): Promise<void> => {
 const getFavoritePosts = async (
   favourite_id: string,
   skip: number = 0,
-  limit: number = 100
+  limit: number = 10
 ): Promise<Post[]> => {
   const response = await axiosInstance.get<Post[]>(
     `/api/v1/favourites/${favourite_id}/posts?skip=${skip}&limit=${limit}`
@@ -58,9 +58,7 @@ const removeFavoritePost = async (
   favourite_id: string,
   post_id: string
 ): Promise<void> => {
-  await axiosInstance.delete(
-    `/api/v1/favourites/${favourite_id}/posts/${post_id}`
-  );
+  await axiosInstance.delete(`/api/v1/favourites/${favourite_id}/posts/${post_id}`);
 };
 
 // Add a post to a favorite folder
@@ -68,9 +66,7 @@ const addPostToFavorite = async (
   favourite_id: string,
   post_id: string
 ): Promise<void> => {
-  await axiosInstance.post(
-    `/api/v1/favourites/${favourite_id}/posts/${post_id}`
-  );
+  await axiosInstance.post(`/api/v1/favourites/${favourite_id}/posts/${post_id}`);
 };
 
 // Add a post to a favorite folder by name
@@ -78,9 +74,24 @@ const addPostToFavoriteByName = async (
   favourite_name: string,
   post_id: string
 ): Promise<void> => {
-  await axiosInstance.post(
-    `/api/v1/favourites/name/${favourite_name}/posts/${post_id}`
-  );
+  await axiosInstance.post(`/api/v1/favourites/name/${favourite_name}/posts/${post_id}`);
+};
+
+// Check if a post is in any favorite folder
+const checkPostInFavorites = async (post_id: string): Promise<boolean> => {
+  try {
+    const folders = await getFavoriteFolders();
+    for (const folder of folders) {
+      const posts = await getFavoritePosts(folder.favourite_id);
+      if (posts.some((post) => post.post_id === post_id)) {
+        return true;
+      }
+    }
+    return false;
+  } catch (err) {
+    console.error("Error checking favorite status:", err);
+    return false;
+  }
 };
 
 export {
@@ -92,4 +103,5 @@ export {
   removeFavoritePost,
   addPostToFavorite,
   addPostToFavoriteByName,
+  checkPostInFavorites,
 };

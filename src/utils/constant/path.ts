@@ -3,6 +3,7 @@ import { UserRole } from "@/types/user-role";
 export const paths = {
   home: "",
   profile: "profile",
+  personal:"/profile/:username",
   setting: "setting",
   login: "/auth/login",
   register: "/auth/register",
