@@ -23,7 +23,7 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
   const [newFolderName, setNewFolderName] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showAllFolders, setShowAllFolders] = useState(false); // State mới để toggle hiển thị folder
+  const [showAllFolders, setShowAllFolders] = useState(false);
   const {
     folders,
     isLoading,
@@ -34,6 +34,13 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
     getSavedFoldersForPost,
   } = useFavoriteStore();
   const savedFolders = getSavedFoldersForPost(postId);
+
+  // Gọi initializeFavorites mỗi khi modal mở
+  useEffect(() => {
+    if (isOpen) {
+      initializeFavorites();
+    }
+  }, [isOpen, initializeFavorites]);
 
   const handleToggleFavorite = async (
     favoriteId: string,
@@ -60,9 +67,8 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
   };
 
   const handleCreateAndAdd = async () => {
-    if (isProcessing) return;
-    if (!newFolderName.trim()) {
-      toast.error("Vui lòng nhập tên thư mục");
+    if (isProcessing || !newFolderName.trim()) {
+      if (!newFolderName.trim()) toast.error("Vui lòng nhập tên thư mục");
       return;
     }
     setIsProcessing(true);
@@ -78,13 +84,6 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
       setIsProcessing(false);
     }
   };
-
-  // Chỉ gọi initializeFavorites nếu chưa có dữ liệu và chỉ một lần
-  useEffect(() => {
-    if (isOpen && folders.length === 0 && !isLoading) {
-      initializeFavorites();
-    }
-  }, [isOpen, initializeFavorites, folders.length, isLoading]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -102,13 +101,17 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
             </div>
           ) : (
             <>
-              {/* Existing Folders */}
-              {folders.length > 0 && (
+              {/* Existing Folders or No Folders Message */}
+              {folders.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-muted-foreground">Bạn chưa có mục nào.</p>
+                </div>
+              ) : (
                 <div className="space-y-2">
                   <Label>Chọn thư mục:</Label>
                   <div className="space-y-2">
                     {folders
-                      .slice(0, showAllFolders ? undefined : 4) // Hiển thị tất cả nếu showAllFolders, ngược lại chỉ 4
+                      .slice(0, showAllFolders ? undefined : 4)
                       .map((folder) => (
                         <Button
                           key={folder.favourite_id}
@@ -139,7 +142,9 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
                         className="w-full text-sm text-muted-foreground"
                         onClick={() => setShowAllFolders(!showAllFolders)}
                       >
-                        {showAllFolders ? "Thu gọn" : `Xem thêm (${folders.length - 4} thư mục)`}
+                        {showAllFolders
+                          ? "Thu gọn"
+                          : `Xem thêm (${folders.length - 4} thư mục)`}
                       </Button>
                     )}
                   </div>

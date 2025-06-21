@@ -91,6 +91,7 @@ export default function FavoritesPage() {
       await deleteFavoriteFolder(favourite_id);
       toast.success("Xóa thư mục thành công!");
       fetchFavorites();
+      window.location.reload();
     } catch (error) {
       console.error("Error:", error);
       toast.error("Không thể xóa thư mục!");
