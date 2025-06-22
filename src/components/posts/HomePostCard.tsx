@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import type { Post } from "@/types/post";
-import { BookmarkModal } from "./BookmarkModal";
+import { BookmarkModal } from "@/components/posts/BookmarkModal";
+import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useAuthStore } from "@/stores/auth";
 
 interface HomePostCardProps {
@@ -30,6 +32,13 @@ export function HomePostCard({
   onShare,
   className,
 }: HomePostCardProps) {
+  const { isPostSaved, initializeFavorites } = useFavoriteStore();
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  useEffect(() => {
+    setIsBookmarked(isPostSaved(post.post_id));
+  }, [post.post_id, isPostSaved]);
+
   const { user } = useAuthStore();
   const role = user?.role?.role_name || "user"; 
 
@@ -172,7 +181,7 @@ export function HomePostCard({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-3 text-muted-foreground hover:text-orange-500"
+                className="h-8 px-3 text-muted-foreground"
               >
                 <Bookmark className="h-4 w-4 mr-1" />
                 Lưu
