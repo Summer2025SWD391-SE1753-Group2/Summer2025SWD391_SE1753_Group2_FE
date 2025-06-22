@@ -19,7 +19,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { PostDetailPopup } from "@/components/posts/PostDetailPopup";
+
 import { Badge } from "@/components/ui/badge";
 import {
   CheckCircle,
@@ -32,6 +32,7 @@ import {
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { paths } from "@/utils/constant/path";
+import { PostDetailPopup } from "@/components/posts/PostDetailPopup";
 
 const MyPostsPage = () => {
   const navigate = useNavigate();
