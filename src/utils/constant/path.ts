@@ -9,7 +9,7 @@ export const paths = {
   register: "/auth/register",
   googleCallback: "/auth/google/callback",
   postDetail: "/posts/:postId",
-
+  search: "/searchPage",
 
   //user
   user: {

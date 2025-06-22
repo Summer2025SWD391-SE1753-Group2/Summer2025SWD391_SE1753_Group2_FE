@@ -234,10 +234,10 @@ const Header = () => {
                         <AvatarFallback>
                           {user.full_name && user.full_name.trim() !== "string"
                             ? user.full_name
-                                .split(" ")
-                                .map((word) => word[0])
-                                .join("")
-                                .toUpperCase()
+                              .split(" ")
+                              .map((word) => word[0])
+                              .join("")
+                              .toUpperCase()
                             : user.username[0].toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -274,9 +274,7 @@ const Header = () => {
                 </div>
               )}
               <Link
-                to={`/search?q=${encodeURIComponent(
-                  query
-                )}&tags=${selectedTags.join(",")}`}
+                to={`/searchPage?q=${encodeURIComponent(query)}&tags=${selectedTags.join(",")}`}
                 onClick={clearSearch}
                 className="block p-2 text-center text-primary hover:bg-gray-100 cursor-pointer"
               >
@@ -290,8 +288,7 @@ const Header = () => {
           <NavLink
             to={paths.home}
             className={({ isActive }) =>
-              `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${
-                isActive ? "text-primary" : "text-muted-foreground"
+              `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive ? "text-primary" : "text-muted-foreground"
               }`
             }
           >
@@ -301,8 +298,7 @@ const Header = () => {
           <NavLink
             to={paths.user.favorites}
             className={({ isActive }: { isActive: boolean }) =>
-              `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${
-                isActive ? "text-primary" : "text-muted-foreground"
+              `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive ? "text-primary" : "text-muted-foreground"
               }`
             }
           >
@@ -321,10 +317,10 @@ const Header = () => {
                     <AvatarFallback>
                       {user?.full_name
                         ? user.full_name
-                            .split(" ")
-                            .map((word) => word[0])
-                            .join("")
-                            .toUpperCase()
+                          .split(" ")
+                          .map((word) => word[0])
+                          .join("")
+                          .toUpperCase()
                         : "?"}
                     </AvatarFallback>
                   </Avatar>

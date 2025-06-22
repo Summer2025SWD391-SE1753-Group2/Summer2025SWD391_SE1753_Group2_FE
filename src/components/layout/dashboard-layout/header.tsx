@@ -215,10 +215,10 @@ const DashboardHeader = () => {
                           <AvatarFallback>
                             {user.full_name && user.full_name.trim() !== 'string'
                               ? user.full_name
-                                  .split(' ')
-                                  .map((word) => word[0])
-                                  .join('')
-                                  .toUpperCase()
+                                .split(' ')
+                                .map((word) => word[0])
+                                .join('')
+                                .toUpperCase()
                               : user.username[0].toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -251,9 +251,9 @@ const DashboardHeader = () => {
                   </div>
                 )}
                 <Link
-                  to={`/search?q=${encodeURIComponent(query)}&tags=${selectedTags.join(',')}`}
+                  to={`/searchPage?q=${encodeURIComponent(query)}&tags=${selectedTags.join(",")}`}
                   onClick={clearSearch}
-                  className='block p-2 text-center text-primary hover:bg-gray-100 cursor-pointer'
+                  className="block p-2 text-center text-primary hover:bg-gray-100 cursor-pointer"
                 >
                   Xem thêm kết quả
                 </Link>

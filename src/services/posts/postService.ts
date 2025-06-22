@@ -86,16 +86,31 @@ const searchPostsByTopic = async (
   skip: number = 0,
   limit: number = 100
 ): Promise<Post[]> => {
-  const response = await axiosInstance.get<Post[]>(
-    `/api/v1/posts/search/by-topic/?topic_name=${encodeURIComponent(
-      topicName
-    )}&skip=${skip}&limit=${limit}`
-  );
-  return response.data;
+  try {
+    const response = await axiosInstance.get<Post[]>(
+      `/api/v1/posts/search/by-topic/?topic_name=${encodeURIComponent(
+        topicName
+      )}&status=approved&skip=${skip}&limit=${limit}`
+    );
+    return response.data || [];
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as {
+        response: { status: number; data?: { message?: string } };
+      };
+      if (axiosError.response?.status === 404) {
+        return [];
+      }
+      throw new Error(
+        axiosError.response?.data?.message ||
+          `Không tìm thấy bài viết với chủ đề: ${topicName}`
+      );
+    }
+    throw new Error("Lỗi khi tìm kiếm bài viết theo chủ đề");
+  }
 };
 
 // Search posts by tag
-// postService.ts
 const searchPostsByTag = async (
   tagName: string,
   skip: number = 0,
@@ -105,7 +120,7 @@ const searchPostsByTag = async (
     const response = await axiosInstance.get<Post[]>(
       `/api/v1/posts/search/by-tag/?tag_name=${encodeURIComponent(
         tagName
-      )}&skip=${skip}&limit=${limit}`
+      )}&status=approved&skip=${skip}&limit=${limit}`
     );
     return response.data || [];
   } catch (error: unknown) {
@@ -131,15 +146,31 @@ const searchPostsByTitle = async (
   skip: number = 0,
   limit: number = 100
 ): Promise<Post[]> => {
-  const response = await axiosInstance.get<Post[]>(
-    `/api/v1/posts/search/?title=${encodeURIComponent(
-      title
-    )}&skip=${skip}&limit=${limit}`
-  );
-  return response.data;
+  try {
+    const response = await axiosInstance.get<Post[]>(
+      `/api/v1/posts/search/?title=${encodeURIComponent(
+        title
+      )}&status=approved&skip=${skip}&limit=${limit}`
+    );
+    return response.data || [];
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as {
+        response: { status: number; data?: { message?: string } };
+      };
+      if (axiosError.response?.status === 404) {
+        return [];
+      }
+      throw new Error(
+        axiosError.response?.data?.message ||
+          `Không tìm thấy bài viết với tiêu đề: ${title}`
+      );
+    }
+    throw new Error("Lỗi khi tìm kiếm bài viết theo tiêu đề");
+  }
 };
 
-export { searchPostsByTopic, searchPostsByTag, searchPostsByTitle, };
+export { searchPostsByTopic, searchPostsByTag, searchPostsByTitle };
 
 // Moderate post (approve or reject)
 export interface PostModerationRequest {
