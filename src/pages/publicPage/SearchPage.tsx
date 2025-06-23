@@ -6,17 +6,17 @@ import { Post } from "@/types/post";
 import { UserProfile } from "@/types/account";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Pagination } from "@/components/ui/pagination";
 
 const SearchPage = () => {
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
   const tags = searchParams.get("tags")?.split(",").filter(tag => tag) || [];
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Bắt đầu với loading
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -153,33 +153,12 @@ const SearchPage = () => {
       )}
 
       {totalPages > 1 && (
-        <Pagination className="mt-6 flex justify-center">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => handlePageChange(currentPage - 1)}
-                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-gray-100"}
-              />
-            </PaginationItem>
-            {[...Array(totalPages)].map((_, index) => (
-              <PaginationItem key={index}>
-                <PaginationLink
-                  onClick={() => handlePageChange(index + 1)}
-                  isActive={currentPage === index + 1}
-                  className="cursor-pointer hover:bg-gray-100"
-                >
-                  {index + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => handlePageChange(currentPage + 1)}
-                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-gray-100"}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          className="mt-6"
+        />
       )}
     </div>
   );
