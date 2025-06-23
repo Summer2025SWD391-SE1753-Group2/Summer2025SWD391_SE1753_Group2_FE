@@ -60,6 +60,10 @@ export const PostDetailPage = () => {
   const [showDeletedComments, setShowDeletedComments] =
     useState<boolean>(false);
 
+ useEffect(() => {
+    initializeFavorites();
+  }, [initializeFavorites]);
+
   useEffect(() => {
     if (!postId) return;
     setIsBookmarked(isPostSaved(postId));

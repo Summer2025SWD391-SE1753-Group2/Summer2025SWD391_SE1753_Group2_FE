@@ -88,7 +88,6 @@ export function HomePostCard({
 
       <CardContent className="space-y-4">
         <h3 className="text-lg font-semibold line-clamp-2">{post.title}</h3>
-        {/* Content Preview */}
         <p className="text-muted-foreground line-clamp-3">{post.content}</p>
 
         {post.images && post.images.length > 0 && (

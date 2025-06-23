@@ -1,67 +1,39 @@
 import React, { useEffect, useState } from "react";
 import type { Post } from "@/types/post";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  getAllPosts,
-  getPostById,
-  moderatePost,
+  getAllPosts, getPostById, moderatePost,
 } from "@/services/posts/postService";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { PopupDetail } from "@/components/posts/PopupDetail";
-import { PopupReject } from "@/components/posts/PopupReject";
 import { useAuthStore } from "@/stores/auth";
+
+
+import { Pagination } from "@/components/ui/pagination";
+import { PostFilter } from "@/components/posts/PostFilter";
+import { PostActions } from "@/components/posts/PostActions";
+import { PostSearch } from "@/components/posts/PostSearch";
+
+const PAGE_SIZE = 8;
 
 const ApprovePostPage = () => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  const [rejectingPost, setRejectingPost] = useState<Post | null>(null);
+  const [searching, setSearching] = useState(false);
 
   const { user } = useAuthStore();
   const moderatorId = user?.account_id || "";
-
-  const handleView = async (postId: string) => {
-    try {
-      const post = await getPostById(postId);
-      setSelectedPost(post);
-    } catch (err) {
-      alert("Không thể tải bài viết: " + (err as Error).message);
-    }
-  };
-
-  const handleApprove = async (post: Post) => {
-    try {
-      await moderatePost(post.post_id, {
-        status: "approved",
-        rejection_reason: "",
-        approved_by: moderatorId,
-      });
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.post_id === post.post_id ? { ...p, status: "approved" } : p
-        )
-      );
-    } catch (err) {
-      alert("Duyệt thất bại: " + (err as Error).message);
-    }
-  };
 
   const fetchPosts = async () => {
     setLoading(true);
     try {
       const data = await getAllPosts();
       setPosts(data);
+      setFilteredPosts(data);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -72,6 +44,29 @@ const ApprovePostPage = () => {
   useEffect(() => {
     fetchPosts();
   }, []);
+
+  const handleFilter = (status: string, sort: string) => {
+    let updated = [...posts];
+
+    if (status !== "all") {
+      updated = updated.filter((p) => p.status === status);
+    }
+
+    updated.sort((a, b) =>
+      sort === "newest"
+        ? new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        : new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    setFilteredPosts(updated);
+    setCurrentPage(1); // reset về trang đầu khi lọc
+  };
+
+  const totalPages = Math.ceil(filteredPosts.length / PAGE_SIZE);
+  const paginatedPosts = filteredPosts.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   if (loading) {
     return (
@@ -87,16 +82,28 @@ const ApprovePostPage = () => {
   if (error) return <div className="p-4 text-red-500">Lỗi: {error}</div>;
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-semibold mb-4">
-        Danh sách bài viết chờ duyệt
-      </h1>
+    <div className="p-4 space-y-4">
+      <div className="flex items-center">
+        <h1 className="text-xl flex-1 font-semibold">Danh sách bài viết chờ duyệt</h1>
+        <div className="mt-6 mr-4">
+          <PostSearch
+            onSearchResults={(results) => {
+              setFilteredPosts(results);
+              setCurrentPage(1);
+            }}
+            onReset={() => {
+              setFilteredPosts(posts);
+            }}
+          />
+        </div>
+          <PostFilter onFilter={handleFilter} />
+      </div>
 
       <div className="border-2 rounded-3xl p-2 shadow">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Tiêu đề</TableHead>
+              <TableHead className="w-1/2">Tiêu đề</TableHead>
               <TableHead>Tác giả</TableHead>
               <TableHead>Trạng thái</TableHead>
               <TableHead>Ngày tạo</TableHead>
@@ -104,99 +111,33 @@ const ApprovePostPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {posts.map((post) => (
-              <TableRow key={post.post_id}>
-                <TableCell>{post.title}</TableCell>
-                <TableCell>{post.creator?.username || "Ẩn danh"}</TableCell>
-                <TableCell
-                  className={cn(
-                    "font-medium",
-                    post.status === "waiting"
-                      ? "text-yellow-500"
-                      : post.status === "approved"
-                      ? "text-green-600"
-                      : post.status === "rejected"
-                      ? "text-red-600"
-                      : "text-gray-600"
-                  )}
-                >
-                  {post.status === "waiting"
-                    ? "Chờ duyệt"
-                    : post.status === "approved"
-                    ? "Đã duyệt"
-                    : post.status === "rejected"
-                    ? "Bị từ chối"
-                    : "Không xác định"}
-                </TableCell>
-                <TableCell>
-                  {new Date(post.created_at).toLocaleDateString()}
-                </TableCell>
-                <TableCell className="text-right space-x-1">
-                  <Button
-                    className="text-red-400"
-                    onClick={() => setRejectingPost(post)}
-                  >
-                    Từ chối
-                  </Button>
-                  <Button
-                    className="text-green-600"
-                    onClick={() => handleApprove(post)}
-                  >
-                    Duyệt
-                  </Button>
-                  <Button
-                    className="text-blue-500"
-                    onClick={() => handleView(post.post_id)}
-                  >
-                    Xem
-                  </Button>
-                </TableCell>
-              </TableRow>
+            {paginatedPosts.map((post) => (
+              <PostActions
+                key={post.post_id}
+                post={post}
+                moderatorId={moderatorId}
+                updatePostStatus={(id, status) =>
+                  setPosts((prev) =>
+                    prev.map((p) =>
+                      p.post_id === id ? { ...p, status } : p
+                    )
+                  )
+                }
+              />
             ))}
           </TableBody>
         </Table>
-
-        {/* Popup xem chi tiết */}
-        <Dialog
-          open={!!selectedPost}
-          onOpenChange={() => setSelectedPost(null)}
-        >
-          <DialogContent className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            {selectedPost && (
-              <PopupDetail
-                post={selectedPost}
-                onClose={() => setSelectedPost(null)}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Popup từ chối */}
-        <Dialog
-          open={!!rejectingPost}
-          onOpenChange={() => setRejectingPost(null)}
-        >
-          <DialogContent className="max-w-md">
-            {rejectingPost && (
-              <PopupReject
-                postId={rejectingPost.post_id}
-                approvedBy={moderatorId}
-                onSuccess={() => {
-                  setPosts((prev) =>
-                    prev.map((p) =>
-                      p.post_id === rejectingPost.post_id
-                        ? { ...p, status: "rejected" }
-                        : p
-                    )
-                  );
-                  setRejectingPost(null);
-                }}
-                onClose={() => setRejectingPost(null)}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-cente">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
+        </div>
+      )}
     </div>
   );
 };
