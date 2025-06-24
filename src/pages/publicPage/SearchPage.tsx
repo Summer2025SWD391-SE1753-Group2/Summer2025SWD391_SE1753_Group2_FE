@@ -47,15 +47,13 @@ const SearchPage = () => {
 
         if (uniquePosts.length === 0 && userResults.length === 0) {
           setError(`Không tìm thấy bài viết, người dùng hoặc chủ đề tương ứng`);
-          const approvedPosts = await getApprovedPosts(skip, postsPerPage);
-          setPosts(approvedPosts);
-          setTotalPages(Math.ceil(approvedPosts.length / postsPerPage));
+          setPosts([]);
+          setUsers([]);
         }
       } else {
-        const approvedPosts = await getApprovedPosts(skip, postsPerPage);
-        setPosts(approvedPosts);
+        setPosts([]);
         setUsers([]);
-        setTotalPages(Math.ceil(approvedPosts.length / postsPerPage));
+        setTotalPages(1);
       }
     } catch (err) {
       setError("Có lỗi xảy ra khi tìm kiếm. Vui lòng thử lại!");
@@ -95,64 +93,72 @@ const SearchPage = () => {
           ))}
         </div>
       )}
-      {error && <p className="text-center text-red-600 text-lg">{error}</p>}
+      {!isLoading && posts.length === 0 && users.length === 0 && (
+        <p className="text-center text-gray-600 text-lg">
+          Không tìm thấy kết quả phù hợp
+        </p>
+      )}
 
-      {!isLoading && (
+      {!isLoading && (posts.length > 0 || users.length > 0) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {users.length > 0 && users.map(user => (
-            <Card
-              key={user.account_id}
-              className="overflow-hidden rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 bg-white"
-            >
-              <CardContent className="p-4 flex flex-col items-center justify-center">
-                <Avatar className="w-36 h-36 mb-4 rounded-full border-2 border-gray-100">
-                  <AvatarImage src={user.avatar} alt={user.full_name} className="object-cover" />
-                  <AvatarFallback className="text-2xl bg-gray-200">
-                    {user.full_name && user.full_name.trim() !== "string"
-                      ? user.full_name.split(" ").map(word => word[0]).join("").toUpperCase()
-                      : user.username[0].toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <Link
-                  to={`/profile/${encodeURIComponent(user.username)}`}
-                  className="hover:underline text-center text-lg font-semibold text-gray-800"
+          {users.length > 0 &&
+            users.map(user => (
+              <Link
+                to={`/profile/${encodeURIComponent(user.username)}`}
+                key={user.account_id}
+              >
+                <Card
+                  className="overflow-hidden rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 bg-white cursor-pointer"
                 >
-                  {user.full_name && user.full_name.trim() !== "string" ? user.full_name : user.username}
-                </Link>
-                <p className="text-sm text-gray-500 text-center mt-1">@{user.username}</p>
-              </CardContent>
-            </Card>
-          ))}
+                  <CardContent className="p-4 flex flex-col items-center justify-center">
+                    <Avatar className="w-36 h-36 mb-4 rounded-full border-2 border-gray-100">
+                      <AvatarImage src={user.avatar} alt={user.full_name} className="object-cover" />
+                      <AvatarFallback className="text-2xl bg-gray-200">
+                        {user.full_name && user.full_name.trim() !== "string"
+                          ? user.full_name.split(" ").map(word => word[0]).join("").toUpperCase()
+                          : user.username[0].toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <h3 className="text-center text-lg font-semibold text-gray-800">
+                      {user.full_name && user.full_name.trim() !== "string" ? user.full_name : user.username}
+                    </h3>
+                    <p className="text-sm text-gray-500 text-center mt-1">@{user.username}</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
 
-          {posts.length > 0 && posts.map(post => (
-            <Card
-              key={post.post_id}
-              className="overflow-hidden rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 bg-white relative"
-            >
-              <div className="w-full h-48 absolute top-0 left-0">
-                {post.images.length > 0 && (
-                  <img
-                    src={post.images[0].image_url}
-                    alt={post.title}
-                    className="w-full h-full object-cover rounded-t-xl"
-                  />
-                )}
-              </div>
-              <CardContent className="p-3 flex flex-col items-center relative z-10 bg-white bg-opacity-95 pt-48">
-                <Link to={`/posts/${post.post_id}`} className="hover:underline">
-                  <h3 className="font-semibold text-center text-lg text-gray-800 line-clamp-2">{post.title}</h3>
-                </Link>
-                <p className="text-sm text-gray-500 text-center mt-1">
-                  {new Date(post.created_at).toLocaleDateString()}
-                </p>
-                <p className="text-sm text-gray-600 text-center mt-1 line-clamp-1">{post.tags.map(tag => tag.name).join(", ") || "Không có thẻ"}</p>
-              </CardContent>
-            </Card>
-          ))}
+          {posts.length > 0 &&
+            posts.map(post => (
+              <Link to={`/posts/${post.post_id}`} key={post.post_id}>
+                <Card
+                  className="overflow-hidden rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 bg-white relative cursor-pointer"
+                >
+                  <div className="w-full h-48 absolute top-0 left-0">
+                    {post.images.length > 0 && (
+                      <img
+                        src={post.images[0].image_url}
+                        alt={post.title}
+                        className="w-full h-full object-cover rounded-t-xl"
+                      />
+                    )}
+                  </div>
+                  <CardContent className="p-3 flex flex-col items-center relative z-10 bg-white bg-opacity-95 pt-48">
+                    <h3 className="font-semibold text-center text-lg text-gray-800 line-clamp-2">{post.title}</h3>
+                    <p className="text-sm text-gray-500 text-center mt-1">
+                      {new Date(post.created_at).toLocaleDateString()}
+                    </p>
+                    <p className="text-sm text-gray-600 text-center mt-1 line-clamp-1">
+                      {post.tags.map(tag => tag.name).join(", ") || "Không có thẻ"}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
         </div>
       )}
 
-      {totalPages > 1 && (
+      {totalPages > 1 && (posts.length > 0 || users.length > 0) && (
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
