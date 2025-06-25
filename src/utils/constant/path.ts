@@ -3,12 +3,13 @@ import { UserRole } from "@/types/user-role";
 export const paths = {
   home: "",
   profile: "profile",
+  personal:"/profile/:username",
   setting: "setting",
   login: "/auth/login",
   register: "/auth/register",
   googleCallback: "/auth/google/callback",
   postDetail: "/posts/:postId",
-  chat: "chat",
+  search: "/searchPage",  chat: "chat",
 
 
   //user
