@@ -19,10 +19,12 @@ import {
 } from "lucide-react";
 import { ImageLightbox } from "@/components/posts/ImageLightbox";
 import { CommentItem } from "@/components/posts/CommentItem";
+import { BookmarkModal } from "@/components/posts/BookmarkModal";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatRelativeTime } from "@/utils/dateUtils";
 import { useAuthStore } from "@/stores/auth";
+import { useFavoriteStore } from "@/stores/favoriteStore";
 import { getPostById } from "@/services/posts/postService";
 import {
   createComment,
@@ -36,6 +38,7 @@ export const PostDetailPage = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { isPostSaved, initializeFavorites } = useFavoriteStore();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -57,6 +60,15 @@ export const PostDetailPage = () => {
   const [showDeletedComments, setShowDeletedComments] =
     useState<boolean>(false);
 
+ useEffect(() => {
+    initializeFavorites();
+  }, [initializeFavorites]);
+
+  useEffect(() => {
+    if (!postId) return;
+    setIsBookmarked(isPostSaved(postId));
+  }, [postId, isPostSaved]);
+  
   const role = user?.role?.role_name || "user";
   // Count deleted comments to show in toggle button
   const countDeletedComments = (commentsList: Comment[]): number => {
@@ -137,7 +149,6 @@ export const PostDetailPage = () => {
     if (post && post.status === "approved" && !commentsLoaded) {
       fetchComments();
     }
-    // Clear comments if post is not approved
     else if (post && post.status !== "approved") {
       setComments([]);
       setCommentsLoaded(false);
@@ -151,7 +162,7 @@ export const PostDetailPage = () => {
     const intervalId = setInterval(() => {
       fetchComments();
       setLastRefresh(new Date());
-    }, 30000); // 30 seconds
+    }, 30000);// 30 seconds
 
     return () => clearInterval(intervalId);
   }, [post, commentsLoaded, fetchComments]);
@@ -160,7 +171,7 @@ export const PostDetailPage = () => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       setLastRefresh(new Date());
-    }, 60000); // 60 seconds for time display update
+    }, 60000);// 60 seconds for time display update
 
     return () => clearInterval(intervalId);
   }, []);
@@ -175,6 +186,7 @@ export const PostDetailPage = () => {
       });
       toast.success("Đã thêm bình luận!");
       setNewComment("");
+
       // Refresh comments after creating new one
       await fetchComments();
     } catch (err) {
@@ -197,8 +209,10 @@ export const PostDetailPage = () => {
         parent_comment_id: parentCommentId,
       });
       toast.success("Đã thêm phản hồi!");
+
       // Cancel reply mode to avoid duplicate
       setReplyingTo(null);
+
       // Refresh comments after creating new reply
       await fetchComments();
     } catch (err) {
@@ -213,10 +227,12 @@ export const PostDetailPage = () => {
       setDeletingComments((prev) => new Set(prev).add(commentId));
       await deleteComment(commentId);
       toast.success("Đã xóa bình luận!");
+
       // Cancel any active reply to the deleted comment
       if (replyingTo === commentId) {
         setReplyingTo(null);
       }
+
       // Refresh comments after deleting
       await fetchComments();
     } catch (err) {
@@ -323,7 +339,6 @@ export const PostDetailPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
-      {/* Back Button */}
       <Button
         variant="ghost"
         onClick={() => navigate(`/${role}`)}
@@ -332,7 +347,6 @@ export const PostDetailPage = () => {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Quay lại
       </Button>
-
       {/* Post Content */}
       <Card className="mb-6">
         <CardHeader className="pb-4">
@@ -355,7 +369,6 @@ export const PostDetailPage = () => {
                 </p>
               </div>
             </div>
-
             {/* Status Badge */}
             <Badge
               variant="outline"
@@ -368,7 +381,6 @@ export const PostDetailPage = () => {
               {getStatusText(post.status)}
             </Badge>
           </div>
-
           {/* Title */}
           <h1 className="text-2xl font-bold mt-4">{post.title}</h1>
         </CardHeader>
@@ -413,14 +425,12 @@ export const PostDetailPage = () => {
               )}
             </div>
           )}
-
           {/* Content */}
           <div className="prose max-w-none">
             <p className="text-base leading-relaxed whitespace-pre-wrap">
               {post.content}
             </p>
           </div>
-
           {/* Materials */}
           {post.materials && post.materials.length > 0 && (
             <div className="bg-gray-50 border rounded-lg p-6">
@@ -447,7 +457,6 @@ export const PostDetailPage = () => {
               </div>
             </div>
           )}
-
           {/* Steps */}
           {post.steps && post.steps.length > 0 && (
             <div className="bg-gray-50 border rounded-lg p-6">
@@ -471,7 +480,6 @@ export const PostDetailPage = () => {
               </div>
             </div>
           )}
-
           {/* Tags & Topics */}
           {(post.tags.length > 0 || post.topics.length > 0) && (
             <div className="space-y-3">
@@ -513,7 +521,6 @@ export const PostDetailPage = () => {
               )}
             </div>
           )}
-
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="flex items-center gap-1">
@@ -537,20 +544,19 @@ export const PostDetailPage = () => {
                 <span className="ml-1 text-sm">Chia sẻ</span>
               </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsBookmarked(!isBookmarked)}
-              className={isBookmarked ? "text-yellow-600" : ""}
-            >
-              <Bookmark
-                className={cn("h-4 w-4", isBookmarked && "fill-current")}
-              />
-            </Button>
+            <BookmarkModal postId={post.post_id}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 text-muted-foreground"
+              >
+                <Bookmark className="h-4 w-4 mr-1" />
+                Lưu
+              </Button>
+            </BookmarkModal>
           </div>
         </CardContent>
       </Card>
-
       {/* Comments Section */}
       <Card>
         <CardHeader>
@@ -593,7 +599,6 @@ export const PostDetailPage = () => {
               </div>
             </div>
           )}
-
           {/* Comments List */}
           {commentsLoading ? (
             <div className="flex justify-center items-center p-4">
@@ -635,7 +640,6 @@ export const PostDetailPage = () => {
         </CardContent>
       </Card>
 
-      {/* Image Lightbox */}
       {post?.images && (
         <ImageLightbox
           images={post.images}
