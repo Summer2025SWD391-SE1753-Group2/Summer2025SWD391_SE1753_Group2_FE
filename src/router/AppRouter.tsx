@@ -22,8 +22,10 @@ import FavoritesPage from "@/pages/private/FavoritesPage";
 import DetailFavoritePage from "@/pages/private/DetailFavoritePage";
 import MyPostsPage from "@/pages/user/posts/MyPostsPage";
 import EditPostPage from "@/pages/user/posts/EditPostPage";
+import { PersonalPage } from "@/pages/user/profile/PersonalPage";
 import UnitManagementPage from "@/pages/private/management/UnitManagementPage";
 import SettingPage from "@/pages/private/management/SettingPage";
+import SearchPage from "@/pages/publicPage/SearchPage";
 import UserManagementPage from "@/pages/private/management/UserManagementPage";
 import ChatPage from "@/pages/publicPage/ChatPage";
 
@@ -55,7 +57,9 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: paths.profile, element: <ProfilePage /> },
+      { path: paths.personal, element: <PersonalPage /> },
       { path: paths.postDetail, element: <PostDetailPage /> },
+      { path: paths.search, element: <SearchPage /> },
     ],
   },
   //user
