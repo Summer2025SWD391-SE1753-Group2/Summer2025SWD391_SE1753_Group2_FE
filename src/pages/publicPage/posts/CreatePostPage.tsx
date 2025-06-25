@@ -13,7 +13,8 @@ import { StepsInput } from "@/components/posts/StepsInput";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { Tag, Topic, Material, PostMaterial, Step } from "@/types/post";
-import { createPost, CreatePostApiRequest } from "@/services/posts/postService";
+import { createPost } from "@/services/posts/postService";
+import type { CreatePostRequest } from "@/types/post";
 
 import { getAllTopics } from "@/services/topics/topicService";
 import { getAllMaterials } from "@/services/materials/materialService";
@@ -83,6 +84,40 @@ export function CreatePostPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Function to clean and validate request data
+  const createCleanRequestData = (): CreatePostRequest => {
+    const validTagIds = formData.selectedTags
+      .map((tag) => tag.tag_id)
+      .filter((id) => id && id.trim() !== "");
+
+    const validTopicIds = formData.selectedTopics
+      .map((topic) => topic.topic_id)
+      .filter((id) => id && id.trim() !== "");
+
+    const validMaterials = formData.selectedMaterials.filter(
+      (material) => material.material_id && material.quantity > 0
+    );
+
+    // Create request data with only the fields that backend expects
+    const requestData: CreatePostRequest = {
+      title: formData.title.trim(),
+      content: formData.content.trim(),
+      tag_ids: validTagIds,
+      topic_ids: validTopicIds,
+      materials: validMaterials.map((pm) => ({
+        material_id: pm.material_id,
+        quantity: pm.quantity,
+      })),
+      images: [], // Will be populated with uploaded URLs
+      steps: formData.steps.map((step) => ({
+        order_number: step.order_number,
+        content: step.content.trim(),
+      })),
+    };
+
+    return requestData;
+  };
+
   const handleSubmit = async () => {
     if (!formData.title.trim()) {
       toast.error("Vui lòng nhập tiêu đề bài viết");
@@ -120,6 +155,35 @@ export function CreatePostPage() {
       return;
     }
 
+    // Validate tag_ids and topic_ids are not empty strings
+    const validTagIds = formData.selectedTags
+      .map((tag) => tag.tag_id)
+      .filter((id) => id && id.trim() !== "");
+
+    const validTopicIds = formData.selectedTopics
+      .map((topic) => topic.topic_id)
+      .filter((id) => id && id.trim() !== "");
+
+    if (validTagIds.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một tag hợp lệ");
+      return;
+    }
+
+    if (validTopicIds.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một chủ đề hợp lệ");
+      return;
+    }
+
+    // Validate materials have valid material_id and quantity
+    const validMaterials = formData.selectedMaterials.filter(
+      (material) => material.material_id && material.quantity > 0
+    );
+
+    if (validMaterials.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một nguyên liệu với số lượng hợp lệ");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -148,21 +212,20 @@ export function CreatePostPage() {
         }
       }
 
-      const requestData: CreatePostApiRequest = {
-        title: formData.title,
-        content: formData.content,
-        tag_ids: formData.selectedTags.map((tag) => tag.tag_id),
-        topic_ids: formData.selectedTopics.map((topic) => topic.topic_id),
-        materials: formData.selectedMaterials.map((pm) => ({
-          material_id: pm.material_id,
-          quantity: pm.quantity,
-        })),
-        images: uploadedImageUrls, // URLs từ Firebase
-        steps: formData.steps.map((step) => ({
-          order_number: step.order_number,
-          content: step.content,
-        })),
-      };
+      // Create clean request data
+      const requestData = createCleanRequestData();
+      requestData.images = uploadedImageUrls; // Add uploaded image URLs
+
+      // Debug logging
+      console.log("📝 Request Data:", JSON.stringify(requestData, null, 2));
+      console.log("🔍 Validation check:");
+      console.log("- Title:", requestData.title);
+      console.log("- Content:", requestData.content);
+      console.log("- Tag IDs:", requestData.tag_ids);
+      console.log("- Topic IDs:", requestData.topic_ids);
+      console.log("- Materials:", requestData.materials);
+      console.log("- Images:", requestData.images);
+      console.log("- Steps:", requestData.steps);
 
       await createPost(requestData);
 

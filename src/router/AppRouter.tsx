@@ -11,6 +11,7 @@ import ProtectedRoute from "./protected-route";
 import { paths } from "@/utils/constant/path";
 import LoginPage from "@/pages/publicPage/auth/LoginPage";
 import RegisterPage from "@/pages/publicPage/auth/RegisterPage";
+import { GoogleCallbackPage } from "@/pages/publicPage/auth/GoogleCallbackPage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CreatePostPage } from "@/pages/publicPage/posts/CreatePostPage";
 import { PostDetailPage } from "@/pages/publicPage/posts/PostDetailPage";
@@ -23,11 +24,9 @@ import DetailFavoritePage from "@/pages/private/DetailFavoritePage";
 import MyPostsPage from "@/pages/user/posts/MyPostsPage";
 import EditPostPage from "@/pages/user/posts/EditPostPage";
 import UnitManagementPage from "@/pages/private/management/UnitManagementPage";
-import SettingPage from "@/pages/private/management/SettingPage";
+import { SettingPage } from "@/pages/private/management/SettingPage";
 import UserManagementPage from "@/pages/private/management/UserManagementPage";
 import ChatPage from "@/pages/publicPage/ChatPage";
-
-
 
 const router = createBrowserRouter([
   {
@@ -40,7 +39,7 @@ const router = createBrowserRouter([
         children: [
           { path: paths.login, element: <LoginPage /> },
           { path: paths.register, element: <RegisterPage /> },
-          { path: paths.googleCallback, element: <LoginPage /> },
+          { path: paths.googleCallback, element: <GoogleCallbackPage /> },
         ],
       },
     ],
@@ -70,7 +69,6 @@ const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: paths.user.dashboard, element: <MyPostsPage /> },
 
-
       { path: paths.user.createPost, element: <CreatePostPage /> },
       { path: paths.user.editPost, element: <EditPostPage /> },
       { path: paths.user.postDetail, element: <PostDetailPage /> },
@@ -81,7 +79,6 @@ const router = createBrowserRouter([
       { path: paths.user.setting, element: <SettingPage /> },
       //
       { path: paths.user.chat, element: <ChatPage /> },
-
     ],
   },
   //moderator
@@ -98,18 +95,22 @@ const router = createBrowserRouter([
       { path: paths.moderator.profile, element: <ProfilePage /> },
       { path: paths.moderator.setting, element: <SettingPage /> },
 
-
       { path: paths.moderator.dashboard, element: <DashboardPage /> },
 
       { path: paths.moderator.approvePost, element: <ApprovePostPage /> },
-      { path: paths.moderator.materialManagement, element: <MaterialManagementPage />, },
+      {
+        path: paths.moderator.materialManagement,
+        element: <MaterialManagementPage />,
+      },
       { path: paths.moderator.tagManagement, element: <TagManagementPage /> },
-      { path: paths.moderator.topicManagement, element: <TopicManagementPage />, },
-      { path: paths.moderator.unitManagement, element: <UnitManagementPage />, },
+      {
+        path: paths.moderator.topicManagement,
+        element: <TopicManagementPage />,
+      },
+      { path: paths.moderator.unitManagement, element: <UnitManagementPage /> },
 
       //
       { path: paths.moderator.chat, element: <ChatPage /> },
-
     ],
   },
   //admin
@@ -130,15 +131,16 @@ const router = createBrowserRouter([
       { path: paths.admin.userManagement, element: <UserManagementPage /> },
 
       { path: paths.admin.approvePost, element: <ApprovePostPage /> },
-      { path: paths.admin.materialManagement, element: <MaterialManagementPage />, },
+      {
+        path: paths.admin.materialManagement,
+        element: <MaterialManagementPage />,
+      },
       { path: paths.admin.tagManagement, element: <TagManagementPage /> },
-      { path: paths.admin.topicManagement, element: <TopicManagementPage />, },
-      { path: paths.admin.unitManagement, element: <UnitManagementPage />, },
+      { path: paths.admin.topicManagement, element: <TopicManagementPage /> },
+      { path: paths.admin.unitManagement, element: <UnitManagementPage /> },
       //
       { path: paths.admin.chat, element: <ChatPage /> },
-
     ],
-
   },
   {
     path: paths.notFound,

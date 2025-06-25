@@ -1,11 +1,11 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getProfileByUsername } from "@/services/accounts/accountService";
+import { accountService } from "@/services/accounts/accountService";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { UserProfile } from "@/types/account";
+import type { UserProfile } from "@/types/account";
 
 const getRoleStyle = (role: string) => {
   switch (role) {
@@ -39,7 +39,7 @@ export function PersonalPage() {
         return;
       }
       try {
-        const data = await getProfileByUsername(username);
+        const data = await accountService.getProfileByUsername(username);
         setProfile(data);
       } catch (err: unknown) {
         const error = err as Error;
@@ -78,7 +78,7 @@ export function PersonalPage() {
             <div className="space-y-1 w-[55%]">
               <div className="flex items-center gap-1">
                 <p className="text-xl font-semibold leading-none">
-                  {profile.full_name}
+                  {profile.full_name || profile.username}
                 </p>
                 {profile.email_verified && (
                   <span className="text-blue-500 text-xs">✔</span>
@@ -145,7 +145,7 @@ export function PersonalPage() {
             <div className="w-[45%] flex justify-center ">
               <img
                 src={profile.avatar || "/default-profile-image.png"}
-                alt={`Ảnh của ${profile.full_name}`}
+                alt={`Ảnh của ${profile.full_name || profile.username}`}
                 className="h-auto max-h-64 object-cover rounded-lg"
                 onError={(e) => {
                   e.currentTarget.src = "/default-profile-image.png";

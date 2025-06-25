@@ -6,10 +6,9 @@ export const paths = {
   setting: "setting",
   login: "/auth/login",
   register: "/auth/register",
-  googleCallback: "/auth/google/callback",
+  googleCallback: "/auth/google-callback",
   postDetail: "/posts/:postId",
   chat: "chat",
-
 
   //user
   user: {
@@ -23,7 +22,6 @@ export const paths = {
     favorites: "/user/favorites",
     favoritesDetail: "/user/favorites/:favouriteId",
     chat: "/user/chat",
-
   },
 
   // Moderator
@@ -39,7 +37,6 @@ export const paths = {
     topicManagement: "/moderator/topic-management",
     unitManagement: "/moderator/unit-management",
     chat: "/moderator/chat",
-
   },
   //admin
   admin: {
@@ -55,7 +52,6 @@ export const paths = {
     unitManagement: "/admin/unit-management",
     userManagement: "/admin/user-management",
     chat: "/admin/chat",
-
   },
 
   // Not found

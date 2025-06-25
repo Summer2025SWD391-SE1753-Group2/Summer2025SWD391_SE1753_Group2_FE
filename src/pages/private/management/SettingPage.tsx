@@ -1,191 +1,368 @@
 import React, { useEffect, useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { GoogleUserSetup } from "@/components/auth/GoogleUserSetup";
+import { accountService } from "@/services/accounts/accountService";
+import type { UserProfile, ProfileUpdateData } from "@/types/account";
+import { User, Shield, Key, Edit, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getOwnProfile, updateOwnProfile } from "@/services/accounts/accountService";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { UserProfile } from "@/types/account";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
-const getInitials = (name: string = "") =>
-  name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-
-const getRoleStyle = (role: string) => {
-  switch (role) {
-    case "admin":
-      return "bg-red-100 text-red-700";
-    case "moderator":
-      return "bg-blue-100 text-blue-700";
-    default:
-      return "bg-green-100 text-green-700";
-  }
-};
-
-const getStatusStyle = (status: string) => {
-  return status === "active"
-    ? "bg-black text-white"
-    : "bg-gray-300 text-gray-700";
-};
-
-const SettingPage = () => {
+export function SettingPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [form, setForm] = useState({
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [formData, setFormData] = useState<ProfileUpdateData>({
     full_name: "",
-    bio: "",
-    date_of_birth: "",
     email: "",
+    phone: "",
+    date_of_birth: "",
+    bio: "",
   });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const data = await getOwnProfile();
+        const data = await accountService.getOwnProfile();
         setProfile(data);
-        setForm({
+        setFormData({
           full_name: data.full_name || "",
-          bio: data.bio || "",
-          date_of_birth: data.date_of_birth || "",
           email: data.email || "",
+          phone: data.phone_number || "",
+          date_of_birth: data.date_of_birth || "",
+          bio: data.bio || "",
         });
-      } catch {
-        toast.error("Không thể tải dữ liệu.");
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProfile();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+  const handleEdit = () => {
+    setEditing(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await updateOwnProfile({
-        full_name: form.full_name,
-        bio: form.bio,
-        date_of_birth: form.date_of_birth,
+  const handleCancel = () => {
+    setEditing(false);
+    // Reset form data to original values
+    if (profile) {
+      setFormData({
+        full_name: profile.full_name || "",
+        email: profile.email || "",
+        phone: profile.phone_number || "",
+        date_of_birth: profile.date_of_birth || "",
+        bio: profile.bio || "",
       });
-      toast.success("Cập nhật thành công!");
-    } catch {
-      toast.error("Cập nhật thất bại!");
     }
   };
 
-  if (!profile) {
-    return <p className="p-6 text-center">Đang tải dữ liệu...</p>;
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const updatedProfile = await accountService.updateOwnProfile(formData);
+      setProfile(updatedProfile);
+      setEditing(false);
+      toast.success("Cập nhật profile thành công!");
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      toast.error("Cập nhật profile thất bại!");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleInputChange = (field: keyof ProfileUpdateData, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Đang tải cài đặt...</p>
+        </div>
+      </div>
+    );
   }
 
-  const roleName = profile?.role?.role_name;
-
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <Card className="p-6 rounded-2xl shadow-sm space-y-6">
-        <div className="flex items-start gap-6">
-          {/* Avatar */}
-          <Avatar className="h-24 w-24">
-            <AvatarImage src={profile.avatar} alt={profile.full_name} />
-            <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-              {getInitials(profile.full_name)}
-            </AvatarFallback>
-          </Avatar>
+    <div className="container mx-auto p-6 max-w-4xl">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Cài đặt tài khoản</h1>
+        <p className="text-muted-foreground mt-2">
+          Quản lý thông tin cá nhân và cài đặt tài khoản của bạn
+        </p>
+      </div>
 
-          {/* Info */}
-          <div className="flex-1 space-y-1">
-            <p className="text-xl font-semibold leading-none">
-              {profile.username}
-            </p>
-            <p className="text-sm text-muted-foreground">{profile.email}</p>
+      <Tabs defaultValue="account" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="account" className="flex items-center gap-2">
+            <User className="w-4 h-4" />
+            Tài khoản
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Bảo mật
+          </TabsTrigger>
+          <TabsTrigger value="google" className="flex items-center gap-2">
+            <Key className="w-4 h-4" />
+            Google OAuth
+          </TabsTrigger>
+        </TabsList>
 
-            <div className="flex gap-3 mt-2">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "px-4 py-1.5 text-sm border-none font-semibold",
-                  getRoleStyle(roleName)
+        <TabsContent value="account" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  Thông tin tài khoản
+                </div>
+                {!editing ? (
+                  <Button onClick={handleEdit} variant="outline" size="sm">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Chỉnh sửa
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button onClick={handleCancel} variant="outline" size="sm">
+                      <X className="w-4 h-4 mr-2" />
+                      Hủy
+                    </Button>
+                    <Button onClick={handleSave} size="sm" disabled={saving}>
+                      <Save className="w-4 h-4 mr-2" />
+                      {saving ? "Đang lưu..." : "Lưu"}
+                    </Button>
+                  </div>
                 )}
-              >
-                {roleName === "admin"
-                  ? "Quản trị viên"
-                  : roleName === "moderator"
-                  ? "Kiểm duyệt viên"
-                  : "Thành viên"}
-              </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {profile && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="username">Tên đăng nhập</Label>
+                    <p className="text-lg font-semibold">@{profile.username}</p>
+                  </div>
 
-              <Badge
-                className={cn(
-                  "px-4 py-1.5 text-sm font-semibold",
-                  getStatusStyle(profile.status)
-                )}
-              >
-                {profile.status === "active" ? "Hoạt động" : "Không hoạt động"}
-              </Badge>
-            </div>
-          </div>
-        </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    {editing ? (
+                      <Input
+                        id="email"
+                        value={formData.email ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("email", e.target.value)
+                        }
+                        placeholder="Nhập email"
+                      />
+                    ) : (
+                      <p className="text-lg">{profile.email}</p>
+                    )}
+                  </div>
 
-        {/* Editable form */}
-        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-          <div>
-            <Label htmlFor="full_name">Họ và tên</Label>
-            <Input
-              id="full_name"
-              name="full_name"
-              value={form.full_name}
-              onChange={handleChange}
-              required
-            />
-          </div>
+                  <div>
+                    <Label htmlFor="full_name">Họ và tên</Label>
+                    {editing ? (
+                      <Input
+                        id="full_name"
+                        value={formData.full_name ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("full_name", e.target.value)
+                        }
+                        placeholder="Nhập họ và tên"
+                      />
+                    ) : (
+                      <p className="text-lg">
+                        {profile.full_name || "Chưa có"}
+                      </p>
+                    )}
+                  </div>
 
-         
-            <Input
-              id="email"
-              name="email"
-              value={form.email}
-              hidden
-              className="bg-gray-100 cursor-not-allowed"
-            />
-        
+                  <div>
+                    <Label htmlFor="phone">Số điện thoại</Label>
+                    {editing ? (
+                      <Input
+                        id="phone"
+                        value={formData.phone ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("phone", e.target.value)
+                        }
+                        placeholder="Nhập số điện thoại"
+                      />
+                    ) : (
+                      <p className="text-lg">
+                        {profile.phone_number || "Chưa có"}
+                      </p>
+                    )}
+                  </div>
 
-          <div>
-            <Label htmlFor="bio">Mô tả</Label>
-            <Textarea
-              id="bio"
-              name="bio"
-              value={form.bio}
-              onChange={handleChange}
-              rows={3}
-            />
-          </div>
+                  <div>
+                    <Label htmlFor="date_of_birth">Ngày sinh</Label>
+                    {editing ? (
+                      <Input
+                        id="date_of_birth"
+                        type="date"
+                        value={formData.date_of_birth ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("date_of_birth", e.target.value)
+                        }
+                      />
+                    ) : (
+                      <p className="text-lg">
+                        {profile.date_of_birth
+                          ? new Date(profile.date_of_birth).toLocaleDateString(
+                              "vi-VN"
+                            )
+                          : "Chưa có"}
+                      </p>
+                    )}
+                  </div>
 
-          <div>
-            <Label htmlFor="date_of_birth">Ngày sinh</Label>
-            <Input
-              id="date_of_birth"
-              name="date_of_birth"
-              type="date"
-              value={form.date_of_birth}
-              onChange={handleChange}
-            />
-          </div>
+                  <div>
+                    <Label htmlFor="role">Vai trò</Label>
+                    <p className="text-lg capitalize">
+                      {profile.role.role_name === "admin"
+                        ? "Quản trị viên"
+                        : profile.role.role_name === "moderator"
+                        ? "Kiểm duyệt viên"
+                        : "Thành viên"}
+                    </p>
+                  </div>
 
-          <Button type="submit" className="mt-2">
-            Lưu thay đổi
-          </Button>
-        </form>
-      </Card>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="bio">Tiểu sử</Label>
+                    {editing ? (
+                      <Textarea
+                        id="bio"
+                        value={formData.bio ?? ""}
+                        onChange={(e) =>
+                          handleInputChange("bio", e.target.value)
+                        }
+                        placeholder="Nhập tiểu sử"
+                        rows={3}
+                      />
+                    ) : (
+                      <p className="text-lg">
+                        {profile.bio || "Chưa có tiểu sử"}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label>Số bạn bè</Label>
+                    <p className="text-lg">{profile.friend_count || 0}</p>
+                  </div>
+
+                  <div>
+                    <Label>Ngày tạo</Label>
+                    <p className="text-lg">
+                      {new Date(profile.created_at).toLocaleDateString("vi-VN")}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="security" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Bảo mật tài khoản
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Xác thực email</h3>
+                <p className="text-muted-foreground">
+                  Trạng thái xác thực email của bạn
+                </p>
+                <div className="flex items-center gap-2">
+                  {profile?.email_verified ? (
+                    <span className="text-green-600 font-medium">
+                      ✓ Email đã được xác thực
+                    </span>
+                  ) : (
+                    <span className="text-yellow-600 font-medium">
+                      ⚠ Email chưa được xác thực
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">
+                  Xác thực số điện thoại
+                </h3>
+                <p className="text-muted-foreground">
+                  Trạng thái xác thực số điện thoại của bạn
+                </p>
+                <div className="flex items-center gap-2">
+                  {profile?.phone_verified ? (
+                    <span className="text-green-600 font-medium">
+                      ✓ Số điện thoại đã được xác thực
+                    </span>
+                  ) : (
+                    <span className="text-yellow-600 font-medium">
+                      ⚠ Số điện thoại chưa được xác thực
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Đổi mật khẩu</h3>
+                <p className="text-muted-foreground">
+                  Cập nhật mật khẩu tài khoản của bạn
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Tính năng này có sẵn trong tab "Google OAuth" nếu bạn là người
+                  dùng Google
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="google" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="w-5 h-5" />
+                Thiết lập Google OAuth
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <GoogleUserSetup
+                onComplete={() => {
+                  // Refresh profile data
+                  window.location.reload();
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
-};
-
-export default SettingPage;
+}
