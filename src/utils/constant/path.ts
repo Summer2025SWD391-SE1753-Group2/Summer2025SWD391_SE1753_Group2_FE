@@ -3,11 +3,13 @@ import { UserRole } from "@/types/user-role";
 export const paths = {
   home: "",
   profile: "profile",
+  personal:"/profile/:username",
   setting: "setting",
   login: "/auth/login",
   register: "/auth/register",
   googleCallback: "/auth/google/callback",
   postDetail: "/posts/:postId",
+  search: "/searchPage",  chat: "chat",
 
 
   //user
@@ -21,6 +23,7 @@ export const paths = {
     postDetail: "/user/posts/:postId",
     favorites: "/user/favorites",
     favoritesDetail: "/user/favorites/:favouriteId",
+    chat: "/user/chat",
 
   },
 
@@ -36,19 +39,24 @@ export const paths = {
     materialManagement: "/moderator/material-management",
     topicManagement: "/moderator/topic-management",
     unitManagement: "/moderator/unit-management",
+    chat: "/moderator/chat",
+
   },
   //admin
   admin: {
     home: "/admin/",
     dashboard: "/admin/dashboard",
     profile: "/admin/profile",
-    setting: "/admin/settings",
+    setting: "/admin/setting",
     postDetail: "/admin/posts/:postId",
     approvePost: "/admin/approvepost",
     tagManagement: "/admin/tag-management",
     materialManagement: "/admin/material-management",
     topicManagement: "/admin/topic-management",
     unitManagement: "/admin/unit-management",
+    userManagement: "/admin/user-management",
+    chat: "/admin/chat",
+
   },
 
   // Not found

@@ -22,8 +22,13 @@ import FavoritesPage from "@/pages/private/FavoritesPage";
 import DetailFavoritePage from "@/pages/private/DetailFavoritePage";
 import MyPostsPage from "@/pages/user/posts/MyPostsPage";
 import EditPostPage from "@/pages/user/posts/EditPostPage";
+import { PersonalPage } from "@/pages/user/profile/PersonalPage";
 import UnitManagementPage from "@/pages/private/management/UnitManagementPage";
 import SettingPage from "@/pages/private/management/SettingPage";
+import SearchPage from "@/pages/publicPage/SearchPage";
+import UserManagementPage from "@/pages/private/management/UserManagementPage";
+import ChatPage from "@/pages/publicPage/ChatPage";
+
 
 
 const router = createBrowserRouter([
@@ -52,7 +57,9 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: paths.profile, element: <ProfilePage /> },
+      { path: paths.personal, element: <PersonalPage /> },
       { path: paths.postDetail, element: <PostDetailPage /> },
+      { path: paths.search, element: <SearchPage /> },
     ],
   },
   //user
@@ -76,6 +83,8 @@ const router = createBrowserRouter([
 
       { path: paths.user.profile, element: <ProfilePage /> },
       { path: paths.user.setting, element: <SettingPage /> },
+      //
+      { path: paths.user.chat, element: <ChatPage /> },
 
     ],
   },
@@ -93,6 +102,7 @@ const router = createBrowserRouter([
       { path: paths.moderator.profile, element: <ProfilePage /> },
       { path: paths.moderator.setting, element: <SettingPage /> },
 
+
       { path: paths.moderator.dashboard, element: <DashboardPage /> },
 
       { path: paths.moderator.approvePost, element: <ApprovePostPage /> },
@@ -100,6 +110,10 @@ const router = createBrowserRouter([
       { path: paths.moderator.tagManagement, element: <TagManagementPage /> },
       { path: paths.moderator.topicManagement, element: <TopicManagementPage />, },
       { path: paths.moderator.unitManagement, element: <UnitManagementPage />, },
+
+      //
+      { path: paths.moderator.chat, element: <ChatPage /> },
+
     ],
   },
   //admin
@@ -117,12 +131,16 @@ const router = createBrowserRouter([
       { path: paths.admin.setting, element: <SettingPage /> },
 
       { path: paths.admin.dashboard, element: <DashboardPage /> },
+      { path: paths.admin.userManagement, element: <UserManagementPage /> },
 
       { path: paths.admin.approvePost, element: <ApprovePostPage /> },
       { path: paths.admin.materialManagement, element: <MaterialManagementPage />, },
       { path: paths.admin.tagManagement, element: <TagManagementPage /> },
       { path: paths.admin.topicManagement, element: <TopicManagementPage />, },
       { path: paths.admin.unitManagement, element: <UnitManagementPage />, },
+      //
+      { path: paths.admin.chat, element: <ChatPage /> },
+
     ],
 
   },

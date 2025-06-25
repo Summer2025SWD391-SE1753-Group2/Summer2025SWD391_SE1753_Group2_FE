@@ -20,6 +20,8 @@ import {
   Ham,
   Package2,
   LogOut,
+  UserCheck2,
+  MessageCircle,
 } from "lucide-react";
 import BrandLogo from "@/components/common/brand-logo";
 import { paths } from "@/utils/constant/path";
@@ -54,6 +56,12 @@ const sidebarLinks: SidebarLink[] = [
     href: paths.user.favorites,
     icon: <Bookmark className="h-5 w-5" />,
     roles: ["user"],
+  },
+  {
+    title: "Chat",
+    href: paths.chat,
+    icon: <MessageCircle className="h-5 w-5" />,
+    roles: ["user","moderator","admin" ],
   },
   // Moderator
   {
@@ -144,6 +152,12 @@ const sidebarLinks: SidebarLink[] = [
         roles: ["admin"],
       },
     ],
+  },
+  {
+    title: "Phân quyền",
+    href: paths.admin.userManagement,
+    icon: <UserCheck2 className="h-5 w-5" />,
+    roles: ["admin"],
   },
 ];
 
