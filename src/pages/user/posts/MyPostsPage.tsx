@@ -190,7 +190,10 @@ const MyPostsPage = () => {
           <CardContent className="text-center py-8">
             <p className="text-muted-foreground">
               Bạn chưa có bài viết nào.
-              <Link to="/posts/create" className="text-primary ml-1 underline">
+              <Link
+                to="/user/posts/create"
+                className="text-primary ml-1 underline"
+              >
                 Tạo bài viết đầu tiên
               </Link>
             </p>

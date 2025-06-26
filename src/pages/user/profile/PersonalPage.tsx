@@ -1,11 +1,13 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getProfileByUsername } from "@/services/accounts/accountService";
+import { sendFriendRequest } from "@/services/friends/friendService";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { UserProfile } from "@/types/account";
+import { toast } from "sonner";
 
 const getRoleStyle = (role: string) => {
   switch (role) {
@@ -54,13 +56,16 @@ export function PersonalPage() {
   }, [username]);
 
   const handleAddFriend = async () => {
-    // try {
-    //   // Giả sử có API addFriend
-    //   await addFriend(profile!.username);
-    //   setProfile((prev) => (prev ? { ...prev, friends: (prev.friends || 0) + 1 } : null));
-    // } catch (err) {
-    //   console.error("Lỗi khi thêm bạn:", err);
-    // }
+    if (!profile) return;
+
+    try {
+      await sendFriendRequest({ receiver_id: profile.account_id });
+      toast.success("Đã gửi lời mời kết bạn!");
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Lỗi khi gửi lời mời kết bạn");
+      console.error("Lỗi khi thêm bạn:", err);
+    }
   };
 
   if (loading)
