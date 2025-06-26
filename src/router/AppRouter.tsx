@@ -23,13 +23,12 @@ import DetailFavoritePage from "@/pages/private/DetailFavoritePage";
 import MyPostsPage from "@/pages/user/posts/MyPostsPage";
 import EditPostPage from "@/pages/user/posts/EditPostPage";
 import { PersonalPage } from "@/pages/user/profile/PersonalPage";
+import { FriendManagementPage } from "@/pages/user/friends/FriendManagementPage";
 import UnitManagementPage from "@/pages/private/management/UnitManagementPage";
 import SettingPage from "@/pages/private/management/SettingPage";
 import SearchPage from "@/pages/publicPage/SearchPage";
 import UserManagementPage from "@/pages/private/management/UserManagementPage";
 import ChatPage from "@/pages/publicPage/ChatPage";
-
-
 
 const router = createBrowserRouter([
   {
@@ -74,18 +73,17 @@ const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: paths.user.dashboard, element: <MyPostsPage /> },
 
-
       { path: paths.user.createPost, element: <CreatePostPage /> },
       { path: paths.user.editPost, element: <EditPostPage /> },
       { path: paths.user.postDetail, element: <PostDetailPage /> },
       { path: paths.user.favorites, element: <FavoritesPage /> },
       { path: paths.user.favoritesDetail, element: <DetailFavoritePage /> },
+      { path: paths.user.friends, element: <FriendManagementPage /> },
 
       { path: paths.user.profile, element: <ProfilePage /> },
       { path: paths.user.setting, element: <SettingPage /> },
       //
       { path: paths.user.chat, element: <ChatPage /> },
-
     ],
   },
   //moderator
@@ -102,18 +100,22 @@ const router = createBrowserRouter([
       { path: paths.moderator.profile, element: <ProfilePage /> },
       { path: paths.moderator.setting, element: <SettingPage /> },
 
-
       { path: paths.moderator.dashboard, element: <DashboardPage /> },
 
       { path: paths.moderator.approvePost, element: <ApprovePostPage /> },
-      { path: paths.moderator.materialManagement, element: <MaterialManagementPage />, },
+      {
+        path: paths.moderator.materialManagement,
+        element: <MaterialManagementPage />,
+      },
       { path: paths.moderator.tagManagement, element: <TagManagementPage /> },
-      { path: paths.moderator.topicManagement, element: <TopicManagementPage />, },
-      { path: paths.moderator.unitManagement, element: <UnitManagementPage />, },
+      {
+        path: paths.moderator.topicManagement,
+        element: <TopicManagementPage />,
+      },
+      { path: paths.moderator.unitManagement, element: <UnitManagementPage /> },
 
       //
       { path: paths.moderator.chat, element: <ChatPage /> },
-
     ],
   },
   //admin
@@ -134,15 +136,16 @@ const router = createBrowserRouter([
       { path: paths.admin.userManagement, element: <UserManagementPage /> },
 
       { path: paths.admin.approvePost, element: <ApprovePostPage /> },
-      { path: paths.admin.materialManagement, element: <MaterialManagementPage />, },
+      {
+        path: paths.admin.materialManagement,
+        element: <MaterialManagementPage />,
+      },
       { path: paths.admin.tagManagement, element: <TagManagementPage /> },
-      { path: paths.admin.topicManagement, element: <TopicManagementPage />, },
-      { path: paths.admin.unitManagement, element: <UnitManagementPage />, },
+      { path: paths.admin.topicManagement, element: <TopicManagementPage /> },
+      { path: paths.admin.unitManagement, element: <UnitManagementPage /> },
       //
       { path: paths.admin.chat, element: <ChatPage /> },
-
     ],
-
   },
   {
     path: paths.notFound,
