@@ -14,7 +14,7 @@ interface FavoriteState {
   folders: Favorite[];
   savedPosts: Map<string, Set<string>>; // Map<favourite_id, Set<post_id>>
   isLoading: boolean;
-  initializeFavorites: () => Promise<void>; // Gọi một lần để tải dữ liệu
+  initializeFavorites: (forceRefresh?: boolean) => Promise<void>;
   addPost: (favourite_id: string, post_id: string, favourite_name: string) => Promise<void>;
   removePost: (favourite_id: string, post_id: string, favourite_name: string) => Promise<void>;
   createFolder: (name: string, post_id?: string) => Promise<void>;
@@ -26,8 +26,8 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
   folders: [],
   savedPosts: new Map(),
   isLoading: false,
-  initializeFavorites: async () => {
-    if (get().folders.length > 0) return; // Chỉ gọi lần đầu
+  initializeFavorites: async (forceRefresh = false) => {
+    if (!forceRefresh && get().folders.length > 0) return;
     try {
       set({ isLoading: true });
       const folders = await getFavoriteFolders();
@@ -64,7 +64,12 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
         const savedPosts = new Map(state.savedPosts);
         posts.add(post_id);
         savedPosts.set(favourite_id, posts);
-        return { savedPosts };
+        const folders = state.folders.map((folder) =>
+          folder.favourite_id === favourite_id
+            ? { ...folder, post_count: (folder.post_count || 0) + 1 }
+            : folder
+        );
+        return { savedPosts, folders };
       });
       toast.success(`Đã thêm bài viết vào "${favourite_name}"`);
     } catch (error) {
@@ -86,7 +91,12 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
         const savedPosts = new Map(state.savedPosts);
         posts.delete(post_id);
         savedPosts.set(favourite_id, posts);
-        return { savedPosts };
+        const folders = state.folders.map((folder) =>
+          folder.favourite_id === favourite_id
+            ? { ...folder, post_count: Math.max(0, (folder.post_count || 0) - 1) }
+            : folder
+        );
+        return { savedPosts, folders };
       });
       toast.success(`Đã xóa bài viết khỏi "${favourite_name}"`);
     } catch (error) {
@@ -99,10 +109,10 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
     try {
       const newFolder = await createFavoriteFolder({
         favourite_name: name,
-        account_id: "", // Backend xử lý từ token
+        account_id: "",
       });
       set((state) => {
-        const folders = [...state.folders, newFolder];
+        const folders = [...state.folders, { ...newFolder, post_count: 0 }]; // Ensure post_count is set
         const savedPosts = new Map(state.savedPosts);
         savedPosts.set(newFolder.favourite_id, new Set());
         return { folders, savedPosts };

@@ -31,61 +31,60 @@ const SearchPage = () => {
   const postsPerPage = 10;
 
   const fetchSearchResults = async (page: number = 1) => {
-    setIsLoading(true);
-    setError(null);
-    const skip = (page - 1) * postsPerPage;
+  setIsLoading(true);
+  setError(null);
+  const skip = (page - 1) * postsPerPage;
 
-    try {
-      let postResults: Post[] = [];
-      if (query.trim() || tags.length > 0) {
-        if (tags.length > 0) {
-          postResults = await searchPostsByTag(
-            tags.join(","),
-            skip,
-            postsPerPage
+  try {
+    let postResults: Post[] = [];
+    if (query.trim() || tags.length > 0) {
+      if (tags.length > 0) {
+        if (tags.length === 1) {
+          // Single tag search
+          postResults = await searchPostsByTag(tags[0], skip, postsPerPage);
+        } else {
+          // Multiple tags: fetch posts for each tag and combine
+          const tagPromises = tags.map(tag => searchPostsByTag(tag, skip, postsPerPage));
+          const tagResults = await Promise.all(tagPromises);
+          // Flatten and remove duplicates
+          postResults = Array.from(
+            new Map(tagResults.flat().map(post => [post.post_id, post])).values()
           );
         }
-        const [userResults, titleResults, topicResults] = await Promise.all([
-          query.trim()
-            ? searchUsersByUsername(query, skip, postsPerPage)
-            : Promise.resolve([]),
-          query.trim()
-            ? searchPostsByTitle(query, skip, postsPerPage)
-            : Promise.resolve([]),
-          query.trim()
-            ? searchPostsByTopic(query, skip, postsPerPage)
-            : Promise.resolve([]),
-        ]);
-        const uniquePosts = Array.from(
-          new Map(
-            [...titleResults, ...topicResults, ...postResults].map((post) => [
-              post.post_id,
-              post,
-            ])
-          ).values()
-        );
-        setUsers(userResults);
-        setPosts(uniquePosts);
-        setTotalPages(Math.ceil(uniquePosts.length / postsPerPage));
+      }
 
-        if (uniquePosts.length === 0 && userResults.length === 0) {
-          setError(`Không tìm thấy bài viết, người dùng hoặc chủ đề tương ứng`);
-          setPosts([]);
-          setUsers([]);
-        }
-      } else {
+      const [userResults, titleResults, topicResults] = await Promise.all([
+        query.trim() ? searchUsersByUsername(query, skip, postsPerPage) : Promise.resolve([]),
+        query.trim() ? searchPostsByTitle(query, skip, postsPerPage) : Promise.resolve([]),
+        query.trim() ? searchPostsByTopic(query, skip, postsPerPage) : Promise.resolve([]),
+      ]);
+
+      const uniquePosts = Array.from(
+        new Map([...titleResults, ...topicResults, ...postResults].map(post => [post.post_id, post])).values()
+      );
+
+      setUsers(userResults);
+      setPosts(uniquePosts);
+      setTotalPages(Math.ceil(uniquePosts.length / postsPerPage));
+
+      if (uniquePosts.length === 0 && userResults.length === 0) {
+        setError(`Không tìm thấy bài viết, người dùng hoặc chủ đề tương ứng`);
         setPosts([]);
         setUsers([]);
-        setTotalPages(1);
       }
-    } catch {
-      setError("Có lỗi xảy ra khi tìm kiếm. Vui lòng thử lại!");
+    } else {
       setPosts([]);
       setUsers([]);
-    } finally {
-      setIsLoading(false);
+      setTotalPages(1);
     }
-  };
+  } catch (err) {
+    setError("Có lỗi xảy ra khi tìm kiếm. Vui lòng thử lại!");
+    setPosts([]);
+    setUsers([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     // Chỉ gọi API khi trang load lần đầu hoặc thay đổi trang
