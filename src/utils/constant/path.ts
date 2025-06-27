@@ -3,14 +3,14 @@ import { UserRole } from "@/types/user-role";
 export const paths = {
   home: "",
   profile: "profile",
-  personal:"/profile/:username",
+  personal: "/profile/:username",
   setting: "setting",
   login: "/auth/login",
   register: "/auth/register",
   googleCallback: "/auth/google/callback",
   postDetail: "/posts/:postId",
-  search: "/searchPage",  chat: "chat",
-
+  search: "/searchPage",
+  chat: "chat",
 
   //user
   user: {
@@ -23,8 +23,8 @@ export const paths = {
     postDetail: "/user/posts/:postId",
     favorites: "/user/favorites",
     favoritesDetail: "/user/favorites/:favouriteId",
+    friends: "/user/friends",
     chat: "/user/chat",
-
   },
 
   // Moderator
@@ -40,7 +40,6 @@ export const paths = {
     topicManagement: "/moderator/topic-management",
     unitManagement: "/moderator/unit-management",
     chat: "/moderator/chat",
-
   },
   //admin
   admin: {
@@ -56,7 +55,6 @@ export const paths = {
     unitManagement: "/admin/unit-management",
     userManagement: "/admin/user-management",
     chat: "/admin/chat",
-
   },
 
   // Not found

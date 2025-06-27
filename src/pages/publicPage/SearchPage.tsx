@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link, useSearchParams } from "react-router-dom";
-import { searchPostsByTitle, searchPostsByTag, searchPostsByTopic, getApprovedPosts } from "@/services/posts/postService";
+import {
+  searchPostsByTitle,
+  searchPostsByTag,
+  searchPostsByTopic,
+} from "@/services/posts/postService";
 import { searchUsersByUsername } from "@/services/accounts/accountService";
 import { Post } from "@/types/post";
 import { UserProfile } from "@/types/account";
@@ -12,12 +16,16 @@ const SearchPage = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
-  const tags = searchParams.get("tags")?.split(",").filter(tag => tag) || [];
+  const tags =
+    searchParams
+      .get("tags")
+      ?.split(",")
+      .filter((tag) => tag) || [];
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const postsPerPage = 10;
@@ -96,7 +104,10 @@ const SearchPage = () => {
       {isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {[...Array(8)].map((_, index) => (
-            <Card key={index} className="overflow-hidden rounded-xl border border-gray-200 shadow-sm bg-gray-100 animate-pulse">
+            <Card
+              key={index}
+              className="overflow-hidden rounded-xl border border-gray-200 shadow-sm bg-gray-100 animate-pulse"
+            >
               <div className="w-full h-48 bg-gray-300"></div>
               <CardContent className="p-3 flex flex-col items-center">
                 <div className="h-6 bg-gray-300 rounded w-3/4 mb-2"></div>
@@ -116,38 +127,46 @@ const SearchPage = () => {
       {!isLoading && (posts.length > 0 || users.length > 0) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {users.length > 0 &&
-            users.map(user => (
+            users.map((user) => (
               <Link
                 to={`/profile/${encodeURIComponent(user.username)}`}
                 key={user.account_id}
               >
-                <Card
-                  className="overflow-hidden rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 bg-white cursor-pointer"
-                >
+                <Card className="overflow-hidden rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 bg-white cursor-pointer">
                   <CardContent className="p-4 flex flex-col items-center justify-center">
                     <Avatar className="w-36 h-36 mb-4 rounded-full border-2 border-gray-100">
-                      <AvatarImage src={user.avatar} alt={user.full_name} className="object-cover" />
+                      <AvatarImage
+                        src={user.avatar}
+                        alt={user.full_name}
+                        className="object-cover"
+                      />
                       <AvatarFallback className="text-2xl bg-gray-200">
                         {user.full_name && user.full_name.trim() !== "string"
-                          ? user.full_name.split(" ").map(word => word[0]).join("").toUpperCase()
+                          ? user.full_name
+                              .split(" ")
+                              .map((word) => word[0])
+                              .join("")
+                              .toUpperCase()
                           : user.username[0].toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <h3 className="text-center text-lg font-semibold text-gray-800">
-                      {user.full_name && user.full_name.trim() !== "string" ? user.full_name : user.username}
+                      {user.full_name && user.full_name.trim() !== "string"
+                        ? user.full_name
+                        : user.username}
                     </h3>
-                    <p className="text-sm text-gray-500 text-center mt-1">@{user.username}</p>
+                    <p className="text-sm text-gray-500 text-center mt-1">
+                      @{user.username}
+                    </p>
                   </CardContent>
                 </Card>
               </Link>
             ))}
 
           {posts.length > 0 &&
-            posts.map(post => (
+            posts.map((post) => (
               <Link to={`/posts/${post.post_id}`} key={post.post_id}>
-                <Card
-                  className="overflow-hidden rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 bg-white relative cursor-pointer"
-                >
+                <Card className="overflow-hidden rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 bg-white relative cursor-pointer">
                   <div className="w-full h-48 absolute top-0 left-0">
                     {post.images.length > 0 && (
                       <img
@@ -158,12 +177,15 @@ const SearchPage = () => {
                     )}
                   </div>
                   <CardContent className="p-3 flex flex-col items-center relative z-10 bg-white bg-opacity-95 pt-48">
-                    <h3 className="font-semibold text-center text-lg text-gray-800 line-clamp-2">{post.title}</h3>
+                    <h3 className="font-semibold text-center text-lg text-gray-800 line-clamp-2">
+                      {post.title}
+                    </h3>
                     <p className="text-sm text-gray-500 text-center mt-1">
                       {new Date(post.created_at).toLocaleDateString()}
                     </p>
                     <p className="text-sm text-gray-600 text-center mt-1 line-clamp-1">
-                      {post.tags.map(tag => tag.name).join(", ") || "Không có thẻ"}
+                      {post.tags.map((tag) => tag.name).join(", ") ||
+                        "Không có thẻ"}
                     </p>
                   </CardContent>
                 </Card>
