@@ -90,9 +90,9 @@ const searchPostsByTopic = async (
     const response = await axiosInstance.get<Post[]>(
       `/api/v1/posts/search/by-topic/?topic_name=${encodeURIComponent(
         topicName
-      )}&status=approved&skip=${skip}&limit=${limit}`
+      )}&skip=${skip}&limit=${limit}`
     );
-    return response.data || [];
+    return response.data.filter(post => post.status === 'approved') || [];
   } catch (error: unknown) {
     if (error && typeof error === "object" && "response" in error) {
       const axiosError = error as {
@@ -120,9 +120,9 @@ const searchPostsByTag = async (
     const response = await axiosInstance.get<Post[]>(
       `/api/v1/posts/search/by-tag/?tag_name=${encodeURIComponent(
         tagName
-      )}&status=approved&skip=${skip}&limit=${limit}`
+      )}&skip=${skip}&limit=${limit}`
     );
-    return response.data || [];
+    return response.data.filter(post => post.status === 'approved') || [];
   } catch (error: unknown) {
     if (error && typeof error === "object" && "response" in error) {
       const axiosError = error as {
@@ -150,9 +150,9 @@ const searchPostsByTitle = async (
     const response = await axiosInstance.get<Post[]>(
       `/api/v1/posts/search/?title=${encodeURIComponent(
         title
-      )}&status=approved&skip=${skip}&limit=${limit}`
+      )}&skip=${skip}&limit=${limit}`
     );
-    return response.data || [];
+    return response.data.filter(post => post.status === 'approved') || [];
   } catch (error: unknown) {
     if (error && typeof error === "object" && "response" in error) {
       const axiosError = error as {
