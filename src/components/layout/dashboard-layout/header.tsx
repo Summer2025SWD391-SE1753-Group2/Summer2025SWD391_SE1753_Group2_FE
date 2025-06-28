@@ -42,7 +42,7 @@ const DashboardHeader = () => {
       setUserSuggestions([]);
       setError(null);
       return;
-    }
+      }
     setIsLoading(true);
     setError(null);
     try {
@@ -60,13 +60,13 @@ const DashboardHeader = () => {
           setError(`Không tìm thấy bài viết với các thẻ: ${selectedTags.join(', ')}.`);
         }
       } else {
-        // Tìm kiếm theo tiêu đề, chủ đề, và người dùng
+
         const [userResults, postTitleResults, postTopicResults] = await Promise.all([
           searchUsersByUsername(query, 0, 5),
           searchPostsByTitle(query, 0, 5),
           searchPostsByTopic(query, 0, 5),
         ]);
-        // Gộp kết quả bài viết từ tiêu đề và chủ đề, loại bỏ trùng lặp
+       
         const uniquePosts = Array.from(
           new Map(
             [...postTitleResults, ...postTopicResults].map((post) => [post.post_id, post])
@@ -267,7 +267,7 @@ const DashboardHeader = () => {
               <Bell className='h-5 w-5' />
               <span className='sr-only'>Notifications</span>
             </Button>
-
+            <div>{user?.role.role_name}</div>
             <Avatar>
               <AvatarImage src={user?.avatar || ''} alt={user?.full_name || 'User'} />
               <AvatarFallback>{getInitials(user?.full_name)}</AvatarFallback>
