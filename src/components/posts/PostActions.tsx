@@ -71,32 +71,16 @@ export const PostActions: React.FC<Props> = ({
         </TableCell>
         <TableCell>{new Date(post.created_at).toLocaleDateString()}</TableCell>
         <TableCell className="text-right space-x-1">
-          <Button
-            className="text-red-400"
-            onClick={() => setRejectingPost(post)}
-            disabled={post.status === "rejected"}
-          >
-            Từ chối
-          </Button>
-          <Button
-            className="text-green-600"
-            onClick={handleApprove}
-            disabled={post.status !== "waiting"}
-          >
-            Duyệt
-          </Button>
-          <Button className="text-blue-500" onClick={handleView}>
-            Xem
-          </Button>
+          <Button className="text-red-400" onClick={() => setRejectingPost(post)}>Từ chối</Button>
+          <Button className="text-green-600" onClick={handleApprove}>Duyệt</Button>
+          <Button className="text-blue-500" onClick={handleView}>Xem</Button>
         </TableCell>
       </TableRow>
 
       {/* Popup xem chi tiết */}
       <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
         <DialogContent className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-          {selectedPost && (
-            <PopupDetail post={selectedPost} onClose={() => setSelectedPost(null)} />
-          )}
+          {selectedPost && <PopupDetail post={selectedPost} onClose={() => setSelectedPost(null)} />}
         </DialogContent>
       </Dialog>
 

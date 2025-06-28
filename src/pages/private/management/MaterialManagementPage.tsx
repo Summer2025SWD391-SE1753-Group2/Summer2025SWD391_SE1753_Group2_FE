@@ -61,30 +61,6 @@ export default function MaterialManagementPage() {
   const [newUnit, setNewUnit] = useState("");
 
   const user = useAuthStore((state) => state.user);
-  const toggleStatus = async (material: Material) => {
-    if (user?.role.role_name !== "admin") {
-      toast.error("Tài Khoản không đủ quyền hạn, không thể xoá nguyên liệu này.");
-      return;
-    }
-    try {
-      toast.loading("Đang cập nhật trạng thái...");
-      const updated = await updateMaterial(material.material_id, {
-        name: material.name,
-        unit: material.unit,
-        status: material.status === "active" ? "inactive" : "active",
-        updated_by: user.account_id,
-      });
-      setMaterials((prev) =>
-        prev.map((m) => (m.material_id === material.material_id ? updated : m))
-      );
-      toast.dismiss();
-      toast.success("Đã cập nhật trạng thái.");
-    } catch {
-      toast.dismiss();
-      toast.error("Không thể cập nhật trạng thái.");
-    }
-  };
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,7 +71,7 @@ export default function MaterialManagementPage() {
           getAllUnits(),
         ]);
         setMaterials(materialsData);
-        setUnits(unitsData.filter((u) => u.status === "active"));
+        setUnits(unitsData);
         toast.dismiss();
       } catch {
         toast.dismiss();
@@ -160,10 +136,6 @@ export default function MaterialManagementPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (user?.role.role_name !== "admin") {
-      toast.error("Tài Khoản không đủ quyền hạn, không thể xoá nguyên liệu này.");
-      return;
-    }
     try {
       toast.loading("Đang xoá...");
       await deleteMaterial(id);
@@ -172,7 +144,7 @@ export default function MaterialManagementPage() {
       toast.success("Đã xoá nguyên liệu");
     } catch {
       toast.dismiss();
-      toast.error("Không thể xoá nguyên liệu.");
+      toast.error("Tài Khoản không đủ quyền hạn, không thể xoá nguyên liệu.");
     }
   };
 
@@ -225,7 +197,6 @@ export default function MaterialManagementPage() {
               <TableRow>
                 <TableHead className="w-1/3">Tên nguyên liệu</TableHead>
                 <TableHead className="w-1/4">Đơn vị</TableHead>
-                <TableHead className="w-1/4">Trạng thái</TableHead>
                 <TableHead className="text-center pr-6">Hành động</TableHead>
               </TableRow>
             </TableHeader>
@@ -249,9 +220,6 @@ export default function MaterialManagementPage() {
                           />
                         </Select>
                       </TableCell>
-                      <TableCell className={material.status === "active" ? "text-green-600 font-medium" : "text-red-500 font-medium"}>
-                        {material.status === "active" ? "Hoạt động" : "Không hoạt động"}
-                      </TableCell>
                       <TableCell className="text-center">
                         <div className="flex justify-center gap-2">
                           <Button size="sm" onClick={handleSave}>
@@ -271,19 +239,8 @@ export default function MaterialManagementPage() {
                     <>
                       <TableCell>{material.name}</TableCell>
                       <TableCell>{material.unit}</TableCell>
-                      <TableCell className={material.status === "active" ? "text-green-600 font-medium" : "text-red-500 font-medium"}>
-                        {material.status === "active" ? "Hoạt động" : "Không hoạt động"}
-                      </TableCell>
                       <TableCell className="text-center">
                         <div className="flex justify-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => toggleStatus(material)}
-                            className="w-10"
-                          >
-                            {material.status === "active" ? "Ẩn" : "Hiện"}
-                          </Button>
                           <Button
                             size="sm"
                             onClick={() => handleEdit(material)}
