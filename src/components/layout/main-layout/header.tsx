@@ -284,7 +284,7 @@ const Header = () => {
           )}
         </div>
 
-        <nav className="hidden md:flex items-center space-x-6">
+        {/* <nav className="hidden md:flex items-center space-x-6">
           <NavLink
             to={paths.home}
             className={({ isActive }) =>
@@ -305,7 +305,7 @@ const Header = () => {
             <Heart className="w-7 h-10" />
             <span className="sr-only">Yêu thích</span>
           </NavLink>
-        </nav>
+        </nav> */}
 
         <div className="flex items-center space-x-4">
           {isAuthenticated && user ? (

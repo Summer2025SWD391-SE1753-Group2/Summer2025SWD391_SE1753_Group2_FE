@@ -51,9 +51,6 @@ export default function TagManagementPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editStatus, setEditStatus] = useState<"active" | "inactive">("active");
 
   const [newName, setNewName] = useState("");
   const [newStatus, setNewStatus] = useState<"active" | "inactive">("active");
@@ -102,34 +99,30 @@ export default function TagManagementPage() {
     }
   };
 
-  const handleEdit = (tag: Tag) => {
-    setEditingId(tag.tag_id || null);
-    setEditName(tag.name);
-    setEditStatus(tag.status);
-  };
-
-  const handleSave = async () => {
-    if (!editingId) return;
-
+  const toggleStatus = async (tag: Tag) => {
     try {
-      toast.loading("Đang cập nhật tag...");
-      const updated = await updateTag(editingId, {
-        name: editName,
-        status: editStatus,
+      toast.loading("Đang cập nhật trạng thái...");
+      const updated = await updateTag(tag.tag_id!, {
+        name: tag.name,
+        status: tag.status === "active" ? "inactive" : "active",
       });
       setTags((prev) =>
-        prev.map((t) => (t.tag_id === editingId ? updated : t))
+        prev.map((t) => (t.tag_id === tag.tag_id ? updated : t))
       );
-      setEditingId(null);
       toast.dismiss();
-      toast.success(`Tag '${updated.name}' đã được cập nhật.`);
+      toast.success(`Đã cập nhật trạng thái tag '${updated.name}'`);
     } catch {
       toast.dismiss();
-      toast.error("Không thể cập nhật tag.");
+      toast.error("Không thể cập nhật trạng thái.");
     }
   };
 
   const handleDelete = async (id: string) => {
+    if (user?.role.role_name !== "admin") {
+      toast.error("Tài khoản không đủ quyền hạn, không thể xoá tag này.");
+      return;
+    }
+
     try {
       toast.loading("Đang xoá tag...");
       await deleteTag(id);
@@ -207,92 +200,52 @@ export default function TagManagementPage() {
             <TableBody>
               {tags.map((tag) => (
                 <TableRow key={tag.tag_id}>
-                  {editingId === tag.tag_id ? (
-                    <>
-                      <TableCell>
-                        <Input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={editStatus}
-                          onValueChange={(val) =>
-                            setEditStatus(val as "active" | "inactive")
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Trạng thái" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="active">Hoạt động</SelectItem>
-                            <SelectItem value="inactive">
-                              Không hoạt động
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center gap-2">
-                          <Button size="sm" onClick={handleSave}>
-                            Lưu
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => setEditingId(null)}
-                          >
-                            Huỷ
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </>
-                  ) : (
-                    <>
-                      <TableCell>{tag.name}</TableCell>
-                      <TableCell
-                        className={cn(
-                          "font-medium",
-                          tag.status === "active"
-                            ? "text-green-600"
-                            : "text-red-500"
-                        )}
-                      >
-                        {tag.status === "active" ? "Hoạt động" : "Không hoạt động"}
-                      </TableCell>
+                  <TableCell>{tag.name}</TableCell>
+                  <TableCell
+                    className={cn(
+                      "font-medium",
+                      tag.status === "active"
+                        ? "text-green-600"
+                        : "text-red-500"
+                    )}
+                  >
+                    {tag.status === "active" ? "Hoạt động" : "Không hoạt động"}
+                  </TableCell>
 
-                      <TableCell className="text-center">
-                        <div className="flex justify-center gap-2">
-                          <Button size="sm" onClick={() => handleEdit(tag)}>
-                            Sửa
+                  <TableCell className="text-center">
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => toggleStatus(tag)}
+                        className="w-10"
+                      >
+                        {tag.status === "active" ? "Ẩn" : "Hiện"}
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive">
+                            Xoá
                           </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="destructive">
-                                Xoá
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Bạn có chắc không?
-                                </AlertDialogTitle>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Huỷ</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(tag.tag_id!)}
-                                >
-                                  Xác nhận
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </>
-                  )}
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Bạn có chắc muốn xoá tag này không?
+                            </AlertDialogTitle>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(tag.tag_id!)}
+                            >
+                              Xác nhận
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
