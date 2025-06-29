@@ -49,9 +49,6 @@ export default function UnitManagementPage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editStatus, setEditStatus] = useState<"active" | "inactive">("active");
   const [newName, setNewName] = useState("");
   const [newStatus, setNewStatus] = useState<"active" | "inactive">("active");
 
@@ -99,33 +96,30 @@ export default function UnitManagementPage() {
     }
   };
 
-  const handleEdit = (unit: Unit) => {
-    setEditingId(unit.unit_id);
-    setEditName(unit.name);
-    setEditStatus(unit.status);
-  };
-
-  const handleSave = async () => {
-    if (!editingId || !user?.account_id) return;
-
+  const toggleStatus = async (unit: Unit) => {
     try {
-      toast.loading("Đang cập nhật đơn vị...");
-      const updated = await updateUnit(editingId, {
-        name: editName,
-        status: editStatus,
-        updated_by: user.account_id,
+      toast.loading("Đang cập nhật trạng thái...");
+      const updated = await updateUnit(unit.unit_id, {
+        name: unit.name,
+        status: unit.status === "active" ? "inactive" : "active",
+        updated_by: user?.account_id,
       });
-      setUnits((prev) => prev.map((u) => (u.unit_id === editingId ? updated : u)));
-      setEditingId(null);
+      setUnits((prev) =>
+        prev.map((u) => (u.unit_id === unit.unit_id ? updated : u))
+      );
       toast.dismiss();
-      toast.success(`Đơn vị '${updated.name}' đã được cập nhật.`);
+      toast.success(`Đã cập nhật trạng thái đơn vị '${updated.name}'`);
     } catch {
       toast.dismiss();
-      toast.error("Không thể cập nhật đơn vị.");
+      toast.error("Không thể cập nhật trạng thái.");
     }
   };
 
   const handleDelete = async (id: string) => {
+    if (user?.role.role_name !== "admin") {
+      toast.error("Tài Khoản không đủ quyền hạn, không thể xoá đơn vị này");
+      return;
+    }
     try {
       toast.loading("Đang xoá đơn vị...");
       await deleteUnit(id);
@@ -134,7 +128,7 @@ export default function UnitManagementPage() {
       toast.success("Đã xoá đơn vị");
     } catch {
       toast.dismiss();
-      toast.error("Tài Khoản không đủ quyền hạn, không thể xoá đơn vị.");
+      toast.error("Không thể xoá đơn vị.");
     }
   };
 
@@ -201,77 +195,43 @@ export default function UnitManagementPage() {
             <TableBody>
               {units.map((unit) => (
                 <TableRow key={unit.unit_id}>
-                  {editingId === unit.unit_id ? (
-                    <>
-                      <TableCell>
-                        <Input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={editStatus}
-                          onValueChange={(val) =>
-                            setEditStatus(val as "active" | "inactive")
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Trạng thái" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="active">Đang sử dụng</SelectItem>
-                            <SelectItem value="inactive">Ngưng sử dụng</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center gap-2">
-                          <Button size="sm" onClick={handleSave}>Lưu</Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => setEditingId(null)}
-                          >
-                            Huỷ
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </>
-                  ) : (
-                    <>
-                      <TableCell>{unit.name}</TableCell>
-                      <TableCell
-                        className={cn(
-                          "font-medium",
-                          unit.status === "active" ? "text-green-600" : "text-red-500"
-                        )}
+                  <TableCell>{unit.name}</TableCell>
+                  <TableCell
+                    className={cn(
+                      "font-medium",
+                      unit.status === "active" ? "text-green-600" : "text-red-500"
+                    )}
+                  >
+                    {unit.status === "active" ? "Đang sử dụng" : "Ngưng sử dụng"}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => toggleStatus(unit)}
+                        className="w-10"
                       >
-                        {unit.status === "active" ? "Đang sử dụng" : "Ngưng sử dụng"}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center gap-2">
-                          <Button size="sm" onClick={() => handleEdit(unit)}>Sửa</Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="destructive">Xoá</Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Bạn có chắc không?</AlertDialogTitle>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Huỷ</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(unit.unit_id)}>
-                                  Xác nhận
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </>
-                  )}
+                        {unit.status === "active" ? "Ẩn" : "Hiện"}
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive">Xoá</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Bạn có chắc không?</AlertDialogTitle>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(unit.unit_id)}>
+                              Xác nhận
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

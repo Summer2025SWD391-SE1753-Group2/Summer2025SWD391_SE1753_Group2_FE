@@ -5,7 +5,6 @@ import { useAuthStore } from "@/stores/auth";
 
 import {
   ChevronDown,
-  FileText,
   LayoutDashboard,
   Package,
   Settings,
@@ -22,6 +21,7 @@ import {
   LogOut,
   UserCheck2,
   MessageCircle,
+  UserPlus,
 } from "lucide-react";
 import BrandLogo from "@/components/common/brand-logo";
 import { paths } from "@/utils/constant/path";
@@ -37,7 +37,6 @@ interface SidebarLink {
 }
 
 const sidebarLinks: SidebarLink[] = [
-
   //user
   {
     title: "Quản lý bài viết",
@@ -58,10 +57,16 @@ const sidebarLinks: SidebarLink[] = [
     roles: ["user"],
   },
   {
+    title: "Bạn bè",
+    href: paths.user.friends,
+    icon: <UserPlus className="h-5 w-5" />,
+    roles: ["user"],
+  },
+  {
     title: "Chat",
     href: paths.chat,
     icon: <MessageCircle className="h-5 w-5" />,
-    roles: ["user","moderator","admin" ],
+    roles: ["user", "moderator", "admin"],
   },
   // Moderator
   {
@@ -167,19 +172,37 @@ const bottomLinks: SidebarLink[] = [
     title: "Trang chủ",
     href: paths.home,
     icon: <Home className="h-5 w-5" />,
-    roles: ["user","moderator","admin"],
+    roles: ["user", "moderator", "admin"],
   },
   {
     title: "Người dùng",
-    href: paths.profile,
+    href: paths.user.profile,
     icon: <Users className="h-5 w-5" />,
-    roles: ["user","moderator","admin"],
+    roles: ["user", "moderator", "admin"],
   },
+  // {
+  //   title: "Người dùng",
+  //   href: paths.user.profile,
+  //   icon: <Users className="h-5 w-5" />,
+  //   roles: ["user"],
+  // },
+  // {
+  //   title: "Người dùng",
+  //   href: paths.moderator.profile,
+  //   icon: <Users className="h-5 w-5" />,
+  //   roles: ["moderator"],
+  // },
+  // {
+  //   title: "Người dùng",
+  //   href: paths.admin.profile,
+  //   icon: <Users className="h-5 w-5" />,
+  //   roles: ["admin"],
+  // },
   {
     title: "Cài đặt",
     href: paths.setting,
     icon: <Settings className="h-5 w-5" />,
-    roles: ["user","moderator","admin"],
+    roles: ["user", "moderator", "admin"],
   },
 ];
 
@@ -280,10 +303,13 @@ const DashboardSidebar = () => {
                         className={cn(
                           "w-full justify-start",
                           isLinkActive(child.href) &&
-                          "bg-gray-100 dark:bg-gray-700"
+                            "bg-gray-100 dark:bg-gray-700"
                         )}
                       >
-                        <Link to={child.href} className="flex items-center gap-2">
+                        <Link
+                          to={child.href}
+                          className="flex items-center gap-2"
+                        >
                           {child.icon}
                           {child.title}
                         </Link>
@@ -324,7 +350,6 @@ const DashboardSidebar = () => {
               Đăng xuất
             </div>
           </Button>
-
         </div>
       </div>
     </div>
