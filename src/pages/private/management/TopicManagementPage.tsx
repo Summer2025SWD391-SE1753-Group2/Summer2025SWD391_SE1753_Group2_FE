@@ -52,9 +52,6 @@ export default function TopicManagementPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editStatus, setEditStatus] = useState<"active" | "inactive">("active");
 
   const [newName, setNewName] = useState("");
   const [newStatus, setNewStatus] = useState<"active" | "inactive">("active");
@@ -103,34 +100,30 @@ export default function TopicManagementPage() {
     }
   };
 
-  const handleEdit = (topic: Topic) => {
-    setEditingId(topic.topic_id || null);
-    setEditName(topic.name);
-    setEditStatus(topic.status);
-  };
-
-  const handleSave = async () => {
-    if (!editingId) return;
-
+  const toggleStatus = async (topic: Topic) => {
     try {
-      toast.loading("Đang cập nhật chủ đề...");
-      const updated = await updateTopic(editingId, {
-        name: editName,
-        status: editStatus,
+      toast.loading("Đang cập nhật trạng thái...");
+      const updated = await updateTopic(topic.topic_id!, {
+        name: topic.name,
+        status: topic.status === "active" ? "inactive" : "active",
       });
       setTopics((prev) =>
-        prev.map((t) => (t.topic_id === editingId ? updated : t))
+        prev.map((t) => (t.topic_id === topic.topic_id ? updated : t))
       );
-      setEditingId(null);
       toast.dismiss();
-      toast.success(`Chủ đề '${updated.name}' đã được cập nhật.`);
+      toast.success(`Đã cập nhật trạng thái chủ đề '${updated.name}'`);
     } catch {
       toast.dismiss();
-      toast.error("Không thể cập nhật chủ đề.");
+      toast.error("Không thể cập nhật trạng thái.");
     }
   };
 
   const handleDelete = async (id: string) => {
+    if (user?.role.role_name !== "admin") {
+      toast.error("Tài khoản không đủ quyền hạn để xoá chủ đề này.");
+      return;
+    }
+
     try {
       toast.loading("Đang xoá chủ đề...");
       await deleteTopic(id);
@@ -208,79 +201,49 @@ export default function TopicManagementPage() {
             <TableBody>
               {topics.map((topic) => (
                 <TableRow key={topic.topic_id}>
-                  {editingId === topic.topic_id ? (
-                    <>
-                      <TableCell>
-                        <Input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={editStatus}
-                          onValueChange={(val) =>
-                            setEditStatus(val as "active" | "inactive")
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Trạng thái" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="active">Hoạt động</SelectItem>
-                            <SelectItem value="inactive">Không hoạt động</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center gap-2">
-                          <Button size="sm" onClick={handleSave}>Lưu</Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => setEditingId(null)}
-                          >
-                            Huỷ
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </>
-                  ) : (
-                    <>
-                      <TableCell>{topic.name}</TableCell>
-                      <TableCell
-                        className={cn(
-                          "font-medium",
-                          topic.status === "active" ? "text-green-600" : "text-red-500"
-                        )}
+                  <TableCell>{topic.name}</TableCell>
+                  <TableCell
+                    className={cn(
+                      "font-medium",
+                      topic.status === "active" ? "text-green-600" : "text-red-500"
+                    )}
+                  >
+                    {topic.status === "active" ? "Hoạt động" : "Không hoạt động"}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => toggleStatus(topic)}
+                        className="w-10"
                       >
-                        {topic.status === "active" ? "Hoạt động" : "Không hoạt động"}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center gap-2">
-                          <Button size="sm" onClick={() => handleEdit(topic)}>Sửa</Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="destructive">Xoá</Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Bạn có chắc không?</AlertDialogTitle>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Huỷ</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(topic.topic_id!)}
-                                >
-                                  Xác nhận
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </>
-                  )}
+                        {topic.status === "active" ? "Ẩn" : "Hiện"}
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive">
+                            Xoá
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Bạn có chắc muốn xoá chủ đề này không?
+                            </AlertDialogTitle>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(topic.topic_id!)}
+                            >
+                              Xác nhận
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
