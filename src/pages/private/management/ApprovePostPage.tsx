@@ -11,9 +11,9 @@ import { useAuthStore } from "@/stores/auth";
 
 
 import { Pagination } from "@/components/ui/pagination";
-import { PostFilter } from "@/components/posts/PostFilter";
-import { PostActions } from "@/components/posts/PostActions";
-import { PostSearch } from "@/components/posts/PostSearch";
+import { PostFilter } from "@/components/management/PostFilter";
+import { PostActions } from "@/components/management/PostActions";
+import { PostSearch } from "@/components/management/PostSearch";
 
 const PAGE_SIZE = 8;
 
@@ -27,6 +27,15 @@ const ApprovePostPage = () => {
 
   const { user } = useAuthStore();
   const moderatorId = user?.account_id || "";
+  const handleUpdatePostStatus = (id: string, status: "approved" | "rejected") => {
+    setPosts((prev) =>
+      prev.map((p) => (p.post_id === id ? { ...p, status } : p))
+    );
+
+    setFilteredPosts((prev) =>
+      prev.map((p) => (p.post_id === id ? { ...p, status } : p))
+    );
+  };
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -59,7 +68,7 @@ const ApprovePostPage = () => {
     );
 
     setFilteredPosts(updated);
-    setCurrentPage(1); // reset về trang đầu khi lọc
+    setCurrentPage(1);
   };
 
   const totalPages = Math.ceil(filteredPosts.length / PAGE_SIZE);
@@ -96,7 +105,7 @@ const ApprovePostPage = () => {
             }}
           />
         </div>
-          <PostFilter onFilter={handleFilter} />
+        <PostFilter onFilter={handleFilter} />
       </div>
 
       <div className="border-2 rounded-3xl p-2 shadow">
@@ -116,14 +125,10 @@ const ApprovePostPage = () => {
                 key={post.post_id}
                 post={post}
                 moderatorId={moderatorId}
-                updatePostStatus={(id, status) =>
-                  setPosts((prev) =>
-                    prev.map((p) =>
-                      p.post_id === id ? { ...p, status } : p
-                    )
-                  )
-                }
+                updatePostStatus={handleUpdatePostStatus}
               />
+
+
             ))}
           </TableBody>
         </Table>
