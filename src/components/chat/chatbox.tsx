@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import axios from "@/lib/api/axios";
+import { Settings } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 // Minimal types for chat
 interface UserInfo {
@@ -48,6 +55,14 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
   const LIMIT = 20;
   const currentFriendId = friend.account_id;
   const messages = chatHistory[currentFriendId] || [];
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchResults, setSearchResults] = useState<ChatMessage[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchSkip, setSearchSkip] = useState(0);
+  const SEARCH_LIMIT = 10;
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Helper to safely send data via WebSocket
   const safeSend = (data: Record<string, unknown>) => {
@@ -272,6 +287,30 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
     .reverse()
     .find((m) => m.sender_id === currentUser.account_id);
 
+  const handleSearchMessages = async (keyword: string, skip = 0) => {
+    setSearchLoading(true);
+    setSearchError(null);
+    try {
+      const res = await axios.get(
+        `/api/v1/chat/messages/search/${currentFriendId}?keyword=${encodeURIComponent(
+          keyword
+        )}&skip=${skip}&limit=${SEARCH_LIMIT}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      let data: ChatMessage[] = [];
+      if (Array.isArray(res.data)) data = res.data;
+      else if (res.data && Array.isArray(res.data.data)) data = res.data.data;
+      else if (res.data && Array.isArray(res.data.messages))
+        data = res.data.messages;
+      setSearchResults(skip === 0 ? data : [...searchResults, ...data]);
+      setSearchSkip(skip + data.length);
+    } catch {
+      setSearchError("Lỗi khi tìm kiếm tin nhắn");
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
   return (
     <div className="flex items-center justify-center w-full h-full">
       <div className="max-w-4xl w-full md:w-4/5 mx-auto my-8 bg-white border rounded-2xl shadow-2xl flex flex-col h-[80vh]">
@@ -291,6 +330,30 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
               Đang nhập...
             </span>
           )}
+          {/* Settings button */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="p-2 rounded-full hover:bg-orange-200 transition"
+                title="Cài đặt chat"
+              >
+                <Settings className="w-6 h-6" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onSelect={() => {
+                  setSearchOpen(true);
+                  setTimeout(() => searchInputRef.current?.focus(), 100);
+                }}
+              >
+                Tìm kiếm tin nhắn
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled>
+                Cài đặt (coming soon)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         {/* Body */}
         <div
@@ -434,6 +497,101 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
             Gửi
           </button>
         </div>
+        {/* Modal tìm kiếm tin nhắn */}
+        {searchOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative">
+              <button
+                className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-700"
+                onClick={() => {
+                  setSearchOpen(false);
+                  setSearchKeyword("");
+                  setSearchResults([]);
+                }}
+              >
+                ×
+              </button>
+              <h3 className="font-bold text-lg mb-2">
+                Tìm kiếm tin nhắn với {friend.full_name}
+              </h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSearchMessages(searchKeyword, 0);
+                }}
+                className="flex gap-2 mb-4"
+              >
+                <input
+                  ref={searchInputRef}
+                  className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  placeholder="Nhập từ khóa..."
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  className="bg-orange-500 text-white px-4 py-2 rounded font-semibold"
+                >
+                  Tìm
+                </button>
+              </form>
+              {searchLoading && (
+                <div className="text-center text-gray-400">
+                  Đang tìm kiếm...
+                </div>
+              )}
+              {searchError && (
+                <div className="text-center text-red-500">{searchError}</div>
+              )}
+              {!searchLoading &&
+                searchResults.length === 0 &&
+                searchKeyword &&
+                !searchError && (
+                  <div className="text-center text-gray-400">
+                    Không tìm thấy tin nhắn nào
+                  </div>
+                )}
+              <ul className="max-h-64 overflow-y-auto space-y-2">
+                {searchResults.map((msg) => (
+                  <li
+                    key={msg.message_id}
+                    className="p-2 rounded bg-gray-50 border flex flex-col"
+                  >
+                    <span className="text-xs text-gray-500 mb-1">
+                      {new Date(msg.created_at).toLocaleString("vi-VN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "2-digit",
+                      })}
+                    </span>
+                    <span
+                      className="break-words"
+                      dangerouslySetInnerHTML={{
+                        __html: msg.content.replace(
+                          new RegExp(`(${searchKeyword})`, "gi"),
+                          '<mark class="bg-yellow-200">$1</mark>'
+                        ),
+                      }}
+                    />
+                  </li>
+                ))}
+              </ul>
+              {searchResults.length > 0 && (
+                <button
+                  className="mt-3 w-full text-center text-orange-600 hover:underline"
+                  onClick={() =>
+                    handleSearchMessages(searchKeyword, searchSkip)
+                  }
+                  disabled={searchLoading}
+                >
+                  Xem thêm
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
