@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Search, UserPlus } from "lucide-react";
+import axios from "axios";
 
 const getRoleStyle = (role: string) => {
   switch (role) {
@@ -108,24 +109,60 @@ export function FindFriends() {
   };
 
   const handleSendRequest = async (user: UserProfile) => {
+    const status = friendshipStatuses[user.account_id]?.status;
+    if (status === "request_sent") {
+      toast.warning(
+        "Bạn đã gửi lời mời kết bạn trước đó, vui lòng chờ xác nhận."
+      );
+      return;
+    }
+    if (status === "request_received") {
+      toast.warning(
+        "Người này đã gửi lời mời cho bạn, hãy kiểm tra mục lời mời kết bạn."
+      );
+      return;
+    }
+    if (status === "friends") {
+      toast.warning("Bạn đã là bạn bè với người này.");
+      return;
+    }
+    if (status === "self") {
+      toast.warning("Không thể gửi lời mời kết bạn cho chính mình.");
+      return;
+    }
     setSendingRequest(true);
     try {
       const res = await sendFriendRequest({ receiver_id: user.account_id });
       if (res.status === "pending") {
         toast.success(`Đã gửi lời mời kết bạn đến ${user.full_name}`);
-        setFriendshipStatuses((prev) => ({
-          ...prev,
-          [user.account_id]: {
-            status: "request_sent",
-            can_send_request: false,
-          },
-        }));
       } else {
         toast.error("Không thể gửi lời mời kết bạn");
       }
+      // Luôn đồng bộ lại trạng thái từ BE
+      const newStatus = await getFriendshipStatus(user.account_id);
+      setFriendshipStatuses((prev) => ({
+        ...prev,
+        [user.account_id]: newStatus,
+      }));
+      setSearchResults((prev) => [...prev]);
     } catch (error) {
-      console.error("Lỗi khi gửi lời mời:", error);
-      toast.error("Không thể gửi lời mời kết bạn");
+      if (
+        axios.isAxiosError(error) &&
+        error.response?.data?.detail === "Friend request already exists"
+      ) {
+        toast.warning(
+          "Bạn đã gửi lời mời kết bạn trước đó, vui lòng chờ xác nhận."
+        );
+        // Luôn đồng bộ lại trạng thái từ BE
+        const newStatus = await getFriendshipStatus(user.account_id);
+        setFriendshipStatuses((prev) => ({
+          ...prev,
+          [user.account_id]: newStatus,
+        }));
+        setSearchResults((prev) => [...prev]);
+      } else {
+        toast.error("Không thể gửi lời mời kết bạn");
+      }
     } finally {
       setSendingRequest(false);
     }
