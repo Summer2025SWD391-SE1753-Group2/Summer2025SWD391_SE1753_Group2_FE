@@ -69,6 +69,16 @@ const getFriendshipStatus = async (
   return response.data;
 };
 
+// Update friend nickname
+const updateFriendNickname = async (
+  friend_id: string,
+  nickname: string
+): Promise<void> => {
+  await axiosInstance.put(`/api/v1/friends/${friend_id}/nickname`, {
+    nickname,
+  });
+};
+
 export {
   sendFriendRequest,
   acceptFriendRequest,
@@ -77,4 +87,5 @@ export {
   getPendingRequests,
   removeFriend,
   getFriendshipStatus,
+  updateFriendNickname,
 };

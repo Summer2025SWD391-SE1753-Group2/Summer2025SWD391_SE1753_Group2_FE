@@ -1,12 +1,22 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import axios from "@/lib/api/axios";
-import { Settings } from "lucide-react";
+import { Settings, Pencil } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  updateFriendNickname,
+  getFriendsList,
+} from "@/services/friends/friendService";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import type { FriendListItem } from "@/types/friend";
 
 // Minimal types for chat
 interface UserInfo {
@@ -63,6 +73,12 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
   const [searchSkip, setSearchSkip] = useState(0);
   const SEARCH_LIMIT = 10;
   const searchInputRef = useRef<HTMLInputElement>(null);
+  // Nickname state
+  const [nicknameInput, setNicknameInput] = useState("");
+  const [nicknameLoading, setNicknameLoading] = useState(false);
+  const [nicknameError, setNicknameError] = useState<string | null>(null);
+  const [nicknamePopoverOpen, setNicknamePopoverOpen] = useState(false);
+  const [displayName, setDisplayName] = useState(friend.full_name);
 
   // Helper to safely send data via WebSocket
   const safeSend = (data: Record<string, unknown>) => {
@@ -77,6 +93,19 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
     setTotal(0);
     setLoading(true);
   }, [currentFriendId, token]);
+
+  // Helper để merge và loại bỏ trùng message_id
+  function mergeUniqueMessages(
+    oldMsgs: ChatMessage[],
+    newMsgs: ChatMessage[]
+  ): ChatMessage[] {
+    const map = new Map<string, ChatMessage>();
+    [...oldMsgs, ...newMsgs].forEach((m) => map.set(m.message_id, m));
+    return Array.from(map.values()).sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  }
 
   // Fetch chat history (lấy mới nhất, skip=0)
   useEffect(() => {
@@ -99,7 +128,13 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
           data = res.data.messages;
           totalCount = res.data.total || 0;
         }
-        setChatHistory((prev) => ({ ...prev, [currentFriendId]: data }));
+        setChatHistory((prev) => ({
+          ...prev,
+          [currentFriendId]: mergeUniqueMessages(
+            prev[currentFriendId] || [],
+            data
+          ),
+        }));
         setTotal(totalCount || data.length);
         setHasMore((totalCount || data.length) > data.length);
       } catch {
@@ -133,22 +168,15 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
         data = res.data.messages;
         totalCount = res.data.total || total;
       }
-      // Nếu API trả về mới nhất trước (descending), reverse lại
-      if (
-        data.length > 1 &&
-        new Date(data[0].created_at) > new Date(data[1].created_at)
-      ) {
-        data = data.reverse();
-      }
-      // Loại bỏ trùng message_id
-      const existingIds = new Set(messages.map((m) => m.message_id));
-      const uniqueData = data.filter((m) => !existingIds.has(m.message_id));
       setChatHistory((prev) => ({
         ...prev,
-        [currentFriendId]: [...uniqueData, ...(prev[currentFriendId] || [])],
+        [currentFriendId]: mergeUniqueMessages(
+          data,
+          prev[currentFriendId] || []
+        ),
       }));
       setHasMore(
-        (totalCount || messages.length) > messages.length + uniqueData.length
+        (totalCount || messages.length) > messages.length + data.length
       );
     } catch {
       setHasMore(false);
@@ -189,7 +217,10 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
         if (data.type === "new_message") {
           setChatHistory((prev) => ({
             ...prev,
-            [currentFriendId]: [...(prev[currentFriendId] || []), data.message],
+            [currentFriendId]: mergeUniqueMessages(
+              prev[currentFriendId] || [],
+              [data.message]
+            ),
           }));
         } else if (data.type === "typing_indicator") {
           if (data.user_id === friend.account_id)
@@ -226,8 +257,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
     // Optimistic UI: append ngay tin nhắn vào messages
     setChatHistory((prev) => ({
       ...prev,
-      [currentFriendId]: [
-        ...(prev[currentFriendId] || []),
+      [currentFriendId]: mergeUniqueMessages(prev[currentFriendId] || [], [
         {
           message_id: tempId,
           sender_id: currentUser.account_id,
@@ -237,7 +267,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
           created_at: new Date().toISOString(),
           sender: currentUser,
         },
-      ],
+      ]),
     }));
     setInput("");
     setIsTyping(false);
@@ -311,6 +341,72 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
     }
   };
 
+  // Lấy nickname mới nhất từ danh sách bạn bè khi vào đoạn chat hoặc đổi nickname
+  useEffect(() => {
+    async function fetchFriendDisplayName() {
+      try {
+        const friends = await getFriendsList();
+        const friendData = friends.find(
+          (f) => f.account_id === currentFriendId
+        ) as (FriendListItem & { nickname?: string }) | undefined;
+        setDisplayName(
+          friendData?.nickname ||
+            friendData?.full_name ||
+            friendData?.username ||
+            friend.full_name
+        );
+      } catch {
+        setDisplayName(friend.full_name);
+      }
+    }
+    if (currentFriendId && token) fetchFriendDisplayName();
+  }, [currentFriendId, token, friend.full_name, friend.username]);
+
+  const handleSaveNickname = async () => {
+    if (!nicknameInput.trim()) return;
+    setNicknameLoading(true);
+    setNicknameError(null);
+    try {
+      await updateFriendNickname(currentFriendId, nicknameInput.trim());
+      setNicknamePopoverOpen(false);
+      // Refetch lại danh sách bạn bè để lấy nickname mới nhất
+      const friends = await getFriendsList();
+      const friendData = friends.find(
+        (f) => f.account_id === currentFriendId
+      ) as (FriendListItem & { nickname?: string }) | undefined;
+      setDisplayName(
+        friendData?.nickname ||
+          friendData?.full_name ||
+          friendData?.username ||
+          friend.full_name
+      );
+      // Refetch lại lịch sử chat để đồng bộ các trường nickname trong message nếu cần
+      setLoading(true);
+      const chatRes = await axios.get(
+        `/api/v1/chat/messages/history/${currentFriendId}?skip=0&limit=${LIMIT}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      let dataMsg: ChatMessage[] = [];
+      let totalCount = 0;
+      if (Array.isArray(chatRes.data)) {
+        dataMsg = chatRes.data;
+      } else if (chatRes.data && Array.isArray(chatRes.data.data)) {
+        dataMsg = chatRes.data.data;
+      } else if (chatRes.data && Array.isArray(chatRes.data.messages)) {
+        dataMsg = chatRes.data.messages;
+        totalCount = chatRes.data.total || 0;
+      }
+      setChatHistory((prev) => ({ ...prev, [currentFriendId]: dataMsg }));
+      setTotal(totalCount || dataMsg.length);
+      setHasMore((totalCount || dataMsg.length) > dataMsg.length);
+    } catch {
+      setNicknameError("Lỗi khi cập nhật nickname");
+    } finally {
+      setNicknameLoading(false);
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex items-center justify-center w-full h-full">
       <div className="max-w-4xl w-full md:w-4/5 mx-auto my-8 bg-white border rounded-2xl shadow-2xl flex flex-col h-[80vh]">
@@ -322,7 +418,60 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
             className="w-10 h-10 rounded-full object-cover border"
           />
           <div className="flex-1">
-            <div className="font-bold text-lg">{friend.full_name}</div>
+            <div className="font-bold text-lg flex items-center gap-2">
+              <span>{displayName}</span>
+              <Popover
+                open={nicknamePopoverOpen}
+                onOpenChange={setNicknamePopoverOpen}
+              >
+                <PopoverTrigger asChild>
+                  <button
+                    className="ml-1 p-1 rounded hover:bg-orange-100"
+                    title="Đổi nickname"
+                    onClick={() => {
+                      setNicknamePopoverOpen(true);
+                      setNicknameInput(nicknameInput || "");
+                    }}
+                  >
+                    <Pencil className="w-4 h-4 text-orange-500" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-64">
+                  <div className="flex flex-col gap-2">
+                    <input
+                      className="border rounded px-2 py-1 text-base"
+                      value={nicknameInput}
+                      onChange={(e) => setNicknameInput(e.target.value)}
+                      disabled={nicknameLoading}
+                      maxLength={100}
+                      placeholder="Nhập nickname mới..."
+                      autoFocus
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        className="text-orange-600 font-semibold px-2 py-1 rounded hover:bg-orange-100"
+                        onClick={handleSaveNickname}
+                        disabled={nicknameLoading}
+                      >
+                        {nicknameLoading ? "Đang lưu..." : "Lưu"}
+                      </button>
+                      <button
+                        className="text-gray-500 px-2 py-1 rounded hover:bg-gray-100"
+                        onClick={() => setNicknamePopoverOpen(false)}
+                        disabled={nicknameLoading}
+                      >
+                        Huỷ
+                      </button>
+                    </div>
+                    {nicknameError && (
+                      <div className="text-xs text-red-500 text-right">
+                        {nicknameError}
+                      </div>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
             <div className="text-xs text-gray-500">@{friend.username}</div>
           </div>
           {friendTyping && (
