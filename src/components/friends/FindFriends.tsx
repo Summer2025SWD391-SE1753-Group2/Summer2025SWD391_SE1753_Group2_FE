@@ -110,14 +110,19 @@ export function FindFriends() {
   const handleSendRequest = async (user: UserProfile) => {
     setSendingRequest(true);
     try {
-      await sendFriendRequest({ receiver_id: user.account_id });
-      toast.success(`Đã gửi lời mời kết bạn đến ${user.full_name}`);
-      // Update status after sending request
-      const newStatus = await getFriendshipStatus(user.account_id);
-      setFriendshipStatuses((prev) => ({
-        ...prev,
-        [user.account_id]: newStatus,
-      }));
+      const res = await sendFriendRequest({ receiver_id: user.account_id });
+      if (res.status === "pending") {
+        toast.success(`Đã gửi lời mời kết bạn đến ${user.full_name}`);
+        setFriendshipStatuses((prev) => ({
+          ...prev,
+          [user.account_id]: {
+            status: "request_sent",
+            can_send_request: false,
+          },
+        }));
+      } else {
+        toast.error("Không thể gửi lời mời kết bạn");
+      }
     } catch (error) {
       console.error("Lỗi khi gửi lời mời:", error);
       toast.error("Không thể gửi lời mời kết bạn");
