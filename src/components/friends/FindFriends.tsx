@@ -35,7 +35,9 @@ export function FindFriends() {
   const [hasMore, setHasMore] = useState(true);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const [searching, setSearching] = useState(false);
-  const [sendingRequest, setSendingRequest] = useState(false);
+  const [sendingRequest, setSendingRequest] = useState<Record<string, boolean>>(
+    {}
+  );
   const [friendshipStatuses, setFriendshipStatuses] = useState<
     Record<string, FriendshipStatus>
   >({});
@@ -130,7 +132,7 @@ export function FindFriends() {
       toast.warning("Không thể gửi lời mời kết bạn cho chính mình.");
       return;
     }
-    setSendingRequest(true);
+    setSendingRequest((prev) => ({ ...prev, [user.account_id]: true }));
     try {
       const res = await sendFriendRequest({ receiver_id: user.account_id });
       if (res.status === "pending") {
@@ -164,7 +166,7 @@ export function FindFriends() {
         toast.error("Không thể gửi lời mời kết bạn");
       }
     } finally {
-      setSendingRequest(false);
+      setSendingRequest((prev) => ({ ...prev, [user.account_id]: false }));
     }
   };
 
@@ -201,11 +203,11 @@ export function FindFriends() {
         return (
           <Button
             onClick={() => handleSendRequest(user)}
-            disabled={sendingRequest}
+            disabled={!!sendingRequest[user.account_id]}
             className="bg-green-500 hover:bg-green-600"
           >
             <UserPlus className="h-4 w-4 mr-1" />
-            {sendingRequest ? "Đang gửi..." : "Thêm bạn"}
+            {sendingRequest[user.account_id] ? "Đang gửi..." : "Thêm bạn"}
           </Button>
         );
       default:
