@@ -4,11 +4,14 @@ import { useAuthStore } from "@/stores/auth";
 import { authService } from "@/services/auth/authService";
 import { getFriendsList } from "@/services/friends/friendService";
 import type { FriendListItem } from "@/types/friend";
+import { useNavigate, useParams } from "react-router-dom";
 
 const ChatPage = () => {
   const { user } = useAuthStore();
   const token = authService.getToken();
   const [friends, setFriends] = useState<FriendListItem[]>([]);
+  const navigate = useNavigate();
+  const { friendId } = useParams();
   const [selectedFriend, setSelectedFriend] = useState<FriendListItem | null>(
     null
   );
@@ -19,7 +22,21 @@ const ChatPage = () => {
     }
   }, [token]);
 
+  // Khi friendId trên URL thay đổi, tự động chọn bạn đó
+  useEffect(() => {
+    if (friendId && friends.length > 0) {
+      const found = friends.find((f) => f.account_id === friendId);
+      setSelectedFriend(found || null);
+    }
+  }, [friendId, friends]);
+
   if (!user || !token) return <div>Vui lòng đăng nhập</div>;
+
+  // Khi chọn bạn, cập nhật URL
+  const handleSelectFriend = (friend: FriendListItem) => {
+    setSelectedFriend(friend);
+    navigate(`/user/chat/${friend.account_id}`);
+  };
 
   return (
     <div className="flex h-[90vh]">
@@ -36,7 +53,7 @@ const ChatPage = () => {
                   ? "bg-blue-100"
                   : ""
               }`}
-              onClick={() => setSelectedFriend(friend)}
+              onClick={() => handleSelectFriend(friend)}
             >
               <div className="flex items-center gap-2">
                 <img

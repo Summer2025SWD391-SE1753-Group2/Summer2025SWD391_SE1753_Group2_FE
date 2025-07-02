@@ -84,6 +84,7 @@ const router = createBrowserRouter([
       { path: paths.user.setting, element: <SettingPage /> },
       //
       { path: paths.user.chat, element: <ChatPage /> },
+      { path: "/user/chat/:friendId", element: <ChatPage /> },
     ],
   },
   //moderator
