@@ -164,6 +164,13 @@ const sidebarLinks: SidebarLink[] = [
     icon: <UserCheck2 className="h-5 w-5" />,
     roles: ["admin"],
   },
+  //moderator
+  {
+    title: "Bạn bè",
+    href: "/moderator/friends",
+    icon: <UserPlus className="h-5 w-5" />,
+    roles: ["moderator"],
+  },
 ];
 
 // bottom

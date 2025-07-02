@@ -66,12 +66,12 @@ export function FriendCard({ friend, onRemove }: FriendCardProps) {
               variant="outline"
               className={cn(
                 "mt-1 text-xs",
-                getRoleStyle(friend.role.role_name)
+                getRoleStyle(friend.role?.role_name || "user")
               )}
             >
-              {friend.role.role_name === "admin"
+              {friend.role?.role_name === "admin"
                 ? "Quản trị viên"
-                : friend.role.role_name === "moderator"
+                : friend.role?.role_name === "moderator"
                 ? "Kiểm duyệt viên"
                 : "Thành viên"}
             </Badge>
