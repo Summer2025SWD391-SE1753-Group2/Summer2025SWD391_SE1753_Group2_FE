@@ -7,7 +7,7 @@ import type { FriendListItem } from "@/types/friend";
 import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "@/lib/api/axios";
 import type { GroupChat } from "@/types/group-chat";
-import GroupChatBox from "@/components/chat/GroupChatBox";
+import GroupChatContainer from "@/components/chat/GroupChatContainer";
 
 const ChatPage = () => {
   const { user } = useAuthStore();
@@ -107,10 +107,12 @@ const ChatPage = () => {
         {selectedFriend ? (
           <Chatbox currentUser={user} friend={selectedFriend} token={token} />
         ) : selectedGroup ? (
-          <GroupChatBox
+          <GroupChatContainer
             groupId={selectedGroup.group_id}
             token={token}
             currentUserId={user.account_id}
+            groupName={selectedGroup.group_name}
+            groupDescription={selectedGroup.group_description}
           />
         ) : (
           <div className="text-gray-400">
