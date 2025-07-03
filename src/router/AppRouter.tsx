@@ -29,6 +29,7 @@ import SettingPage from "@/pages/private/management/SettingPage";
 import SearchPage from "@/pages/publicPage/SearchPage";
 import UserManagementPage from "@/pages/private/management/UserManagementPage";
 import ChatPage from "@/pages/publicPage/ChatPage";
+import GroupChatManagementPage from "@/pages/private/management/GroupChatManagementPage";
 
 const router = createBrowserRouter([
   {
@@ -118,6 +119,10 @@ const router = createBrowserRouter([
       //
       { path: paths.moderator.chat, element: <ChatPage /> },
       { path: "/moderator/friends", element: <FriendManagementPage /> },
+      {
+        path: paths.moderator.groupChatManagement,
+        element: <GroupChatManagementPage />,
+      },
     ],
   },
   //admin
@@ -147,6 +152,10 @@ const router = createBrowserRouter([
       { path: paths.admin.unitManagement, element: <UnitManagementPage /> },
       //
       { path: paths.admin.chat, element: <ChatPage /> },
+      {
+        path: paths.admin.groupChatManagement,
+        element: <GroupChatManagementPage />,
+      },
     ],
   },
   {
