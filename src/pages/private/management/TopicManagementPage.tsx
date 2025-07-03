@@ -70,6 +70,12 @@ export default function TopicManagementPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
 
+  // Add edit dialog state
+  const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editStatus, setEditStatus] = useState<"active" | "inactive">("active");
+  const [editLoading, setEditLoading] = useState(false);
+
   const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
@@ -135,23 +141,6 @@ export default function TopicManagementPage() {
       toast.error("Không thể tạo chủ đề.");
     } finally {
       setCreating(false);
-      toast.dismiss();
-    }
-  };
-
-  const toggleStatus = async (topic: Topic) => {
-    toast.loading("Đang cập nhật trạng thái...");
-    try {
-      const updatedTopic = await updateTopic(topic.topic_id!, {
-        status: topic.status === "active" ? "inactive" : "active",
-      });
-      setTopics((prev) =>
-        prev.map((t) => (t.topic_id === topic.topic_id ? updatedTopic : t))
-      );
-      toast.success(`Đã cập nhật trạng thái cho chủ đề '${updatedTopic.name}'`);
-    } catch {
-      toast.error("Không thể cập nhật trạng thái.");
-    } finally {
       toast.dismiss();
     }
   };
@@ -293,53 +282,63 @@ export default function TopicManagementPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => toggleStatus(topic)}
-                      >
-                        {topic.status === "active" ? "Ẩn" : "Hiện"}
-                      </Button>
-
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="destructive">
-                            Xoá
+                      {(user?.role.role_name === "admin" ||
+                        user?.role.role_name === "moderator") && (
+                        <>
+                          {/* Nút Sửa */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingTopic(topic);
+                              setEditName(topic.name);
+                              setEditStatus(topic.status);
+                            }}
+                          >
+                            Sửa
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Bạn có chắc chắn muốn xóa chủ đề này?
-                            </AlertDialogTitle>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Hủy</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(topic.topic_id!)}
-                            >
-                              Xác nhận
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-
-                      {(user?.role.role_name === "moderator" ||
-                        user?.role.role_name === "admin") &&
+                          {/* Nút Xóa */}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="destructive">
+                                Xóa
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Bạn có chắc chắn muốn xóa chủ đề này?
+                                </AlertDialogTitle>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={async () => {
+                                    await handleDelete(topic.topic_id);
+                                  }}
+                                >
+                                  Xác nhận
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
+                      )}
+                      {/* Nút Group chat giữ nguyên */}
+                      {(user?.role.role_name === "admin" ||
+                        user?.role.role_name === "moderator") &&
                         (groupChatMap[topic.topic_id!] ? (
                           <span className="inline-block px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-md">
                             Đã có group
                           </span>
                         ) : (
-                          <>
-                            <Button
-                              size="sm"
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
-                              onClick={() => openGroupDialog(topic.topic_id!)}
-                            >
-                              Tạo Group
-                            </Button>
-                          </>
+                          <Button
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            onClick={() => openGroupDialog(topic.topic_id!)}
+                          >
+                            Tạo Group
+                          </Button>
                         ))}
                     </div>
                   </TableCell>
@@ -394,6 +393,73 @@ export default function TopicManagementPage() {
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {groupLoading ? "Đang tạo..." : "Tạo Group Chat"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingTopic} onOpenChange={() => setEditingTopic(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sửa chủ đề</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!editingTopic) return;
+              setEditLoading(true);
+              try {
+                await updateTopic(editingTopic.topic_id, {
+                  name: editName,
+                  status: editStatus,
+                });
+                toast.success("Cập nhật chủ đề thành công!");
+                setEditingTopic(null);
+                // refresh topics
+                const data = await getAllTopics();
+                setTopics(data);
+              } catch {
+                toast.error("Không thể cập nhật chủ đề.");
+              } finally {
+                setEditLoading(false);
+              }
+            }}
+            className="space-y-4"
+          >
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+            />
+            <Select
+              value={editStatus}
+              onValueChange={(val) =>
+                setEditStatus(val as "active" | "inactive")
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Hoạt động</SelectItem>
+                <SelectItem value="inactive">Không hoạt động</SelectItem>
+              </SelectContent>
+            </Select>
+            <DialogFooter>
+              <Button
+                type="submit"
+                variant="destructive"
+                disabled={editLoading}
+              >
+                {editLoading ? "Đang lưu..." : "Lưu"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setEditingTopic(null)}
+              >
+                Hủy
               </Button>
             </DialogFooter>
           </form>
