@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from "react";
 import {
-  getAllTopics,
   createTopic,
   updateTopic,
   deleteTopic,
 } from "@/services/topics/topicService";
-import {
-  getGroupChatByTopic,
-  createGroupChat,
-} from "@/services/groupChat/groupChatService";
+import { createGroupChat } from "@/services/groupChat/groupChatService";
+import axiosInstance from "@/lib/api/axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,19 +43,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
-import { Topic } from "@/types/topic";
+
+// Topic type with group_chat
+interface TopicWithGroup {
+  topic_id: string;
+  topic_name: string;
+  status: string;
+  group_chat: null | {
+    group_id: string;
+    group_name: string;
+    group_description: string;
+    member_count: number;
+    max_members: number;
+    created_at: string;
+  };
+}
 
 export default function TopicManagementPage() {
-  const [topics, setTopics] = useState<Topic[]>([]);
+  const [topics, setTopics] = useState<TopicWithGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
   const [newName, setNewName] = useState("");
   const [newStatus, setNewStatus] = useState<"active" | "inactive">("active");
 
-  const [groupChatMap, setGroupChatMap] = useState<Record<string, unknown>>({});
   const [creatingGroupTopicId, setCreatingGroupTopicId] = useState<
     string | null
   >(null);
@@ -70,59 +79,34 @@ export default function TopicManagementPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
 
-  // Add edit dialog state
-  const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
+  // Edit dialog state
+  const [editingTopic, setEditingTopic] = useState<TopicWithGroup | null>(null);
   const [editName, setEditName] = useState("");
   const [editStatus, setEditStatus] = useState<"active" | "inactive">("active");
   const [editLoading, setEditLoading] = useState(false);
 
   const user = useAuthStore((state) => state.user);
 
+  // Fetch topics with group info
   useEffect(() => {
     const fetchTopics = async () => {
-      toast.loading("Đang tải danh sách chủ đề...");
+      setLoading(true);
       try {
-        const data = await getAllTopics();
-        setTopics(data);
-        toast.dismiss();
+        const res = await axiosInstance.get(
+          "/api/v1/group-chat/topics/with-or-without-group"
+        );
+        setTopics(res.data);
       } catch {
         toast.error("Không thể tải danh sách chủ đề.");
       } finally {
         setLoading(false);
-        toast.dismiss();
       }
     };
-
     fetchTopics();
   }, []);
 
-  useEffect(() => {
-    if (
-      topics.length > 0 &&
-      (user?.role.role_name === "moderator" || user?.role.role_name === "admin")
-    ) {
-      const fetchGroups = async () => {
-        const groupPromises = topics.map(async (topic) => {
-          try {
-            const group = await getGroupChatByTopic(topic.topic_id!);
-            return {
-              [topic.topic_id!]: group && group.is_chat_group ? group : null,
-            };
-          } catch {
-            return { [topic.topic_id!]: null };
-          }
-        });
-        const groupResults = await Promise.all(groupPromises);
-        const map = Object.assign({}, ...groupResults);
-        setGroupChatMap(map);
-      };
-      fetchGroups();
-    }
-  }, [topics, user?.role.role_name]);
-
   const handleCreate = async () => {
     if (!newName.trim() || !user?.account_id) return;
-
     setCreating(true);
     toast.loading("Đang tạo chủ đề...");
     try {
@@ -131,12 +115,16 @@ export default function TopicManagementPage() {
         status: newStatus,
         created_by: user.account_id,
       };
-      const newTopic = await createTopic(newTopicData);
-      setTopics((prev) => [newTopic, ...prev]);
+      await createTopic(newTopicData);
+      // Refresh topics
+      const res = await axiosInstance.get(
+        "/api/v1/group-chat/topics/with-or-without-group"
+      );
+      setTopics(res.data);
       setNewName("");
       setNewStatus("active");
       setIsCreateDialogOpen(false);
-      toast.success(`Đã tạo chủ đề '${newTopic.name}'`);
+      toast.success(`Đã tạo chủ đề '${newTopicData.name}'`);
     } catch {
       toast.error("Không thể tạo chủ đề.");
     } finally {
@@ -150,11 +138,14 @@ export default function TopicManagementPage() {
       toast.error("Bạn không có quyền xóa chủ đề.");
       return;
     }
-
     toast.loading("Đang xóa chủ đề...");
     try {
       await deleteTopic(topicId);
-      setTopics((prev) => prev.filter((t) => t.topic_id !== topicId));
+      // Refresh topics
+      const res = await axiosInstance.get(
+        "/api/v1/group-chat/topics/with-or-without-group"
+      );
+      setTopics(res.data);
       toast.success("Đã xóa chủ đề thành công.");
     } catch {
       toast.error("Không thể xóa chủ đề.");
@@ -163,20 +154,46 @@ export default function TopicManagementPage() {
     }
   };
 
-  const handleCreateGroupChat = async (topic: Topic) => {
+  // Edit topic
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTopic) return;
+    setEditLoading(true);
+    try {
+      await updateTopic(editingTopic.topic_id, {
+        name: editName,
+        status: editStatus,
+      });
+      toast.success("Cập nhật chủ đề thành công!");
+      setEditingTopic(null);
+      // refresh topics
+      const res = await axiosInstance.get(
+        "/api/v1/group-chat/topics/with-or-without-group"
+      );
+      setTopics(res.data);
+    } catch {
+      toast.error("Không thể cập nhật chủ đề.");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  // Group chat creation
+  const handleCreateGroupChat = async (topic: TopicWithGroup) => {
     setGroupLoading(true);
     toast.loading("Đang tạo group chat...");
     try {
       await createGroupChat({
-        topic_id: topic.topic_id!,
-        name: groupName || topic.name,
+        topic_id: topic.topic_id,
+        name: groupName || topic.topic_name,
         description: groupDesc,
         max_members: 50,
       });
-
-      const group = await getGroupChatByTopic(topic.topic_id!);
-      setGroupChatMap((prev) => ({ ...prev, [topic.topic_id!]: group }));
-
+      // Refresh topics
+      const res = await axiosInstance.get(
+        "/api/v1/group-chat/topics/with-or-without-group"
+      );
+      setTopics(res.data);
       setCreatingGroupTopicId(null);
       setGroupName("");
       setGroupDesc("");
@@ -260,90 +277,107 @@ export default function TopicManagementPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Tên Chủ đề</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead className="text-center">Hành động</TableHead>
+                <TableHead className="w-40">Trạng thái</TableHead>
+                <TableHead className="pl-4">Hành động</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {topics.map((topic) => (
-                <TableRow key={topic.topic_id}>
-                  <TableCell className="font-medium">{topic.name}</TableCell>
-                  <TableCell
-                    className={cn(
-                      "font-medium",
-                      topic.status === "active"
-                        ? "text-green-600"
-                        : "text-red-500"
-                    )}
-                  >
-                    {topic.status === "active"
-                      ? "Hoạt động"
-                      : "Không hoạt động"}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-center gap-2">
-                      {(user?.role.role_name === "admin" ||
-                        user?.role.role_name === "moderator") && (
-                        <>
-                          {/* Nút Sửa */}
+              {topics.map((topic) => {
+                const canCreateGroup =
+                  topic.status === "active" && !topic.group_chat;
+                let groupBtnText = "Tạo Group Chat";
+                let groupBtnClass = "bg-blue-600 hover:bg-blue-700 text-white";
+                let groupBtnDisabled = false;
+
+                if (topic.group_chat) {
+                  groupBtnText = "Đã có Group Chat";
+                  groupBtnClass =
+                    "bg-gray-300 text-gray-600 cursor-not-allowed";
+                  groupBtnDisabled = true;
+                } else if (topic.status !== "active") {
+                  groupBtnText = "Không thể tạo group chat";
+                  groupBtnClass =
+                    "bg-gray-300 text-gray-600 cursor-not-allowed";
+                  groupBtnDisabled = true;
+                }
+
+                return (
+                  <TableRow key={topic.topic_id}>
+                    <TableCell className="font-medium">
+                      {topic.topic_name}
+                    </TableCell>
+                    <TableCell className="w-40">
+                      {topic.status === "active"
+                        ? "Hoạt động"
+                        : "Không hoạt động"}
+                    </TableCell>
+                    <TableCell className="pl-4">
+                      <div className="flex items-center justify-start gap-2">
+                        {(user?.role.role_name === "admin" ||
+                          user?.role.role_name === "moderator") && (
+                          <>
+                            {/* Nút Sửa */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingTopic(topic);
+                                setEditName(topic.topic_name);
+                                setEditStatus(
+                                  topic.status as "active" | "inactive"
+                                );
+                              }}
+                            >
+                              Sửa
+                            </Button>
+                            {/* Nút Xóa */}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="destructive">
+                                  Xóa
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Bạn có chắc chắn muốn xóa chủ đề này?
+                                  </AlertDialogTitle>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={async () => {
+                                      await handleDelete(topic.topic_id);
+                                    }}
+                                  >
+                                    Xác nhận
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        )}
+                        {/* Nút Group chat */}
+                        {(user?.role.role_name === "admin" ||
+                          user?.role.role_name === "moderator") && (
                           <Button
                             size="sm"
-                            variant="outline"
+                            style={{ minWidth: 140 }}
+                            className={groupBtnClass}
+                            disabled={groupBtnDisabled}
                             onClick={() => {
-                              setEditingTopic(topic);
-                              setEditName(topic.name);
-                              setEditStatus(topic.status);
+                              if (canCreateGroup)
+                                openGroupDialog(topic.topic_id);
                             }}
                           >
-                            Sửa
+                            {groupBtnText}
                           </Button>
-                          {/* Nút Xóa */}
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="destructive">
-                                Xóa
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Bạn có chắc chắn muốn xóa chủ đề này?
-                                </AlertDialogTitle>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Hủy</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={async () => {
-                                    await handleDelete(topic.topic_id);
-                                  }}
-                                >
-                                  Xác nhận
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </>
-                      )}
-                      {/* Nút Group chat giữ nguyên */}
-                      {(user?.role.role_name === "admin" ||
-                        user?.role.role_name === "moderator") &&
-                        (groupChatMap[topic.topic_id!] ? (
-                          <span className="inline-block px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-md">
-                            Đã có group
-                          </span>
-                        ) : (
-                          <Button
-                            size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                            onClick={() => openGroupDialog(topic.topic_id!)}
-                          >
-                            Tạo Group
-                          </Button>
-                        ))}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
@@ -355,7 +389,10 @@ export default function TopicManagementPage() {
           <DialogHeader>
             <DialogTitle>
               Tạo group chat cho:{" "}
-              {topics.find((t) => t.topic_id === creatingGroupTopicId)?.name}
+              {
+                topics.find((t) => t.topic_id === creatingGroupTopicId)
+                  ?.topic_name
+              }
             </DialogTitle>
             <DialogDescription>
               Điền thông tin để tạo group chat cho chủ đề này.
@@ -375,8 +412,8 @@ export default function TopicManagementPage() {
           >
             <Input
               placeholder={`Tên group (mặc định: ${
-                topics.find((t) => t.topic_id === creatingGroupTopicId)?.name ||
-                ""
+                topics.find((t) => t.topic_id === creatingGroupTopicId)
+                  ?.topic_name || ""
               })`}
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
@@ -405,29 +442,7 @@ export default function TopicManagementPage() {
           <DialogHeader>
             <DialogTitle>Sửa chủ đề</DialogTitle>
           </DialogHeader>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!editingTopic) return;
-              setEditLoading(true);
-              try {
-                await updateTopic(editingTopic.topic_id, {
-                  name: editName,
-                  status: editStatus,
-                });
-                toast.success("Cập nhật chủ đề thành công!");
-                setEditingTopic(null);
-                // refresh topics
-                const data = await getAllTopics();
-                setTopics(data);
-              } catch {
-                toast.error("Không thể cập nhật chủ đề.");
-              } finally {
-                setEditLoading(false);
-              }
-            }}
-            className="space-y-4"
-          >
+          <form onSubmit={handleEditSubmit} className="space-y-4">
             <Input
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
