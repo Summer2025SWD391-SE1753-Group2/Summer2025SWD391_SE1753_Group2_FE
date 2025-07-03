@@ -45,21 +45,64 @@ export const getGroupChatById = async (group_id: string) => {
   return res.data;
 };
 
-// Thêm thành viên vào group
-export const addGroupMember = async (
+// Đổi tên nhóm
+export const updateGroupName = async (
   group_id: string,
-  data: { account_id: string; role: string }
+  name: string,
+  token: string
 ) => {
-  const res = await axiosInstance.post(
-    `/api/v1/group-chat/${group_id}/members`,
-    data
+  const res = await axiosInstance.put(
+    `/api/v1/group-chat/${group_id}`,
+    { name },
+    { headers: { Authorization: `Bearer ${token}` } }
   );
   return res.data;
 };
 
 // Lấy danh sách thành viên
-export const getGroupMembers = async (group_id: string) => {
-  const res = await axiosInstance.get(`/api/v1/group-chat/${group_id}/members`);
+export const getGroupMembers = async (group_id: string, token: string) => {
+  const res = await axiosInstance.get(
+    `/api/v1/group-chat/${group_id}/members`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return res.data;
+};
+
+// Thêm thành viên vào nhóm
+export const addGroupMember = async (
+  group_id: string,
+  account_id: string,
+  token: string
+) => {
+  const res = await axiosInstance.post(
+    `/api/v1/group-chat/${group_id}/members`,
+    { account_id, role: "member" },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return res.data;
+};
+
+// Xóa thành viên khỏi nhóm
+export const removeGroupMember = async (
+  group_id: string,
+  account_id: string,
+  token: string
+) => {
+  const res = await axiosInstance.delete(
+    `/api/v1/group-chat/${group_id}/members/${account_id}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return res.data;
+};
+
+// Tìm kiếm user (FE filter user đã trong nhóm)
+export const searchAccounts = async (keyword: string, token: string) => {
+  const res = await axiosInstance.get(
+    `/api/v1/accounts/search/?name=${encodeURIComponent(
+      keyword
+    )}&skip=0&limit=100`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
   return res.data;
 };
 
