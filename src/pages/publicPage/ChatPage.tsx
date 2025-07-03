@@ -7,6 +7,7 @@ import type { FriendListItem } from "@/types/friend";
 import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "@/lib/api/axios";
 import type { GroupChat } from "@/types/group-chat";
+import GroupChatBox from "@/components/chat/GroupChatBox";
 
 const ChatPage = () => {
   const { user } = useAuthStore();
@@ -18,6 +19,7 @@ const ChatPage = () => {
     null
   );
   const [groupChats, setGroupChats] = useState<GroupChat[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<GroupChat | null>(null);
 
   useEffect(() => {
     if (token) {
@@ -41,7 +43,13 @@ const ChatPage = () => {
   // Khi chọn bạn, cập nhật URL
   const handleSelectFriend = (friend: FriendListItem) => {
     setSelectedFriend(friend);
+    setSelectedGroup(null);
     navigate(`/user/chat/${friend.account_id}`);
+  };
+
+  const handleSelectGroup = (group: GroupChat) => {
+    setSelectedGroup(group);
+    setSelectedFriend(null);
   };
 
   return (
@@ -79,8 +87,10 @@ const ChatPage = () => {
           {groupChats.map((group) => (
             <li
               key={group.group_id}
-              className="p-2 rounded cursor-pointer hover:bg-green-50"
-              onClick={() => alert(`Vào group chat: ${group.group_name}`)}
+              className={`p-2 rounded cursor-pointer hover:bg-green-50 ${
+                selectedGroup?.group_id === group.group_id ? "bg-green-100" : ""
+              }`}
+              onClick={() => handleSelectGroup(group)}
             >
               <div className="flex flex-col">
                 <span className="font-semibold">{group.group_name}</span>
@@ -96,8 +106,16 @@ const ChatPage = () => {
       <div className="flex-1 flex items-center justify-center bg-gray-50">
         {selectedFriend ? (
           <Chatbox currentUser={user} friend={selectedFriend} token={token} />
+        ) : selectedGroup ? (
+          <GroupChatBox
+            groupId={selectedGroup.group_id}
+            token={token}
+            currentUserId={user.account_id}
+          />
         ) : (
-          <div className="text-gray-400">Chọn một bạn để bắt đầu chat</div>
+          <div className="text-gray-400">
+            Chọn một bạn hoặc group để bắt đầu chat
+          </div>
         )}
       </div>
     </div>
