@@ -29,6 +29,7 @@ import SettingPage from "@/pages/private/management/SettingPage";
 import SearchPage from "@/pages/publicPage/SearchPage";
 import UserManagementPage from "@/pages/private/management/UserManagementPage";
 import ChatPage from "@/pages/publicPage/ChatPage";
+import NotificationsPage from "@/pages/private/NotificationsPage";
 
 const router = createBrowserRouter([
   {
@@ -84,6 +85,7 @@ const router = createBrowserRouter([
       { path: paths.user.setting, element: <SettingPage /> },
       //
       { path: paths.user.chat, element: <ChatPage /> },
+      { path: paths.user.notifications, element: <NotificationsPage /> },
     ],
   },
   //moderator
@@ -116,6 +118,7 @@ const router = createBrowserRouter([
 
       //
       { path: paths.moderator.chat, element: <ChatPage /> },
+      { path: paths.moderator.notifications, element: <NotificationsPage /> },
     ],
   },
   //admin
