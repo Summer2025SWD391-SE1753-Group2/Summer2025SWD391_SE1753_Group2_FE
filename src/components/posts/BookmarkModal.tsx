@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,10 +36,13 @@ export function BookmarkModal({ postId, children }: BookmarkModalProps) {
   } = useFavoriteStore();
   const savedFolders = getSavedFoldersForPost(postId);
 
-  // Gọi initializeFavorites mỗi khi modal mở
+  // Refresh folders and reset modal state when opening
   useEffect(() => {
     if (isOpen) {
-      initializeFavorites();
+      initializeFavorites(true); // Force refresh to update folders
+      setNewFolderName("");
+      setShowCreateForm(false);
+      setShowAllFolders(false);
     }
   }, [isOpen, initializeFavorites]);
 

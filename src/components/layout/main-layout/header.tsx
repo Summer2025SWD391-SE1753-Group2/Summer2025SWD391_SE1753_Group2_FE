@@ -9,20 +9,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/stores/auth";
 import { paths } from "@/utils/constant/path";
-import { ChevronDown, Heart, LogOut, User, Sliders, Home, LayoutDashboard } from "lucide-react";
+import { ChevronDown, Heart, LogOut, User, Sliders, Home, X, LayoutDashboard } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Link, NavLink } from "react-router-dom";
-import {
-  searchPostsByTitle,
-  searchPostsByTag,
-} from "@/services/posts/postService";
+import { searchPostsByTitle, searchPostsByTag, searchPostsByTopic } from "@/services/posts/postService";
+import { searchUsersByUsername } from "@/services/accounts/accountService";
 import { Post } from "@/types/post";
+import { UserProfile } from "@/types/account";
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
 
   const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<Post[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [postSuggestions, setPostSuggestions] = useState<Post[]>([]);
+  const [userSuggestions, setUserSuggestions] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tags, setTags] = useState<
@@ -35,39 +36,75 @@ const Header = () => {
   };
 
   const handleSearch = useCallback(async () => {
-    if (!query.trim()) {
-      setSuggestions([]);
+    if (!query.trim() && selectedTags.length === 0) {
+      setPostSuggestions([]);
+      setUserSuggestions([]);
       setError(null);
       return;
     }
     setIsLoading(true);
     setError(null);
     try {
-      const postTitleResults = await searchPostsByTitle(query, 0, 5);
-      setSuggestions(postTitleResults);
+      if (selectedTags.length > 0) {
+        // Gọi searchPostsByTag cho từng tag và gộp kết quả
+        const postResultsPromises = selectedTags.map((tag) =>
+          searchPostsByTag(tag, 0, 5)
+        );
+        const postResults = await Promise.all(postResultsPromises);
+        // Gộp kết quả và loại bỏ trùng lặp dựa trên post_id
+        const uniquePosts = Array.from(
+          new Map(
+            postResults
+              .flat()
+              .map((post) => [post.post_id, post])
+          ).values()
+        ).slice(0, 5); // Giới hạn 5 bài viết
+        setPostSuggestions(uniquePosts);
+        setUserSuggestions([]);
+        if (uniquePosts.length === 0) {
+          setError(
+            `Không tìm thấy bài viết với các thẻ: ${selectedTags.join(", ")}.`
+          );
+        }
+      } else {
+        // Tìm kiếm theo tiêu đề, chủ đề, và người dùng
+        const [userResults, postTitleResults, postTopicResults] = await Promise.all([
+          searchUsersByUsername(query, 0, 5),
+          searchPostsByTitle(query, 0, 5),
+          searchPostsByTopic(query, 0, 5),
+        ]);
+        // Gộp kết quả bài viết từ tiêu đề và chủ đề, loại bỏ trùng lặp
+        const uniquePosts = Array.from(
+          new Map(
+            [...postTitleResults, ...postTopicResults].map((post) => [post.post_id, post])
+          ).values()
+        ).slice(0, 5);
+        setUserSuggestions(userResults);
+        setPostSuggestions(uniquePosts);
+        if (userResults.length === 0 && uniquePosts.length === 0) {
+          setError(`Không tìm thấy bài viết, chủ đề, hoặc người dùng với "${query}".`);
+        }
+      }
     } catch (error) {
       console.error("Search error:", error);
-      setError("Không tìm thấy kết quả. Vui lòng thử lại!");
-      setSuggestions([]);
+      setError("Có lỗi xảy ra khi tìm kiếm. Vui lòng thử lại sau!");
+      setPostSuggestions([]);
+      setUserSuggestions([]);
     } finally {
       setIsLoading(false);
     }
-  }, [query]);
+  }, [query, selectedTags]);
 
-  const handleTagSelect = async (tagName: string) => {
-    setQuery(tagName);
-    setIsLoading(true);
-    setError(null);
-    try {
-      const postTagResults = await searchPostsByTag(tagName, 0, 5);
-      setSuggestions(postTagResults);
-    } catch (error) {
-      console.error("Tag search error:", error);
-      setError("Không tìm thấy bài viết với thẻ này!");
-      setSuggestions([]);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleTagToggle = (tagName: string) => {
+    setSelectedTags((prev) => {
+      if (prev.includes(tagName)) {
+        return prev.filter((tag) => tag !== tagName);
+      } else if (prev.length < 3) {
+        return [...prev, tagName];
+      }
+      return prev;
+    });
+    setIsTagDropdownOpen(true);
   };
 
   useEffect(() => {
@@ -75,10 +112,13 @@ const Header = () => {
       handleSearch();
     }, 500);
     return () => clearTimeout(delayDebounce);
-  }, [query, handleSearch]);
+  }, [query, selectedTags, handleSearch]);
 
   const clearSearch = () => {
-    setSuggestions([]);
+    setQuery("");
+    setSelectedTags([]);
+    setPostSuggestions([]);
+    setUserSuggestions([]);
     setError(null);
   };
 
@@ -114,33 +154,56 @@ const Header = () => {
                 <Sliders className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48">
+            <DropdownMenuContent
+              className="w-48 max-h-40 overflow-y-auto mt-2 bg-background border border-gray-200 rounded-md shadow-lg"
+              align="start"
+            >
               {tags
                 .filter((tag) => tag.status === "active")
                 .map((tag) => (
                   <DropdownMenuItem
                     key={tag.tag_id}
-                    onClick={() => handleTagSelect(tag.name)}
+                    onSelect={(e) => e.preventDefault()}
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
                   >
-                    {tag.name}
+                    <input
+                      type="checkbox"
+                      checked={selectedTags.includes(tag.name)}
+                      onChange={() => handleTagToggle(tag.name)}
+                      className="h-4 w-4"
+                      disabled={selectedTags.length >= 3 && !selectedTags.includes(tag.name)}
+                    />
+                    <span>{tag.name}</span>
                   </DropdownMenuItem>
                 ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm kiếm bài viết..."
-            className="w-full p-2 pl-4 pr-10 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground placeholder-muted-foreground"
-            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-          />
-          {query && (
+          <div className="flex-1 flex items-center flex-wrap gap-2 p-2 border border-gray-300 rounded-full bg-background">
+            {selectedTags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 bg-primary/10 text-primary text-sm px-2 py-1 rounded-full"
+              >
+                {tag}
+                <button
+                  onClick={() => handleTagToggle(tag)}
+                  className="hover:text-red-500"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={selectedTags.length > 0 ? '' : "Tìm kiếm bài viết, thẻ, hoặc người dùng..."}
+              className="flex-1 min-w-0 p-1 bg-transparent focus:outline-none placeholder-muted-foreground"
+            />
+          </div>
+          {(query || selectedTags.length > 0) && (
             <button
-              onClick={() => {
-                setQuery("");
-                clearSearch();
-              }}
+              onClick={clearSearch}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <span className="text-xl">×</span>
@@ -151,15 +214,51 @@ const Header = () => {
               Loading...
             </span>
           )}
-          {(error || suggestions.length > 0) && (
+          {(error || postSuggestions.length > 0 || userSuggestions.length > 0) && (
             <div className="absolute top-full mt-1 w-full bg-background border border-gray-200 rounded shadow-lg z-50 max-h-96 overflow-y-auto">
               {error && <div className="p-2 text-red-500 text-sm">{error}</div>}
-              {suggestions.length > 0 && (
+              {userSuggestions.length > 0 && (
                 <div className="p-2 border-b">
                   <span className="text-sm font-semibold text-muted-foreground">
-                    Bài viết
+                    Người dùng
                   </span>
-                  {suggestions.map((post) => (
+                  {userSuggestions.map((user) => (
+                    <Link
+                      key={user.account_id}
+                      to={`/profile/${encodeURIComponent(user.username)}`}
+                      onClick={clearSearch}
+                      className="block p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                    >
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.avatar} alt={user.full_name} />
+                        <AvatarFallback>
+                          {user.full_name && user.full_name.trim() !== "string"
+                            ? user.full_name
+                              .split(" ")
+                              .map((word) => word[0])
+                              .join("")
+                              .toUpperCase()
+                            : user.username[0].toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">
+                        {user.full_name && user.full_name.trim() !== "string"
+                          ? user.full_name
+                          : user.username}
+                      </span>
+                      <span className="text-muted-foreground text-sm">
+                        @{user.username}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+              {postSuggestions.length > 0 && (
+                <div className="p-2 border-b">
+                  <span className="text-sm font-semibold text-muted-foreground">
+                    Bài viết theo thẻ
+                  </span>
+                  {postSuggestions.map((post) => (
                     <Link
                       key={post.post_id}
                       to={`/posts/${post.post_id}`}
@@ -175,7 +274,7 @@ const Header = () => {
                 </div>
               )}
               <Link
-                to={`/search?q=${encodeURIComponent(query)}`}
+                to={`/searchPage?q=${encodeURIComponent(query)}&tags=${selectedTags.join(",")}`}
                 onClick={clearSearch}
                 className="block p-2 text-center text-primary hover:bg-gray-100 cursor-pointer"
               >
@@ -185,12 +284,11 @@ const Header = () => {
           )}
         </div>
 
-        <nav className="hidden md:flex items-center space-x-6">
+        {/* <nav className="hidden md:flex items-center space-x-6">
           <NavLink
             to={paths.home}
-            className={({ isActive }: { isActive: boolean }) =>
-              `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${
-                isActive ? "text-primary" : "text-muted-foreground"
+            className={({ isActive }) =>
+              `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive ? "text-primary" : "text-muted-foreground"
               }`
             }
           >
@@ -200,15 +298,14 @@ const Header = () => {
           <NavLink
             to={paths.user.favorites}
             className={({ isActive }: { isActive: boolean }) =>
-              `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${
-                isActive ? "text-primary" : "text-muted-foreground"
+              `text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive ? "text-primary" : "text-muted-foreground"
               }`
             }
           >
             <Heart className="w-7 h-10" />
             <span className="sr-only">Yêu thích</span>
           </NavLink>
-        </nav>
+        </nav> */}
 
         <div className="flex items-center space-x-4">
           {isAuthenticated && user ? (
@@ -220,14 +317,10 @@ const Header = () => {
                     <AvatarFallback>
                       {user?.full_name
                         ? user.full_name
-                            .split(" ")
-                            .map((word) => word[0])
-                            .join("")
-                            .toUpperCase()
-                            .split(" ")
-                            .map((word) => word[0])
-                            .join("")
-                            .toUpperCase()
+                          .split(" ")
+                          .map((word) => word[0])
+                          .join("")
+                          .toUpperCase()
                         : "?"}
                     </AvatarFallback>
                   </Avatar>
@@ -239,20 +332,19 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 {user?.role?.role_name && (
-  <DropdownMenuItem className="flex items-center gap-2">
-    <Link
-      to={
-        paths[user.role.role_name as "user" | "moderator" | "admin"]
-          ?.dashboard
-      }
-      className="flex items-center gap-2 w-full"
-    >
-      <LayoutDashboard className="h-4 w-4" />
-      Quay lại dashboard
-    </Link>
-  </DropdownMenuItem>
-)}
-
+                  <DropdownMenuItem className="flex items-center gap-2">
+                    <Link
+                      to={
+                        paths[user.role.role_name as "user" | "moderator" | "admin"]
+                          ?.dashboard
+                      }
+                      className="flex items-center gap-2 w-full"
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      Quay lại dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem className="flex flex-col items-start w-full">
                   <Link
                     to={paths.profile}

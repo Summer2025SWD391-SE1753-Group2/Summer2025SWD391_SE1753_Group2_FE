@@ -23,10 +23,14 @@ import FavoritesPage from "@/pages/private/FavoritesPage";
 import DetailFavoritePage from "@/pages/private/DetailFavoritePage";
 import MyPostsPage from "@/pages/user/posts/MyPostsPage";
 import EditPostPage from "@/pages/user/posts/EditPostPage";
+import { PersonalPage } from "@/pages/user/profile/PersonalPage";
+import { FriendManagementPage } from "@/pages/user/friends/FriendManagementPage";
 import UnitManagementPage from "@/pages/private/management/UnitManagementPage";
 import { SettingPage } from "@/pages/private/management/SettingPage";
+import SearchPage from "@/pages/publicPage/SearchPage";
 import UserManagementPage from "@/pages/private/management/UserManagementPage";
 import ChatPage from "@/pages/publicPage/ChatPage";
+import GroupChatManagementPage from "@/pages/private/management/GroupChatManagementPage";
 
 const router = createBrowserRouter([
   {
@@ -54,7 +58,9 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: paths.profile, element: <ProfilePage /> },
+      { path: paths.personal, element: <PersonalPage /> },
       { path: paths.postDetail, element: <PostDetailPage /> },
+      { path: paths.search, element: <SearchPage /> },
     ],
   },
   //user
@@ -74,11 +80,13 @@ const router = createBrowserRouter([
       { path: paths.user.postDetail, element: <PostDetailPage /> },
       { path: paths.user.favorites, element: <FavoritesPage /> },
       { path: paths.user.favoritesDetail, element: <DetailFavoritePage /> },
+      { path: paths.user.friends, element: <FriendManagementPage /> },
 
       { path: paths.user.profile, element: <ProfilePage /> },
       { path: paths.user.setting, element: <SettingPage /> },
       //
       { path: paths.user.chat, element: <ChatPage /> },
+      { path: "/user/chat/:friendId", element: <ChatPage /> },
     ],
   },
   //moderator
@@ -111,6 +119,11 @@ const router = createBrowserRouter([
 
       //
       { path: paths.moderator.chat, element: <ChatPage /> },
+      { path: "/moderator/friends", element: <FriendManagementPage /> },
+      {
+        path: paths.moderator.groupChatManagement,
+        element: <GroupChatManagementPage />,
+      },
     ],
   },
   //admin
@@ -140,6 +153,10 @@ const router = createBrowserRouter([
       { path: paths.admin.unitManagement, element: <UnitManagementPage /> },
       //
       { path: paths.admin.chat, element: <ChatPage /> },
+      {
+        path: paths.admin.groupChatManagement,
+        element: <GroupChatManagementPage />,
+      },
     ],
   },
   {

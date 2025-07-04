@@ -66,9 +66,9 @@ export function CreatePostPage() {
           getAllMaterials(),
         ]);
 
-        setTags(tagsData);
-        setTopics(topicsData);
-        setMaterials(materialsData);
+        setTags(tagsData.filter((tag) => tag.status === "active"));
+        setTopics(topicsData.filter((topic) => topic.status === "active"));
+        setMaterials(materialsData.filter((material) => material.status === "active"));
       } catch (error) {
         console.error("Error loading data:", error);
         toast.error("Không thể tải dữ liệu. Vui lòng thử lại.");
@@ -365,7 +365,7 @@ export function CreatePostPage() {
               <FileUpload
                 files={uploadedFiles}
                 onFilesChange={setUploadedFiles}
-                onUrlsChange={() => {}} // Empty function since we don't need URLs anymore
+                onUrlsChange={() => { }}
                 accept="image/*"
                 maxSize={10}
                 maxFiles={5}
