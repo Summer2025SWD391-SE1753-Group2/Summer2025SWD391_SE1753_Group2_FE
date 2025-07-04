@@ -46,6 +46,9 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
+import { Pagination } from "@/components/ui/pagination";
+
+const PAGE_SIZE = 8;
 
 export default function TagManagementPage() {
   const [tags, setTags] = useState<Tag[]>([]);
@@ -54,6 +57,7 @@ export default function TagManagementPage() {
 
   const [newName, setNewName] = useState("");
   const [newStatus, setNewStatus] = useState<"active" | "inactive">("active");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const user = useAuthStore((state) => state.user);
 
@@ -89,6 +93,7 @@ export default function TagManagementPage() {
       setTags((prev) => [newTag, ...prev]);
       setNewName("");
       setNewStatus("active");
+      setCurrentPage(1); // Reset về trang đầu
       toast.dismiss();
       toast.success(`Đã tạo tag '${newTag.name}'`);
     } catch {
@@ -127,6 +132,7 @@ export default function TagManagementPage() {
       toast.loading("Đang xoá tag...");
       await deleteTag(id);
       setTags((prev) => prev.filter((t) => t.tag_id !== id));
+      setCurrentPage(1); // Reset về trang đầu
       toast.dismiss();
       toast.success("Đã xoá tag");
     } catch {
@@ -134,6 +140,12 @@ export default function TagManagementPage() {
       toast.error("Không thể xoá tag.");
     }
   };
+
+  const totalPages = Math.ceil(tags.length / PAGE_SIZE);
+  const paginatedTags = tags.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -198,7 +210,7 @@ export default function TagManagementPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tags.map((tag) => (
+              {paginatedTags.map((tag) => (
                 <TableRow key={tag.tag_id}>
                   <TableCell>{tag.name}</TableCell>
                   <TableCell
@@ -250,6 +262,16 @@ export default function TagManagementPage() {
               ))}
             </TableBody>
           </Table>
+
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-4">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => setCurrentPage(page)}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

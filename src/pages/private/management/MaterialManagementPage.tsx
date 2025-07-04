@@ -38,15 +38,11 @@ import {
   AlertDialogTrigger,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuthStore } from "@/stores/auth";
 import { UnitCombobox } from "@/components/common/UnitCombobox";
+import { Pagination } from "@/components/ui/pagination";
+
+const PAGE_SIZE = 8;
 
 export default function MaterialManagementPage() {
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -60,7 +56,10 @@ export default function MaterialManagementPage() {
   const [newName, setNewName] = useState("");
   const [newUnit, setNewUnit] = useState("");
 
+  const [currentPage, setCurrentPage] = useState(1);
+
   const user = useAuthStore((state) => state.user);
+
   const toggleStatus = async (material: Material) => {
     if (user?.role.role_name !== "admin") {
       toast.error("Tài Khoản không đủ quyền hạn, không thể xoá nguyên liệu này.");
@@ -84,7 +83,6 @@ export default function MaterialManagementPage() {
       toast.error("Không thể cập nhật trạng thái.");
     }
   };
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,6 +120,7 @@ export default function MaterialManagementPage() {
       setMaterials((prev) => [newMaterial, ...prev]);
       setNewName("");
       setNewUnit("");
+      setCurrentPage(1);
       toast.dismiss();
       toast.success("Đã tạo nguyên liệu");
     } catch {
@@ -175,6 +174,12 @@ export default function MaterialManagementPage() {
       toast.error("Không thể xoá nguyên liệu.");
     }
   };
+
+  const totalPages = Math.ceil(materials.length / PAGE_SIZE);
+  const paginatedMaterials = materials.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -230,7 +235,7 @@ export default function MaterialManagementPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {materials.map((material) => (
+              {paginatedMaterials.map((material) => (
                 <TableRow key={material.material_id}>
                   {editingId === material.material_id ? (
                     <>
@@ -241,13 +246,11 @@ export default function MaterialManagementPage() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Select value={editUnit} onValueChange={setEditUnit}>
-                          <UnitCombobox
-                            units={units}
-                            value={editUnit}
-                            onChange={setEditUnit}
-                          />
-                        </Select>
+                        <UnitCombobox
+                          units={units}
+                          value={editUnit}
+                          onChange={setEditUnit}
+                        />
                       </TableCell>
                       <TableCell className={material.status === "active" ? "text-green-600 font-medium" : "text-red-500 font-medium"}>
                         {material.status === "active" ? "Hoạt động" : "Không hoạt động"}
@@ -322,6 +325,16 @@ export default function MaterialManagementPage() {
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
         </div>
       )}
     </div>

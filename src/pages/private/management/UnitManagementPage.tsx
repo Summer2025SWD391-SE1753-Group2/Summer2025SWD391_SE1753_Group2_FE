@@ -44,6 +44,9 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 import { Unit } from "@/types/unit";
+import { Pagination } from "@/components/ui/pagination";
+
+const PAGE_SIZE = 8;
 
 export default function UnitManagementPage() {
   const [units, setUnits] = useState<Unit[]>([]);
@@ -51,6 +54,8 @@ export default function UnitManagementPage() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newStatus, setNewStatus] = useState<"active" | "inactive">("active");
+
+  const [currentPage, setCurrentPage] = useState(1);
 
   const user = useAuthStore((state) => state.user);
 
@@ -86,6 +91,7 @@ export default function UnitManagementPage() {
       setUnits((prev) => [newUnit, ...prev]);
       setNewName("");
       setNewStatus("active");
+      setCurrentPage(1);
       toast.dismiss();
       toast.success(`Đã tạo đơn vị '${newUnit.name}'`);
     } catch {
@@ -131,6 +137,12 @@ export default function UnitManagementPage() {
       toast.error("Không thể xoá đơn vị.");
     }
   };
+
+  const totalPages = Math.ceil(units.length / PAGE_SIZE);
+  const paginatedUnits = units.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -183,60 +195,72 @@ export default function UnitManagementPage() {
       ) : units.length === 0 ? (
         <p>Không có đơn vị nào</p>
       ) : (
-        <div className="rounded-xl border shadow-sm">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-1/3">Tên đơn vị</TableHead>
-                <TableHead className="w-1/3">Trạng thái</TableHead>
-                <TableHead className="text-center">Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {units.map((unit) => (
-                <TableRow key={unit.unit_id}>
-                  <TableCell>{unit.name}</TableCell>
-                  <TableCell
-                    className={cn(
-                      "font-medium",
-                      unit.status === "active" ? "text-green-600" : "text-red-500"
-                    )}
-                  >
-                    {unit.status === "active" ? "Đang sử dụng" : "Ngưng sử dụng"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex justify-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => toggleStatus(unit)}
-                        className="w-10"
-                      >
-                        {unit.status === "active" ? "Ẩn" : "Hiện"}
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="destructive">Xoá</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Bạn có chắc không?</AlertDialogTitle>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Huỷ</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(unit.unit_id)}>
-                              Xác nhận
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
+        <>
+          <div className="rounded-xl border shadow-sm overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-1/3">Tên đơn vị</TableHead>
+                  <TableHead className="w-1/3">Trạng thái</TableHead>
+                  <TableHead className="text-center">Hành động</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {paginatedUnits.map((unit) => (
+                  <TableRow key={unit.unit_id}>
+                    <TableCell>{unit.name}</TableCell>
+                    <TableCell
+                      className={cn(
+                        "font-medium",
+                        unit.status === "active" ? "text-green-600" : "text-red-500"
+                      )}
+                    >
+                      {unit.status === "active" ? "Đang sử dụng" : "Ngưng sử dụng"}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => toggleStatus(unit)}
+                          className="w-10"
+                        >
+                          {unit.status === "active" ? "Ẩn" : "Hiện"}
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="destructive">Xoá</Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Bạn có chắc không?</AlertDialogTitle>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(unit.unit_id)}>
+                                Xác nhận
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-4">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => setCurrentPage(page)}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
