@@ -377,10 +377,7 @@ export function CreatePostPage() {
           {/* Media Upload */}
           <Card>
             <CardHeader>
-              <CardTitle>
-                Hình ảnh món ăn
-                <span className="text-red-500 ml-1">*</span>
-              </CardTitle>
+              <CardTitle>Hình ảnh món ăn</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Thêm tối đa 5 ảnh chất lượng cao để minh họa món ăn (không bắt
                 buộc)
@@ -409,8 +406,7 @@ export function CreatePostPage() {
                 <span className="text-red-500 ml-1">*</span>
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Chọn nguyên liệu và ghi rõ số lượng cần thiết (ít nhất 1 nguyên
-                liệu)
+                Chọn nguyên liệu và ghi rõ số lượng cần thiết
               </p>
             </CardHeader>
             <CardContent>
