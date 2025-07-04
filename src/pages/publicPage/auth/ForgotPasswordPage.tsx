@@ -1,143 +1,117 @@
+// src/pages/auth/ForgotPasswordPage.tsx
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Lock, Eye, EyeOff } from "lucide-react";
+import { Lock } from "lucide-react";
+
+import type { ApiResponse } from "@/types/auth";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
+import { authService } from "@/services/auth/authService";
 
 const ForgotPasswordPage = () => {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const navigate = useNavigate();
+  const [username, setUsername] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const validateField = (field: string, value: string) => {
-    const newErrors: { [key: string]: string } = { ...errors };
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setError("");
+  setSuccess("");
+  setIsLoading(true);
 
-    if (field === "email") {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        newErrors.email = "Nhập địa chỉ email hợp lệ.";
-      } else {
-        delete newErrors.email;
-      }
-    }
-    if (field === "password") {
-      if (value.length < 6) {
-        newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự.";
-      } else {
-        delete newErrors.password;
-      }
-    }
+  if (!username) {
+    setError("Vui lòng nhập tên đăng nhập.");
+    setIsLoading(false);
+    return;
+  }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const fields = { email, password };
-    let isValid = true;
-
-    Object.keys(fields).forEach((field) => {
-      const valid = validateField(field, fields[field as keyof typeof fields]);
-      if (!valid) isValid = false;
-    });
-
-    if (isValid && email && password) {
-      console.log("Yêu cầu đặt lại mật khẩu cho:", { email, password });
-    } else {
-      alert("Vui lòng kiểm tra và điền lại các trường thông tin bị lỗi!");
-    }
-  };
-
-  const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
+  try {
+    const response: ApiResponse<null> = await authService.forgotPassword(username);
+    setSuccess(response.message);
+    toast.success(response.message);
+    setUsername("");
+  } catch (err) {
+    setError(authService.extractErrorMessage(err));
+    toast.error(authService.extractErrorMessage(err));
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-6 p-6 text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
-        <div className="flex justify-center">
-          <div className="w-12 h-12 rounded-full border-2 border-gray-600 dark:border-gray-400 flex items-center justify-center">
-            <Lock className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-to-br from-blue-50 to-purple-50">
+      <Card className="shadow-lg w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-orange-400 to-rose-600 text-indigo-50 rounded-full flex items-center justify-center mx-auto my-3">
+            <Lock className="w-8 h-8" />
           </div>
-        </div>
-
-        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
-          Đặt lại mật khẩu
-        </h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-          Nhập email hoặc tên đăng nhập và mật khẩu mới của bạn. <br />
-          Chúng tôi sẽ gửi một liên kết để xác nhận việc đặt lại mật khẩu.
-        </p>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="relative">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 text-left">
-              Email hoặc tên đăng nhập
-            </label>
-            <Input
-              id="email"
-              className="rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-0 focus:border-blue-600 dark:focus:border-blue-500"
-              type="email"
-              placeholder="Nhập email hoặc tên đăng nhập*"
-              value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setEmail(e.target.value);
-                validateField("email", e.target.value);
-              }}
-              required
-              aria-label="Email hoặc tên đăng nhập"
-            />
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-          </div>
-
-          <div className="relative">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 text-left">
-              Mật khẩu mới (ít nhất 6 ký tự)
-            </label>
-            <div style={{ display: "flex", alignItems: "center", position: "relative" }}>
+          <CardTitle className="text-2xl">Đặt lại mật khẩu</CardTitle>
+          <CardDescription>
+            Nhập tên đăng nhập của bạn. Chúng tôi sẽ gửi một liên kết để xác nhận.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-3">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {success && (
+            <Alert variant="default" className="mb-3 bg-green-50 text-green-700">
+              <AlertDescription>{success}</AlertDescription>
+            </Alert>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium mb-1">
+                Tên đăng nhập
+              </label>
               <Input
-                id="password"
-                className="rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-0 focus:border-blue-600 dark:focus:border-blue-500"
-                style={{ paddingRight: "40px" }}
-                type={showPassword ? "text" : "password"}
-                placeholder="Nhập mật khẩu mới*"
-                value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setPassword(e.target.value);
-                  validateField("password", e.target.value);
-                }}
+                id="username"
+                type="text"
+                placeholder="Nhập tên đăng nhập*"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
-                aria-label="Mật khẩu mới"
+                disabled={isLoading}
+                className={error && error.includes("nhập") ? "border-red-500" : ""}
               />
-              <span
-                style={{ position: "absolute", right: "8px", cursor: "pointer" }}
-                onClick={togglePasswordVisibility}
-                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-              >
-                {showPassword ? <EyeOff className="h-5 w-5 text-gray-500 dark:text-gray-400" /> : <Eye className="h-5 w-5 text-gray-500 dark:text-gray-400" />}
-              </span>
+              <div className="h-4 mt-1">
+                {error && error.includes("nhập") && (
+                  <p className="text-sm text-red-600">{error}</p>
+                )}
+              </div>
             </div>
-            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+              aria-label="Gửi liên kết đặt lại"
+            >
+              {isLoading ? "Đang gửi..." : "Gửi liên kết đặt lại"}
+            </Button>
+          </form>
+          <div className="mt-4 text-center text-sm">
+            <Link
+              to="/auth/login"
+              className="text-primary hover:underline font-medium transition-colors"
+            >
+              Quay lại đăng nhập
+            </Link>
           </div>
-
-          <Button
-            type="submit"
-            className="w-full"
-            aria-label="Gửi liên kết đặt lại"
-          >
-            Gửi liên kết đặt lại
-          </Button>
-        </form>
-
-        <div className="mt-6">
-          <Link
-            to="/auth/login"
-            className="text-primary hover:underline"
-            aria-label="Quay lại đăng nhập"
-          >
-            Quay lại đăng nhập
-          </Link>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

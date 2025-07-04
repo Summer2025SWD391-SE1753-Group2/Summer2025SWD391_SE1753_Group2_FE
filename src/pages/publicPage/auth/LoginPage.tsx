@@ -235,7 +235,7 @@ const LoginPage: React.FC = () => {
 
             <div className="flex justify-between text-sm">
               <Link
-                to="/forgot-password"
+                to="/auth/forgot-password"
                 className="text-primary hover:underline transition-colors"
               >
                 Quên mật khẩu?
