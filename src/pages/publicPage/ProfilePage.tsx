@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { getOwnProfile } from "@/services/accounts/accountService";
+import accountService from "@/services/accounts/accountService";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { UserProfile } from "@/types/account";
+import type { UserProfile } from "@/types/account";
 import { Check, Crown, Shield, User } from "lucide-react";
+import { GoogleUserSetup } from "@/components/auth/GoogleUserSetup";
 import { getMyPosts } from "@/services/posts/postService";
 import { Post } from "@/types/post";
 import { Link } from "react-router-dom";
@@ -58,7 +59,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const data = await getOwnProfile();
+        const data = await accountService.getOwnProfile();
         setProfile(data);
       } catch (error) {
         console.error("Failed to fetch profile:", error);
@@ -94,13 +95,19 @@ const ProfilePage = () => {
       <div className="flex justify-start relative pl-30">
         <div className="flex items-center space-x-4 justify-between absolute -top-12">
           <Avatar className="h-40 w-40 mb-4 border-4 border-white shadow-md">
-            <AvatarImage src={profile.avatar} alt={profile.full_name} />
+            <AvatarImage
+              src={profile.avatar ?? undefined}
+              alt={profile.full_name ?? profile.username}
+            />
             <AvatarFallback className="bg-primary text-primary-foreground text-3xl">
-              {getInitials(profile.full_name)}
+              {getInitials(profile.full_name ?? profile.username)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-xl font-semibold leading-none">@{profile.username}</p>
+            <p className="text-xl font-semibold leading-none">
+              @{profile.username}
+            </p>
+
             <div className="flex gap-3 mt-3">
               <Badge
                 variant="outline"
@@ -132,11 +139,22 @@ const ProfilePage = () => {
         </div>
       </div>
       <div className="h-40"></div>
-      <div className="space-y-2 ml-12">
+      <div className="space-y-2 ml-30">
         <div className="text-xl leading-none">{profile.email}</div>
-        <div className="text-xl leading-none">{profile.bio}</div>
+        <div className="text-xl leading-none">
+          {profile.bio || "Chưa có tiểu sử"}
+        </div>
       </div>
 
+      {/* Google User Setup Section */}
+      <div className="mt-8 ml-30">
+        <GoogleUserSetup
+          onComplete={() => {
+            // Refresh profile data
+            window.location.reload();
+          }}
+        />
+      </div>
       {/* Posts Section */}
       <div className="mt-8 ml-12">
         <h2 className="text-lg font-semibold mb-4">Bài viết đã tạo</h2>

@@ -9,10 +9,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/stores/auth";
 import { paths } from "@/utils/constant/path";
-import { ChevronDown, Heart, LogOut, User, Sliders, Home, X, LayoutDashboard } from "lucide-react";
+import {
+  ChevronDown,
+  Heart,
+  LogOut,
+  User,
+  Sliders,
+  Home,
+  X,
+  LayoutDashboard,
+} from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { searchPostsByTitle, searchPostsByTag, searchPostsByTopic } from "@/services/posts/postService";
+import {
+  searchPostsByTitle,
+  searchPostsByTag,
+  searchPostsByTopic,
+} from "@/services/posts/postService";
 import { searchUsersByUsername } from "@/services/accounts/accountService";
 import { Post } from "@/types/post";
 import { UserProfile } from "@/types/account";
@@ -54,9 +67,7 @@ const Header = () => {
         // Gộp kết quả và loại bỏ trùng lặp dựa trên post_id
         const uniquePosts = Array.from(
           new Map(
-            postResults
-              .flat()
-              .map((post) => [post.post_id, post])
+            postResults.flat().map((post) => [post.post_id, post])
           ).values()
         ).slice(0, 5); // Giới hạn 5 bài viết
         setPostSuggestions(uniquePosts);
@@ -68,21 +79,27 @@ const Header = () => {
         }
       } else {
         // Tìm kiếm theo tiêu đề, chủ đề, và người dùng
-        const [userResults, postTitleResults, postTopicResults] = await Promise.all([
-          searchUsersByUsername(query, 0, 5),
-          searchPostsByTitle(query, 0, 5),
-          searchPostsByTopic(query, 0, 5),
-        ]);
+        const [userResults, postTitleResults, postTopicResults] =
+          await Promise.all([
+            searchUsersByUsername(query, 0, 5),
+            searchPostsByTitle(query, 0, 5),
+            searchPostsByTopic(query, 0, 5),
+          ]);
         // Gộp kết quả bài viết từ tiêu đề và chủ đề, loại bỏ trùng lặp
         const uniquePosts = Array.from(
           new Map(
-            [...postTitleResults, ...postTopicResults].map((post) => [post.post_id, post])
+            [...postTitleResults, ...postTopicResults].map((post) => [
+              post.post_id,
+              post,
+            ])
           ).values()
         ).slice(0, 5);
         setUserSuggestions(userResults);
         setPostSuggestions(uniquePosts);
         if (userResults.length === 0 && uniquePosts.length === 0) {
-          setError(`Không tìm thấy bài viết, chủ đề, hoặc người dùng với "${query}".`);
+          setError(
+            `Không tìm thấy bài viết, chủ đề, hoặc người dùng với "${query}".`
+          );
         }
       }
     } catch (error) {
@@ -171,7 +188,10 @@ const Header = () => {
                       checked={selectedTags.includes(tag.name)}
                       onChange={() => handleTagToggle(tag.name)}
                       className="h-4 w-4"
-                      disabled={selectedTags.length >= 3 && !selectedTags.includes(tag.name)}
+                      disabled={
+                        selectedTags.length >= 3 &&
+                        !selectedTags.includes(tag.name)
+                      }
                     />
                     <span>{tag.name}</span>
                   </DropdownMenuItem>
@@ -197,7 +217,11 @@ const Header = () => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={selectedTags.length > 0 ? '' : "Tìm kiếm bài viết, thẻ, hoặc người dùng..."}
+              placeholder={
+                selectedTags.length > 0
+                  ? ""
+                  : "Tìm kiếm bài viết, thẻ, hoặc người dùng..."
+              }
               className="flex-1 min-w-0 p-1 bg-transparent focus:outline-none placeholder-muted-foreground"
             />
           </div>
@@ -214,7 +238,9 @@ const Header = () => {
               Loading...
             </span>
           )}
-          {(error || postSuggestions.length > 0 || userSuggestions.length > 0) && (
+          {(error ||
+            postSuggestions.length > 0 ||
+            userSuggestions.length > 0) && (
             <div className="absolute top-full mt-1 w-full bg-background border border-gray-200 rounded shadow-lg z-50 max-h-96 overflow-y-auto">
               {error && <div className="p-2 text-red-500 text-sm">{error}</div>}
               {userSuggestions.length > 0 && (
@@ -230,14 +256,17 @@ const Header = () => {
                       className="block p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
                     >
                       <Avatar className="h-6 w-6">
-                        <AvatarImage src={user.avatar} alt={user.full_name} />
+                        <AvatarImage
+                          src={user.avatar || undefined}
+                          alt={user.full_name || "User"}
+                        />
                         <AvatarFallback>
                           {user.full_name && user.full_name.trim() !== "string"
                             ? user.full_name
-                              .split(" ")
-                              .map((word) => word[0])
-                              .join("")
-                              .toUpperCase()
+                                .split(" ")
+                                .map((word) => word[0])
+                                .join("")
+                                .toUpperCase()
                             : user.username[0].toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -274,7 +303,9 @@ const Header = () => {
                 </div>
               )}
               <Link
-                to={`/searchPage?q=${encodeURIComponent(query)}&tags=${selectedTags.join(",")}`}
+                to={`/searchPage?q=${encodeURIComponent(
+                  query
+                )}&tags=${selectedTags.join(",")}`}
                 onClick={clearSearch}
                 className="block p-2 text-center text-primary hover:bg-gray-100 cursor-pointer"
               >
@@ -284,7 +315,7 @@ const Header = () => {
           )}
         </div>
 
-        <nav className="hidden md:flex items-center space-x-6">
+        {/* <nav className="hidden md:flex items-center space-x-6">
           <NavLink
             to={paths.home}
             className={({ isActive }) =>
@@ -305,7 +336,7 @@ const Header = () => {
             <Heart className="w-7 h-10" />
             <span className="sr-only">Yêu thích</span>
           </NavLink>
-        </nav>
+        </nav> */}
 
         <div className="flex items-center space-x-4">
           {isAuthenticated && user ? (
@@ -313,14 +344,17 @@ const Header = () => {
               <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-2 cursor-pointer">
                   <Avatar>
-                    <AvatarImage src={user?.avatar} alt={user?.full_name} />
+                    <AvatarImage
+                      src={user?.avatar || undefined}
+                      alt={user?.full_name || "User"}
+                    />
                     <AvatarFallback>
                       {user?.full_name
                         ? user.full_name
-                          .split(" ")
-                          .map((word) => word[0])
-                          .join("")
-                          .toUpperCase()
+                            .split(" ")
+                            .map((word) => word[0])
+                            .join("")
+                            .toUpperCase()
                         : "?"}
                     </AvatarFallback>
                   </Avatar>
@@ -335,8 +369,9 @@ const Header = () => {
                   <DropdownMenuItem className="flex items-center gap-2">
                     <Link
                       to={
-                        paths[user.role.role_name as "user" | "moderator" | "admin"]
-                          ?.dashboard
+                        paths[
+                          user.role.role_name as "user" | "moderator" | "admin"
+                        ]?.dashboard
                       }
                       className="flex items-center gap-2 w-full"
                     >
