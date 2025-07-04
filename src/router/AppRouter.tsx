@@ -11,6 +11,7 @@ import ProtectedRoute from "./protected-route";
 import { paths } from "@/utils/constant/path";
 import LoginPage from "@/pages/publicPage/auth/LoginPage";
 import RegisterPage from "@/pages/publicPage/auth/RegisterPage";
+import { GoogleCallbackPage } from "@/pages/publicPage/auth/GoogleCallbackPage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CreatePostPage } from "@/pages/publicPage/posts/CreatePostPage";
 import { PostDetailPage } from "@/pages/publicPage/posts/PostDetailPage";
@@ -25,10 +26,11 @@ import EditPostPage from "@/pages/user/posts/EditPostPage";
 import { PersonalPage } from "@/pages/user/profile/PersonalPage";
 import { FriendManagementPage } from "@/pages/user/friends/FriendManagementPage";
 import UnitManagementPage from "@/pages/private/management/UnitManagementPage";
-import SettingPage from "@/pages/private/management/SettingPage";
+import { SettingPage } from "@/pages/private/management/SettingPage";
 import SearchPage from "@/pages/publicPage/SearchPage";
 import UserManagementPage from "@/pages/private/management/UserManagementPage";
 import ChatPage from "@/pages/publicPage/ChatPage";
+import GroupChatManagementPage from "@/pages/private/management/GroupChatManagementPage";
 import NotificationsPage from "@/pages/private/NotificationsPage";
 
 const router = createBrowserRouter([
@@ -42,7 +44,7 @@ const router = createBrowserRouter([
         children: [
           { path: paths.login, element: <LoginPage /> },
           { path: paths.register, element: <RegisterPage /> },
-          { path: paths.googleCallback, element: <LoginPage /> },
+          { path: paths.googleCallback, element: <GoogleCallbackPage /> },
         ],
       },
     ],
@@ -85,6 +87,7 @@ const router = createBrowserRouter([
       { path: paths.user.setting, element: <SettingPage /> },
       //
       { path: paths.user.chat, element: <ChatPage /> },
+      { path: "/user/chat/:friendId", element: <ChatPage /> },
       { path: paths.user.notifications, element: <NotificationsPage /> },
     ],
   },
@@ -118,6 +121,11 @@ const router = createBrowserRouter([
 
       //
       { path: paths.moderator.chat, element: <ChatPage /> },
+      { path: "/moderator/friends", element: <FriendManagementPage /> },
+      {
+        path: paths.moderator.groupChatManagement,
+        element: <GroupChatManagementPage />,
+      },
       { path: paths.moderator.notifications, element: <NotificationsPage /> },
     ],
   },
@@ -148,6 +156,10 @@ const router = createBrowserRouter([
       { path: paths.admin.unitManagement, element: <UnitManagementPage /> },
       //
       { path: paths.admin.chat, element: <ChatPage /> },
+      {
+        path: paths.admin.groupChatManagement,
+        element: <GroupChatManagementPage />,
+      },
     ],
   },
   {

@@ -118,6 +118,12 @@ const sidebarLinks: SidebarLink[] = [
         icon: <Weight className="h-5 w-5" />,
         roles: ["moderator"],
       },
+      {
+        title: "Quản lý Group Chat",
+        href: paths.moderator.groupChatManagement,
+        icon: <MessageCircle className="h-5 w-5" />,
+        roles: ["moderator"],
+      },
     ],
   },
   {
@@ -169,6 +175,12 @@ const sidebarLinks: SidebarLink[] = [
         icon: <Weight className="h-5 w-5" />,
         roles: ["admin"],
       },
+      {
+        title: "Quản lý Group Chat",
+        href: paths.admin.groupChatManagement,
+        icon: <MessageCircle className="h-5 w-5" />,
+        roles: ["admin"],
+      },
     ],
   },
   {
@@ -176,6 +188,13 @@ const sidebarLinks: SidebarLink[] = [
     href: paths.admin.userManagement,
     icon: <UserCheck2 className="h-5 w-5" />,
     roles: ["admin"],
+  },
+  //moderator
+  {
+    title: "Bạn bè",
+    href: "/moderator/friends",
+    icon: <UserPlus className="h-5 w-5" />,
+    roles: ["moderator"],
   },
 ];
 
