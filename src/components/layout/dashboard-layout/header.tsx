@@ -249,7 +249,10 @@ const DashboardHeader = () => {
                         className="block p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
                       >
                         <Avatar className="h-6 w-6">
-                          <AvatarImage src={user.avatar} alt={user.full_name} />
+                          <AvatarImage
+                            src={user.avatar || ""}
+                            alt={user.full_name || ""}
+                          />
                           <AvatarFallback>
                             {user.full_name &&
                             user.full_name.trim() !== "string"

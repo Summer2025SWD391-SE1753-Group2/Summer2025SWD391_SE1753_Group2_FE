@@ -41,7 +41,7 @@ export function PersonalPage() {
         return;
       }
       try {
-        const data = await accountService.getProfileByUsername(username);
+        const data = await getProfileByUsername(username);
         setProfile(data);
       } catch (err: unknown) {
         const error = err as Error;

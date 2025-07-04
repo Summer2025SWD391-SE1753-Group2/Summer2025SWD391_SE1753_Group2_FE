@@ -1,7 +1,6 @@
 import axiosInstance from "@/lib/api/axios";
 import type {
   UserProfile,
-  ProfileUpdateData,
   PasswordUpdateData,
   UsernameUpdateData,
   GoogleUserInfo,
@@ -46,9 +45,45 @@ const searchUsersByUsername = async (
   return response.data;
 };
 
+// Check if user is Google user
+const isGoogleUser = async (): Promise<GoogleUserInfo> => {
+  const response = await axiosInstance.get<GoogleUserInfo>(
+    "/api/v1/accounts/is-google-user"
+  );
+  return response.data;
+};
+
+// Update username
+const updateUsername = async (data: UsernameUpdateData): Promise<void> => {
+  await axiosInstance.put("/api/v1/accounts/username", data);
+};
+
+// Update password
+const updatePassword = async (data: PasswordUpdateData): Promise<void> => {
+  await axiosInstance.put("/api/v1/accounts/password", data);
+};
+
+// Create accountService object for default export
+const accountService = {
+  getOwnProfile,
+  updateOwnProfile,
+  getProfileByUsername,
+  searchUsersByUsername,
+  isGoogleUser,
+  updateUsername,
+  updatePassword,
+};
+
+// Named exports for backward compatibility
 export {
   getOwnProfile,
   updateOwnProfile,
   getProfileByUsername,
   searchUsersByUsername,
+  isGoogleUser,
+  updateUsername,
+  updatePassword,
 };
+
+// Default export
+export default accountService;

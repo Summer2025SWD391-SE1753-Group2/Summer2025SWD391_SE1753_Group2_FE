@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { accountService } from "@/services/accounts/accountService";
+import accountService from "@/services/accounts/accountService";
 import type { GoogleUserInfo } from "@/types/account";
 import { useAuthStore } from "@/stores/auth";
 

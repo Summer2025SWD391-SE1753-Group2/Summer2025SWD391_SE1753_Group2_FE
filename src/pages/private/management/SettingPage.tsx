@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { GoogleUserSetup } from "@/components/auth/GoogleUserSetup";
-import { accountService } from "@/services/accounts/accountService";
+import accountService from "@/services/accounts/accountService";
 import type { UserProfile, ProfileUpdateData } from "@/types/account";
 import { User, Shield, Key, Edit, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -68,7 +68,22 @@ export function SettingPage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const updatedProfile = await accountService.updateOwnProfile(formData);
+      // Convert null to undefined for API compatibility
+      const dataToSend = {
+        ...formData,
+        email: formData.email === null ? undefined : formData.email,
+        full_name: formData.full_name === null ? undefined : formData.full_name,
+        phone: formData.phone === null ? undefined : formData.phone,
+        date_of_birth:
+          formData.date_of_birth === null ? undefined : formData.date_of_birth,
+        bio: formData.bio === null ? undefined : formData.bio,
+        avatar: formData.avatar === null ? undefined : formData.avatar,
+        background_url:
+          formData.background_url === null
+            ? undefined
+            : formData.background_url,
+      };
+      const updatedProfile = await accountService.updateOwnProfile(dataToSend);
       setProfile(updatedProfile);
       setEditing(false);
       toast.success("Cập nhật profile thành công!");

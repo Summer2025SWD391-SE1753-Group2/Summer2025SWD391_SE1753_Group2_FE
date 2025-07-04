@@ -55,8 +55,8 @@ interface GroupMember {
   group_member_id?: string;
   account_id: string;
   username: string;
-  full_name: string;
-  avatar: string;
+  full_name: string | null;
+  avatar: string | null;
   role: string;
   joined_at?: string;
   email?: string;
@@ -183,7 +183,8 @@ export default function GroupChatContainer({
   };
 
   // Get user initials for avatar
-  const getUserInitials = (fullName: string) => {
+  const getUserInitials = (fullName: string | null) => {
+    if (!fullName) return "?";
     return fullName
       .split(" ")
       .map((name) => name[0])
@@ -216,7 +217,7 @@ export default function GroupChatContainer({
       toast.success("Đã đổi tên nhóm thành công");
       setEditingName(false);
       // Optionally: reload group info
-    } catch (e) {
+    } catch {
       toast.error("Đổi tên nhóm thất bại");
     }
   };
@@ -555,7 +556,7 @@ export default function GroupChatContainer({
                 className="flex items-center gap-3 p-2 rounded hover:bg-gray-50"
               >
                 <Avatar className="w-8 h-8">
-                  <AvatarImage src={m.avatar} />
+                  <AvatarImage src={m.avatar || undefined} />
                   <AvatarFallback>
                     {getUserInitials(m.full_name)}
                   </AvatarFallback>
@@ -617,7 +618,7 @@ export default function GroupChatContainer({
                   className="flex items-center gap-3 p-2 rounded hover:bg-blue-50"
                 >
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src={u.avatar} />
+                    <AvatarImage src={u.avatar || undefined} />
                     <AvatarFallback>
                       {getUserInitials(u.full_name)}
                     </AvatarFallback>

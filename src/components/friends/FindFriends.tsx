@@ -247,7 +247,7 @@ export function FindFriends() {
                 <div className="flex items-center space-x-4">
                   <img
                     src={user.avatar || "/default-profile-image.png"}
-                    alt={user.full_name}
+                    alt={user.full_name || "User"}
                     className="w-12 h-12 rounded-full object-cover"
                     onError={(e) => {
                       e.currentTarget.src = "/default-profile-image.png";

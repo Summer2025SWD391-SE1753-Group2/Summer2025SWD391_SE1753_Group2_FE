@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { accountService } from "@/services/accounts/accountService";
+import accountService from "@/services/accounts/accountService";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
