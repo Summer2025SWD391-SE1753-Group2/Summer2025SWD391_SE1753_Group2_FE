@@ -1,34 +1,35 @@
 import axiosInstance from "@/lib/api/axios";
-import type { Post } from "@/types/post";
+import type { Post, CreatePostRequest } from "@/types/post";
 
-export interface CreatePostApiRequest {
-  title: string;
-  content: string;
-  images: string[];
-  tag_ids: string[];
-  topic_ids: string[];
-  materials: {
-    material_id: string;
-    quantity: number;
-  }[];
-  steps: {
-    order_number: number;
-    content: string;
-  }[];
-}
-
-export const createPost = async (data: CreatePostApiRequest): Promise<void> => {
+export const createPost = async (data: CreatePostRequest): Promise<void> => {
   try {
     const response = await axiosInstance.post("/api/v1/posts", data);
     return response.data;
   } catch (error: unknown) {
     if (error && typeof error === "object" && "response" in error) {
       const axiosError = error as {
-        response: { status: number; data?: { message?: string } };
+        response: {
+          status: number;
+          data?: {
+            message?: string;
+            detail?: string;
+            errors?: unknown;
+          };
+        };
       };
+
       if (axiosError.response?.status === 401) {
         throw new Error("Không tìm thấy token đăng nhập");
       }
+
+      if (axiosError.response?.status === 400) {
+        const errorMessage =
+          axiosError.response?.data?.message ||
+          axiosError.response?.data?.detail ||
+          "Dữ liệu không hợp lệ";
+        throw new Error(`Lỗi validation: ${errorMessage}`);
+      }
+
       throw new Error(
         axiosError.response?.data?.message || "Không thể tạo bài viết"
       );
