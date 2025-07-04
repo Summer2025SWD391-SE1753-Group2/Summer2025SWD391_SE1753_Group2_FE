@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { removeFriend } from "@/services/friends/friendService";
 import { FriendListItem } from "@/types/friend";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const getRoleStyle = (role: string) => {
 
 export function FriendCard({ friend, onRemove }: FriendCardProps) {
   const [removing, setRemoving] = useState(false);
+  const navigate = useNavigate();
 
   const handleRemove = async () => {
     setRemoving(true);
@@ -42,8 +44,7 @@ export function FriendCard({ friend, onRemove }: FriendCardProps) {
   };
 
   const handleChat = () => {
-    // TODO: Implement chat functionality
-    toast.info("Chức năng chat đang được phát triển");
+    navigate(`/user/chat/${friend.account_id}`);
   };
 
   return (
@@ -65,12 +66,12 @@ export function FriendCard({ friend, onRemove }: FriendCardProps) {
               variant="outline"
               className={cn(
                 "mt-1 text-xs",
-                getRoleStyle(friend.role.role_name)
+                getRoleStyle(friend.role?.role_name || "user")
               )}
             >
-              {friend.role.role_name === "admin"
+              {friend.role?.role_name === "admin"
                 ? "Quản trị viên"
-                : friend.role.role_name === "moderator"
+                : friend.role?.role_name === "moderator"
                 ? "Kiểm duyệt viên"
                 : "Thành viên"}
             </Badge>

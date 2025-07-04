@@ -255,57 +255,8 @@ export const authService = {
    * Google login redirect
    */
   async loginWithGoogle(): Promise<void> {
-    const baseUrl =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
     window.location.href = `${baseUrl}/api/v1/auth/google/login`;
-  },
-
-  /**
-   * Handle Google callback
-   */
-  async handleGoogleCallback(code: string): Promise<ApiResponse<AuthResponse>> {
-    if (!code || code.trim().length === 0) {
-      throw new Error("Mã xác thực Google không hợp lệ");
-    }
-
-    try {
-      const res = await axiosInstance.post<AuthResponse>(
-        "/api/v1/auth/google/callback",
-        { code }
-      );
-
-      if (!res.data.access_token) {
-        throw new Error("Không nhận được token từ Google");
-      }
-
-      // Store tokens
-      setCookie("access_token", res.data.access_token, 1);
-      if (res.data.refresh_token) {
-        setCookie("refresh_token", res.data.refresh_token, 7);
-      }
-
-      // Get and store user profile
-      try {
-        const profile = await this.getCurrentUserProfile();
-        setCookie("user_info", JSON.stringify(profile), 7);
-        res.data.user = profile;
-      } catch (profileError) {
-        console.warn("Google user profile fetch failed:", profileError);
-        if (res.data.user) {
-          setCookie("user_info", JSON.stringify(res.data.user), 7);
-        }
-      }
-
-      return {
-        data: res.data,
-        message: "Đăng nhập Google thành công",
-        status: 200,
-      };
-    } catch (error) {
-      console.error("Google callback failed:", error);
-      const errorMsg = this.extractErrorMessage(error);
-      throw new Error(errorMsg);
-    }
   },
 
   /**

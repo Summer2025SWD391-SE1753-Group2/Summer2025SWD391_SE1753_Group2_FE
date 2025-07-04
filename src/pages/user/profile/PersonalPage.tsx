@@ -83,7 +83,7 @@ export function PersonalPage() {
             <div className="space-y-1 w-[55%]">
               <div className="flex items-center gap-1">
                 <p className="text-xl font-semibold leading-none">
-                  {profile.full_name}
+                  {profile.full_name || profile.username}
                 </p>
                 {profile.email_verified && (
                   <span className="text-blue-500 text-xs">✔</span>
@@ -150,7 +150,7 @@ export function PersonalPage() {
             <div className="w-[45%] flex justify-center ">
               <img
                 src={profile.avatar || "/default-profile-image.png"}
-                alt={`Ảnh của ${profile.full_name}`}
+                alt={`Ảnh của ${profile.full_name || profile.username}`}
                 className="h-auto max-h-64 object-cover rounded-lg"
                 onError={(e) => {
                   e.currentTarget.src = "/default-profile-image.png";
