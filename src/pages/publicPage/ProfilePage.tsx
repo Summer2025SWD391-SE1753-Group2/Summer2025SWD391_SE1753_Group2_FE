@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { UserProfile } from "@/types/account";
 import { Check, Crown, Shield, User } from "lucide-react";
-
-// Icons
+import { getMyPosts } from "@/services/posts/postService";
+import { Post } from "@/types/post";
+import { Link } from "react-router-dom";
 
 const getInitials = (name: string = "") =>
   name
@@ -16,7 +17,6 @@ const getInitials = (name: string = "") =>
     .join("")
     .toUpperCase();
 
-// Thêm icon + class cho mỗi role
 const getRoleInfo = (role: string) => {
   switch (role) {
     case "admin":
@@ -46,20 +46,36 @@ const getStatusStyle = (status: string) => {
     : "bg-gray-300 text-gray-700";
 };
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("vi-VN");
+};
+
 const ProfilePage = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const data = await getOwnProfile();
         setProfile(data);
-      } catch {
-        // handle error
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      }
+    };
+
+    const fetchPosts = async () => {
+      try {
+        const data = await getMyPosts(0, 10);
+        setPosts(data);
+      } catch (error) {
+        console.error("Failed to fetch posts:", error);
       }
     };
 
     fetchProfile();
+    fetchPosts();
   }, []);
 
   if (!profile) {
@@ -77,21 +93,15 @@ const ProfilePage = () => {
       {/* Avatar + Info */}
       <div className="flex justify-start relative pl-30">
         <div className="flex items-center space-x-4 justify-between absolute -top-12">
-          {/* Avatar */}
           <Avatar className="h-40 w-40 mb-4 border-4 border-white shadow-md">
             <AvatarImage src={profile.avatar} alt={profile.full_name} />
             <AvatarFallback className="bg-primary text-primary-foreground text-3xl">
               {getInitials(profile.full_name)}
             </AvatarFallback>
           </Avatar>
-
-          {/* Thông tin */}
           <div>
             <p className="text-xl font-semibold leading-none">@{profile.username}</p>
-
-
             <div className="flex gap-3 mt-3">
-              {/* Role badge with icon */}
               <Badge
                 variant="outline"
                 className={cn(
@@ -102,8 +112,6 @@ const ProfilePage = () => {
                 {roleInfo.icon}
                 {roleInfo.label}
               </Badge>
-
-              {/* Status badge */}
               <Badge
                 className={cn(
                   "px-4 py-1.5 text-sm font-semibold flex items-center gap-1",
@@ -119,17 +127,58 @@ const ProfilePage = () => {
                   <>Không hoạt động</>
                 )}
               </Badge>
-
             </div>
           </div>
         </div>
       </div>
-      <div className="h-40" ></div>
-      <div className="space-y-2 ml-30">
+      <div className="h-40"></div>
+      <div className="space-y-2 ml-12">
         <div className="text-xl leading-none">{profile.email}</div>
         <div className="text-xl leading-none">{profile.bio}</div>
       </div>
 
+      {/* Posts Section */}
+      <div className="mt-8 ml-12">
+        <h2 className="text-lg font-semibold mb-4">Bài viết đã tạo</h2>
+        <div className="flex gap-4">
+          {posts.map((post) => (
+            <Link
+              to={`/posts/${post.post_id}`}
+              key={post.post_id}
+            >
+              <Card
+                className="w-64 overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow"
+                style={{ margin: 0, padding: 0 }}
+              >
+                <div className="w-full h-60 overflow-hidden">
+                  <img
+                    src={post.images.length > 0 ? post.images[0].image_url : "/placeholder-image.jpg"}
+                    alt={post.title}
+                    className="w-full h-full object-cover"
+                    style={{ marginTop: 0 }}
+                  />
+                </div>
+                <div className="pb-2 text-center">
+                  <h3 className="text-sm font-semibold line-clamp-2">{post.title}</h3>
+                  {post.topics.length > 0 && (
+                    <p className="text-xs text-gray-600 mt-1">{post.topics[0].name}</p>
+                  )}
+                  {post.tags.length > 0 && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+                        #{post.tags[0].name}
+                      </Badge>
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-600 mt-1">
+                    Ngày tạo: {formatDate(post.created_at)}
+                  </p>
+                </div>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
