@@ -68,7 +68,9 @@ export function CreatePostPage() {
 
         setTags(tagsData.filter((tag) => tag.status === "active"));
         setTopics(topicsData.filter((topic) => topic.status === "active"));
-        setMaterials(materialsData.filter((material) => material.status === "active"));
+        setMaterials(
+          materialsData.filter((material) => material.status === "active")
+        );
       } catch (error) {
         console.error("Error loading data:", error);
         toast.error("Không thể tải dữ liệu. Vui lòng thử lại.");
@@ -289,7 +291,6 @@ export function CreatePostPage() {
                   • Bài viết sẽ được gửi tới moderator/admin để duyệt trước khi
                   hiển thị công khai
                 </p>
-                <p>• Quá trình duyệt thường mất 1-2 giờ trong giờ hành chính</p>
                 <p>• Chỉ chọn từ danh sách tags, chủ đề, nguyên liệu có sẵn</p>
               </div>
             </div>
@@ -310,26 +311,27 @@ export function CreatePostPage() {
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-sm font-medium">
                   Tiêu đề bài viết
-                  {/* <span className="text-red-500">*</span> */}
+                  <span className="text-red-500 ml-1">*</span>
                 </Label>
                 <Input
                   id="title"
                   placeholder="VD: Cách làm phở bò ngon đúng điệu..."
                   value={formData.title}
                   onChange={(e) => handleInputChange("title", e.target.value)}
+                  required
                 />
-                {/* {formData.title.trim() === "" && (
+                {formData.title.trim() === "" && (
                   <p className="text-xs text-red-600">
                     Tiêu đề không được để trống
                   </p>
-                )} */}
+                )}
               </div>
 
               {/* Content */}
               <div className="space-y-2">
                 <Label htmlFor="content" className="text-sm font-medium">
                   Mô tả món ăn
-                  {/* <span className="text-red-500">*</span> */}
+                  <span className="text-red-500 ml-1">*</span>
                 </Label>
                 <Textarea
                   id="content"
@@ -337,35 +339,55 @@ export function CreatePostPage() {
                   value={formData.content}
                   onChange={(e) => handleInputChange("content", e.target.value)}
                   rows={6}
+                  required
                 />
-                {/* {formData.content.trim() === "" && (
+                {formData.content.trim() === "" && (
                   <p className="text-xs text-red-600">
                     Mô tả không được để trống
                   </p>
-                )} */}
+                )}
               </div>
             </CardContent>
           </Card>
 
           {/* Steps */}
-          <StepsInput
-            steps={formData.steps}
-            onChange={(steps) => handleInputChange("steps", steps)}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                Các bước thực hiện
+                <span className="text-red-500 ml-1">*</span>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Thêm ít nhất 2 bước thực hiện chi tiết
+              </p>
+            </CardHeader>
+            <CardContent>
+              <StepsInput
+                steps={formData.steps}
+                onChange={(steps) => handleInputChange("steps", steps)}
+              />
+              {formData.steps.length < 2 && (
+                <p className="text-xs text-red-600 mt-2">
+                  Vui lòng thêm ít nhất 2 bước thực hiện
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Media Upload */}
           <Card>
             <CardHeader>
               <CardTitle>Hình ảnh món ăn</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Thêm tối đa 5 ảnh chất lượng cao để minh họa món ăn
+                Thêm tối đa 5 ảnh chất lượng cao để minh họa món ăn (không bắt
+                buộc)
               </p>
             </CardHeader>
             <CardContent>
               <FileUpload
                 files={uploadedFiles}
                 onFilesChange={setUploadedFiles}
-                onUrlsChange={() => { }}
+                onUrlsChange={() => {}}
                 accept="image/*"
                 maxSize={10}
                 maxFiles={5}
@@ -379,7 +401,10 @@ export function CreatePostPage() {
           {/* Materials */}
           <Card>
             <CardHeader>
-              <CardTitle>Nguyên liệu</CardTitle>
+              <CardTitle>
+                Nguyên liệu
+                <span className="text-red-500 ml-1">*</span>
+              </CardTitle>
               <p className="text-sm text-muted-foreground">
                 Chọn nguyên liệu và ghi rõ số lượng cần thiết
               </p>
@@ -393,73 +418,95 @@ export function CreatePostPage() {
                 }
                 maxItems={20}
               />
+              {formData.selectedMaterials.length === 0 && (
+                <p className="text-xs text-red-600 mt-2">
+                  Vui lòng chọn ít nhất một nguyên liệu
+                </p>
+              )}
             </CardContent>
           </Card>
 
           {/* Tags */}
           <Card>
             <CardHeader>
-              <CardTitle>Phân loại</CardTitle>
+              <CardTitle>
+                Phân loại
+                <span className="text-red-500 ml-1">*</span>
+              </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Chọn tags và chủ đề để dễ dàng tìm kiếm
+                Chọn tags và chủ đề để dễ dàng tìm kiếm (bắt buộc)
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              <MultiSelect
-                label="Tags"
-                placeholder="Tìm kiếm tag..."
-                items={tags.map((tag) => ({
-                  id: tag.tag_id,
-                  name: tag.name,
-                  description: tag.description,
-                }))}
-                selectedItems={formData.selectedTags.map((tag) => ({
-                  id: tag.tag_id,
-                  name: tag.name,
-                  description: tag.description,
-                }))}
-                onSelectionChange={(items) =>
-                  handleInputChange(
-                    "selectedTags",
-                    items.map((item) => ({
-                      tag_id: item.id,
-                      name: item.name,
-                      description: item.description,
-                      status: "active" as const,
-                    }))
-                  )
-                }
-                maxItems={5}
-              />
+              <div>
+                <MultiSelect
+                  label="Tags"
+                  placeholder="Tìm kiếm tag..."
+                  items={tags.map((tag) => ({
+                    id: tag.tag_id,
+                    name: tag.name,
+                    description: tag.description,
+                  }))}
+                  selectedItems={formData.selectedTags.map((tag) => ({
+                    id: tag.tag_id,
+                    name: tag.name,
+                    description: tag.description,
+                  }))}
+                  onSelectionChange={(items) =>
+                    handleInputChange(
+                      "selectedTags",
+                      items.map((item) => ({
+                        tag_id: item.id,
+                        name: item.name,
+                        description: item.description,
+                        status: "active" as const,
+                      }))
+                    )
+                  }
+                  maxItems={5}
+                />
+                {formData.selectedTags.length === 0 && (
+                  <p className="text-xs text-red-600 mt-1">
+                    Vui lòng chọn ít nhất một tag
+                  </p>
+                )}
+              </div>
 
               <Separator />
 
-              <MultiSelect
-                label="Chủ đề"
-                placeholder="Tìm kiếm chủ đề..."
-                items={topics.map((topic) => ({
-                  id: topic.topic_id,
-                  name: topic.name,
-                  description: topic.description,
-                }))}
-                selectedItems={formData.selectedTopics.map((topic) => ({
-                  id: topic.topic_id,
-                  name: topic.name,
-                  description: topic.description,
-                }))}
-                onSelectionChange={(items) =>
-                  handleInputChange(
-                    "selectedTopics",
-                    items.map((item) => ({
-                      topic_id: item.id,
-                      name: item.name,
-                      description: item.description,
-                      status: "active" as const,
-                    }))
-                  )
-                }
-                maxItems={3}
-              />
+              <div>
+                <MultiSelect
+                  label="Chủ đề"
+                  placeholder="Tìm kiếm chủ đề..."
+                  items={topics.map((topic) => ({
+                    id: topic.topic_id,
+                    name: topic.name,
+                    description: topic.description,
+                  }))}
+                  selectedItems={formData.selectedTopics.map((topic) => ({
+                    id: topic.topic_id,
+                    name: topic.name,
+                    description: topic.description,
+                  }))}
+                  onSelectionChange={(items) =>
+                    handleInputChange(
+                      "selectedTopics",
+                      items.map((item) => ({
+                        topic_id: item.id,
+                        name: item.name,
+                        description: item.description,
+                        status: "active" as const,
+                      }))
+                    )
+                  }
+                  maxItems={3}
+                />
+                {formData.selectedTopics.length === 0 && (
+                  <p className="text-xs text-red-600 mt-1">
+                    Vui lòng chọn ít nhất một chủ đề
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -558,17 +605,13 @@ export function CreatePostPage() {
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="w-full h-12"
+                className="w-full h-12 bg-black text-white hover:bg-primary/90"
                 size="lg"
               >
                 {isSubmitting ? "Đang gửi..." : "Gửi bài để duyệt"}
               </Button>
 
               {/* Post Info */}
-              <div className="pt-2 space-y-1 text-xs text-muted-foreground border-t">
-                <div>• Thời gian duyệt: 1-2 giờ</div>
-                <div>• Tự động thông báo kết quả</div>
-              </div>
             </CardContent>
           </Card>
         </div>

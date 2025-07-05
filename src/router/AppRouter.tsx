@@ -6,6 +6,7 @@ import TagManagementPage from "@/pages/private/management/TagManagementPage";
 import MaterialManagementPage from "@/pages/private/management/MaterialManagementPage";
 import TopicManagementPage from "@/pages/private/management/TopicManagementPage";
 import ApprovePostPage from "@/pages/private/management/ApprovePostPage";
+import { PostReviewPage } from "@/pages/private/management/PostReviewPage";
 import PublicRoute from "./public-route";
 import ProtectedRoute from "./protected-route";
 import { paths } from "@/utils/constant/path";
@@ -106,6 +107,7 @@ const router = createBrowserRouter([
       { path: paths.moderator.dashboard, element: <DashboardPage /> },
 
       { path: paths.moderator.approvePost, element: <ApprovePostPage /> },
+      { path: paths.moderator.postReview, element: <PostReviewPage /> },
       {
         path: paths.moderator.materialManagement,
         element: <MaterialManagementPage />,
@@ -144,6 +146,7 @@ const router = createBrowserRouter([
       { path: paths.admin.userManagement, element: <UserManagementPage /> },
 
       { path: paths.admin.approvePost, element: <ApprovePostPage /> },
+      { path: paths.admin.postReview, element: <PostReviewPage /> },
       {
         path: paths.admin.materialManagement,
         element: <MaterialManagementPage />,
