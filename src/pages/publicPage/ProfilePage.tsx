@@ -5,7 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { UserProfile } from "@/types/account";
-import { Check, Crown, Shield, User } from "lucide-react";
+import { Check, Crown, Loader2, Shield, User } from "lucide-react";
 import { GoogleUserSetup } from "@/components/auth/GoogleUserSetup";
 import { getMyPosts } from "@/services/posts/postService";
 import { Post } from "@/types/post";
@@ -80,7 +80,11 @@ const ProfilePage = () => {
   }, []);
 
   if (!profile) {
-    return <p className="p-6 text-center">Đang tải dữ liệu...</p>;
+    return (
+      <div className="p-6 text-center min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+      </div>
+    );
   }
 
   const roleName = profile?.role?.role_name;
@@ -156,46 +160,50 @@ const ProfilePage = () => {
         />
       </div>
       {/* Posts Section */}
-      <div className="mt-8 ml-12">
-        <h2 className="text-lg font-semibold mb-4">Bài viết đã tạo</h2>
-        <div className="flex gap-4">
-          {posts.map((post) => (
-            <Link
-              to={`/posts/${post.post_id}`}
-              key={post.post_id}
-            >
-              <Card
-                className="w-64 overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow"
-                style={{ margin: 0, padding: 0 }}
-              >
-                <div className="w-full h-60 overflow-hidden">
-                  <img
-                    src={post.images.length > 0 ? post.images[0].image_url : "/placeholder-image.jpg"}
-                    alt={post.title}
-                    className="w-full h-full object-cover"
-                    style={{ marginTop: 0 }}
-                  />
-                </div>
-                <div className="pb-2 text-center">
-                  <h3 className="text-sm font-semibold line-clamp-2">{post.title}</h3>
-                  {post.topics.length > 0 && (
-                    <p className="text-xs text-gray-600 mt-1">{post.topics[0].name}</p>
-                  )}
-                  {post.tags.length > 0 && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
-                        #{post.tags[0].name}
-                      </Badge>
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-600 mt-1">
-                    Ngày tạo: {formatDate(post.created_at)}
-                  </p>
-                </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
+      <div className="mt-8 ml-12 mr-12">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">Bài viết đã tạo</h2>
+        {posts.length === 0 ? (
+          <p className="text-center text-gray-500 text-lg py-8 bg-gray-50 rounded-lg">
+            Chưa có bài viết nào
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {posts.map((post) => (
+              <li key={post.post_id}>
+                <Link
+                  to={`/posts/${post.post_id}`}
+                  className="block"
+                >
+                  <div className="flex items-center py-4 px-4 bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200">
+                    <div className="w-20 h-20 flex-shrink-0">
+                      <img
+                        src={post.images.length > 0 ? post.images[0].image_url : "/placeholder-image.jpg"}
+                        alt={post.title}
+                        className="w-full h-full object-cover rounded-md"
+                      />
+                    </div>
+                    <div className="ml-4 flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{post.title}</h3>
+                      {post.topics.length > 0 && (
+                        <p className="text-sm text-gray-500 mt-1">{post.topics[0].name}</p>
+                      )}
+                      {post.tags.length > 0 && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5">
+                            #{post.tags[0].name}
+                          </Badge>
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-400 mt-1">
+                        Ngày tạo: {formatDate(post.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

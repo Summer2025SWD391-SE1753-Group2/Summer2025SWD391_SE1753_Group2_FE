@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getProfileByUsername } from "@/services/accounts/accountService";
 import { sendFriendRequest } from "@/services/friends/friendService";
-import { getUserPostsById } from "@/services/posts/postService"; // Use new function
+import { getUserPostsById } from "@/services/posts/postService";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { UserProfile } from "@/types/account";
 import { Post } from "@/types/post";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const getRoleStyle = (role: string) => {
   switch (role) {
@@ -34,8 +35,6 @@ export function PersonalPage() {
   const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [loadingMyPosts, setLoadingMyPosts] = useState(false);
   const [errorPosts, setErrorPosts] = useState<string | null>(null);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
 
   // Fetch profile
   useEffect(() => {
@@ -49,6 +48,7 @@ export function PersonalPage() {
       try {
         const data = await getProfileByUsername(username);
         setProfile(data);
+        setMyPosts([]); // Reset posts when profile changes
       } catch (err: unknown) {
         const error = err as Error;
         if (error.name === "AbortError") return;
@@ -61,24 +61,28 @@ export function PersonalPage() {
     return () => controller.abort();
   }, [username]);
 
-  // Fetch posts by user's account_id
+  // Fetch all approved posts by user's account_id
   useEffect(() => {
     const fetchPosts = async () => {
-      if (!profile || !hasMore) return;
+      if (!profile) return;
       setLoadingMyPosts(true);
       try {
-        const postsData = await getUserPostsById(profile.account_id, page * 10, 10); // Use account_id
-        setMyPosts((prev) => [...prev, ...postsData]);
-        setHasMore(postsData.length === 10); // Assume no more posts if less than 10 are returned
+        const postsData = await getUserPostsById(profile.account_id);
+        // Verify posts are approved
+        const approvedPosts = postsData.filter(post => post.status === 'approved');
+        if (postsData.length > approvedPosts.length) {
+          console.warn('Some posts returned are not approved:', postsData);
+        }
+        setMyPosts(approvedPosts);
       } catch (err: unknown) {
         const error = err as Error;
-        setErrorPosts(error.message || "Không thể tải bài viết");
+        setErrorPosts(error.message || "Không thể tải bài viết đã phê duyệt. Vui lòng thử lại.");
       } finally {
         setLoadingMyPosts(false);
       }
     };
     fetchPosts();
-  }, [profile, page]);
+  }, [profile]);
 
   const handleAddFriend = async () => {
     if (!profile) return;
@@ -88,12 +92,7 @@ export function PersonalPage() {
     } catch (err: unknown) {
       const error = err as Error;
       toast.error(error.message || "Lỗi khi gửi lời mời kết bạn");
-      console.error("Lỗi khi thêm bạn:", err);
     }
-  };
-
-  const handleLoadMore = () => {
-    setPage((prev) => prev + 1);
   };
 
   const renderPost = (post: Post) => (
@@ -101,7 +100,7 @@ export function PersonalPage() {
       <Card
         className="w-64 overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow cursor-pointer"
       >
-        <div className="w-full h-60 overflow-hidden pt-0"> {/* Remove top padding */}
+        <div className="w-full h-60 overflow-hidden">
           <img
             src={post.images.length > 0 ? post.images[0].image_url : "/default-image.png"}
             alt={post.images[0]?.caption || "Hình ảnh bài viết"}
@@ -109,27 +108,33 @@ export function PersonalPage() {
             style={{ marginTop: 0 }} // Remove top margin
           />
         </div>
-        <div className="pb-2 text-center"> {/* Keep bottom padding, no top padding */}
-          <h3 className="text-sm font-semibold line-clamp-2">{post.title}</h3>
-          {post.tags.length > 0 && (
+        <div className="pb-2 text-center">
+          <h3 className="text-sm font-semibold line-clamp-2">{post.title || "Không có tiêu đề"}</h3>
+          {post.tags?.length > 0 && (
             <p className="text-xs text-gray-600 mt-1">
               <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
                 #{post.tags[0].name}
               </Badge>
             </p>
           )}
-          {post.topics.length > 0 && (
+          {post.topics?.length > 0 && (
             <p className="text-xs text-gray-600 mt-1">{post.topics[0].name}</p>
           )}
           <p className="text-xs text-gray-600 mt-1">
-            Ngày tạo: {new Date(post.created_at).toLocaleDateString("vi-VN")}
+            Ngày tạo: {post.created_at ? new Date(post.created_at).toLocaleDateString("vi-VN") : "Không có ngày"}
           </p>
         </div>
       </Card>
     </Link>
   );
 
-  if (loadingProfile) return <div className="p-6 text-center">Đang tải dữ liệu...</div>;
+  if (loadingProfile) {
+    return (
+      <div className="p-6 text-center min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+      </div>
+    );
+  }
   if (errorProfile) return <div className="p-6 text-center text-red-500">{errorProfile}</div>;
   if (!profile) return <div className="p-6 text-center">Không tìm thấy hồ sơ</div>;
 
@@ -190,22 +195,21 @@ export function PersonalPage() {
             </div>
           </div>
         </Card>
+      </div>
 
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-4">Bài viết đã tạo</h2>
-          <div className="space-y-4">
-            {loadingMyPosts && <div className="text-center">Đang tải bài viết...</div>}
-            {errorPosts && <div className="text-center text-red-500">{errorPosts}</div>}
-            {!loadingMyPosts && !errorPosts && myPosts.length === 0 && (
-              <div className="text-center">Chưa có bài viết nào</div>
-            )}
-            {myPosts.map(renderPost)}
-            {hasMore && !loadingMyPosts && (
-              <Button onClick={handleLoadMore} className="mt-4">
-                Tải thêm
-              </Button>
-            )}
-          </div>
+      <div className="mt-6 px-4">
+        <h2 className="text-xl font-semibold mb-4 text-center">Bài viết đã tạo</h2>
+        <div className="flex flex-row flex-wrap gap-4 justify-center">
+          {loadingMyPosts && (
+            <div className="text-center w-full flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+            </div>
+          )}
+          {errorPosts && <div className="text-center text-red-500 w-full">{errorPosts}</div>}
+          {!loadingMyPosts && myPosts.length === 0 && !errorPosts && (
+            <div className="text-center w-full">Chưa có bài viết nào</div>
+          )}
+          {myPosts.map(renderPost)}
         </div>
       </div>
     </div>

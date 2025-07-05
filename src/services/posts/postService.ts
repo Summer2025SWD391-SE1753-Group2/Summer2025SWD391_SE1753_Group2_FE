@@ -315,21 +315,29 @@ export const getUserPostsById = async (
 ): Promise<Post[]> => {
   try {
     const response = await axiosInstance.get(`/api/v1/posts/user/${userId}/`, {
-      params: { skip, limit },
+      params: { 
+        skip, 
+        limit, 
+        status: 'approved'
+      },
     });
-    return response.data;
+    return response.data || [];
   } catch (error: unknown) {
     if (error && typeof error === "object" && "response" in error) {
       const axiosError = error as {
         response: { status: number; data?: { message?: string } };
       };
+      if (axiosError.response?.status === 401) {
+        throw new Error("Không tìm thấy token đăng nhập");
+      }
       if (axiosError.response?.status === 404) {
         return [];
       }
       throw new Error(
-        axiosError.response?.data?.message || "Không thể tải bài viết của người dùng"
+        axiosError.response?.data?.message || 
+        `Không thể tải bài viết của người dùng với ID: ${userId}`
       );
     }
-    throw new Error("Không thể tải bài viết của người dùng");
+    throw new Error("Lỗi khi tải bài viết của người dùng");
   }
 };
