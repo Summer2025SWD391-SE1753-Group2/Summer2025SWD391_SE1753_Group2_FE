@@ -31,6 +31,8 @@ import { SettingPage } from "@/pages/private/management/SettingPage";
 import SearchPage from "@/pages/publicPage/SearchPage";
 import UserManagementPage from "@/pages/private/management/UserManagementPage";
 import ChatPage from "@/pages/publicPage/ChatPage";
+import ForgotPasswordPage from "@/pages/publicPage/auth/ForgotPasswordPage";
+import ChangePasswordPage from "@/pages/publicPage/auth/ChangePasswordPage";
 import GroupChatManagementPage from "@/pages/private/management/GroupChatManagementPage";
 
 const router = createBrowserRouter([
@@ -45,6 +47,8 @@ const router = createBrowserRouter([
           { path: paths.login, element: <LoginPage /> },
           { path: paths.register, element: <RegisterPage /> },
           { path: paths.googleCallback, element: <GoogleCallbackPage /> },
+          { path: paths.forgotPassword, element: <ForgotPasswordPage /> },
+          { path: paths.changePassword, element: <ChangePasswordPage/> },
         ],
       },
     ],
