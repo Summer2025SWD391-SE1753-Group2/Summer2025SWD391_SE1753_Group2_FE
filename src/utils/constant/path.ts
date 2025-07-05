@@ -9,8 +9,9 @@ export const paths = {
   register: "/auth/register",
   googleCallback: "/auth/google-callback",
   postDetail: "/posts/:postId",
-  search: "/searchPage",
-  chat: "chat",
+  search: "/searchPage",  chat: "chat",
+  forgotPassword: "/auth/forgot-password",
+  changePassword: "/auth/change-password",
 
   //user
   user: {
@@ -35,6 +36,7 @@ export const paths = {
     setting: "/moderator/setting",
     postDetail: "/moderator/posts/:postId",
     approvePost: "/moderator/approvepost",
+    postReview: "/moderator/posts/review/:postId",
     tagManagement: "/moderator/tag-management",
     materialManagement: "/moderator/material-management",
     topicManagement: "/moderator/topic-management",
@@ -50,6 +52,7 @@ export const paths = {
     setting: "/admin/setting",
     postDetail: "/admin/posts/:postId",
     approvePost: "/admin/approvepost",
+    postReview: "/admin/posts/review/:postId",
     tagManagement: "/admin/tag-management",
     materialManagement: "/admin/material-management",
     topicManagement: "/admin/topic-management",
