@@ -355,4 +355,67 @@ export const authService = {
     // Fallback error message
     return "Có lỗi không xác định xảy ra";
   },
+
+  /**
+   * Reset password with token
+   */
+  async resetPassword(token: string, new_password: string, confirm_password: string): Promise<ApiResponse<null>> {
+    if (!token || token.trim().length === 0) {
+      throw new Error("Token không hợp lệ");
+    }
+    if (!new_password || new_password.length < 6) {
+      throw new Error("Mật khẩu mới phải có ít nhất 6 ký tự");
+    }
+    if (new_password !== confirm_password) {
+      throw new Error("Mật khẩu xác nhận không khớp");
+    }
+
+    try {
+      const res = await axiosInstance.post<{ message?: string }>(
+        "/api/v1/auth/reset-password",
+        { token, new_password, confirm_password },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      return {
+        data: null,
+        message: res.data?.message || "Mật khẩu đã được đặt lại thành công",
+        status: 200,
+      };
+    } catch (error) {
+      console.error("Reset password failed:", error);
+      const errorMsg = this.extractErrorMessage(error);
+      throw new Error(errorMsg);
+    }
+  },
+
+  /**
+   * Request password reset
+   */
+  async forgotPassword(username: string): Promise<ApiResponse<null>> {
+    if (!username || username.trim().length === 0) {
+      throw new Error("Vui lòng nhập email hoặc tên đăng nhập");
+    }
+
+    try {
+      const res = await axiosInstance.post<{ message: string; method?: string; username?: string }>(
+        "/api/v1/auth/forgot-password",
+        { username },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      return {
+        data: null,
+        message: res.data.message || "Hướng dẫn đặt lại mật khẩu đã được gửi.",
+        status: 200,
+      };
+    } catch (error) {
+      console.error("Forgot password failed:", error);
+      const errorMsg = this.extractErrorMessage(error);
+      throw new Error(errorMsg);
+    }
+  },
 };
