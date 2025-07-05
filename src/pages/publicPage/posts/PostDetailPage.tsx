@@ -50,7 +50,6 @@ export const PostDetailPage = () => {
     new Set()
   );
   const [isLiked, setIsLiked] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [deletingComments, setDeletingComments] = useState<Set<string>>(
@@ -60,15 +59,16 @@ export const PostDetailPage = () => {
   const [showDeletedComments, setShowDeletedComments] =
     useState<boolean>(false);
 
- useEffect(() => {
+  useEffect(() => {
     initializeFavorites();
   }, [initializeFavorites]);
 
   useEffect(() => {
     if (!postId) return;
-    setIsBookmarked(isPostSaved(postId));
+    // Check if post is bookmarked - not needed for UI state
+    isPostSaved(postId);
   }, [postId, isPostSaved]);
-  
+
   const role = user?.role?.role_name || "user";
   // Count deleted comments to show in toggle button
   const countDeletedComments = (commentsList: Comment[]): number => {
@@ -118,7 +118,9 @@ export const PostDetailPage = () => {
 
         // Check quyền truy cập nếu bài viết chưa được duyệt
         const isAuthor = user?.account_id === postData.created_by;
-        const isModerator = user?.role.role_name === "moderator" || user?.role.role_name === "admin";
+        const isModerator =
+          user?.role.role_name === "moderator" ||
+          user?.role.role_name === "admin";
 
         if (
           (postData.status === "waiting" || postData.status === "rejected") &&
@@ -148,8 +150,7 @@ export const PostDetailPage = () => {
   useEffect(() => {
     if (post && post.status === "approved" && !commentsLoaded) {
       fetchComments();
-    }
-    else if (post && post.status !== "approved") {
+    } else if (post && post.status !== "approved") {
       setComments([]);
       setCommentsLoaded(false);
     }
@@ -162,7 +163,7 @@ export const PostDetailPage = () => {
     const intervalId = setInterval(() => {
       fetchComments();
       setLastRefresh(new Date());
-    }, 30000);// 30 seconds
+    }, 30000); // 30 seconds
 
     return () => clearInterval(intervalId);
   }, [post, commentsLoaded, fetchComments]);
@@ -171,7 +172,7 @@ export const PostDetailPage = () => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       setLastRefresh(new Date());
-    }, 60000);// 60 seconds for time display update
+    }, 60000); // 60 seconds for time display update
 
     return () => clearInterval(intervalId);
   }, []);
@@ -369,17 +370,19 @@ export const PostDetailPage = () => {
                 </p>
               </div>
             </div>
-            {/* Status Badge */}
-            <Badge
-              variant="outline"
-              className={cn(
-                "flex items-center gap-1",
-                getStatusColor(post.status)
-              )}
-            >
-              {getStatusIcon(post.status)}
-              {getStatusText(post.status)}
-            </Badge>
+            {/* Status Badge - Chỉ hiển thị khi không phải đã duyệt */}
+            {post.status !== "approved" && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "flex items-center gap-1",
+                  getStatusColor(post.status)
+                )}
+              >
+                {getStatusIcon(post.status)}
+                {getStatusText(post.status)}
+              </Badge>
+            )}
           </div>
           {/* Title */}
           <h1 className="text-2xl font-bold mt-4">{post.title}</h1>
