@@ -121,16 +121,19 @@ export const PostDetailPopup = ({ post, onClose }: PostDetailPopupProps) => {
                 </p>
               </div>
             </div>
-            <Badge
-              variant="outline"
-              className={cn(
-                "flex items-center gap-1",
-                getStatusColor(post.status)
-              )}
-            >
-              {getStatusIcon(post.status)}
-              {getStatusText(post.status)}
-            </Badge>
+            {/* Status Badge - Chỉ hiển thị khi không phải đã duyệt */}
+            {post.status !== "approved" && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "flex items-center gap-1",
+                  getStatusColor(post.status)
+                )}
+              >
+                {getStatusIcon(post.status)}
+                {getStatusText(post.status)}
+              </Badge>
+            )}
           </div>
         </CardHeader>
 

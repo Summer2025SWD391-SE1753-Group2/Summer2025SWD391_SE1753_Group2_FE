@@ -6,7 +6,10 @@ import { PopupDetail } from "./PopupDetail";
 import { PopupReject } from "./PopupReject";
 import { getPostById, moderatePost } from "@/services/posts/postService";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Post } from "@/types/post";
+import { useAuthStore } from "@/stores/auth";
+import { paths } from "@/utils/constant/path";
 
 type Props = {
   post: Post;
@@ -19,6 +22,8 @@ export const PostActions: React.FC<Props> = ({
   moderatorId,
   updatePostStatus,
 }) => {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [rejectingPost, setRejectingPost] = useState<Post | null>(null);
 
@@ -29,6 +34,14 @@ export const PostActions: React.FC<Props> = ({
     } catch (err) {
       alert("Không thể tải bài viết: " + (err as Error).message);
     }
+  };
+
+  const handleReview = () => {
+    const reviewPath =
+      user?.role?.role_name === "admin"
+        ? paths.admin.postReview.replace(":postId", post.post_id)
+        : paths.moderator.postReview.replace(":postId", post.post_id);
+    navigate(reviewPath);
   };
 
   const handleApprove = async () => {
@@ -85,8 +98,16 @@ export const PostActions: React.FC<Props> = ({
           >
             Duyệt
           </Button>
-          <Button className="text-blue-500" onClick={handleView}>
-            Xem
+          <Button className="text-blue-500" onClick={handleReview}>
+            Review
+          </Button>
+          <Button
+            className="text-gray-500"
+            onClick={handleView}
+            variant="outline"
+            size="sm"
+          >
+            Xem nhanh
           </Button>
         </TableCell>
       </TableRow>
@@ -95,13 +116,19 @@ export const PostActions: React.FC<Props> = ({
       <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
         <DialogContent className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
           {selectedPost && (
-            <PopupDetail post={selectedPost} onClose={() => setSelectedPost(null)} />
+            <PopupDetail
+              post={selectedPost}
+              onClose={() => setSelectedPost(null)}
+            />
           )}
         </DialogContent>
       </Dialog>
 
       {/* Popup từ chối */}
-      <Dialog open={!!rejectingPost} onOpenChange={() => setRejectingPost(null)}>
+      <Dialog
+        open={!!rejectingPost}
+        onOpenChange={() => setRejectingPost(null)}
+      >
         <DialogContent className="max-w-md">
           {rejectingPost && (
             <PopupReject

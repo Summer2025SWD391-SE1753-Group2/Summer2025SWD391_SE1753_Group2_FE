@@ -44,13 +44,15 @@ export const PopupDetail = ({ post, onClose }: PopupDetailProps) => {
 
           {/* Trạng thái */}
           <div className="text-sm">
-            <span className="font-medium text-muted-foreground">Trạng thái:</span>{" "}
+            <span className="font-medium text-muted-foreground">
+              Trạng thái:
+            </span>{" "}
             <span className={`font-semibold ${getStatusColor(post.status)}`}>
               {post.status === "waiting"
                 ? "Chờ duyệt"
                 : post.status === "approved"
-                  ? "Đã duyệt"
-                  : "Đã từ chối"}
+                ? "Đã duyệt"
+                : "Đã từ chối"}
             </span>
           </div>
 
@@ -68,16 +70,17 @@ export const PopupDetail = ({ post, onClose }: PopupDetailProps) => {
               <div
                 className={`
         grid gap-4
-        ${post.images.length === 1
-                    ? "grid-cols-1"
-                    : post.images.length === 2
-                      ? "grid-cols-2"
-                      : post.images.length === 3
-                        ? "grid-cols-2"
-                        : post.images.length === 4
-                          ? "grid-cols-2"
-                          : "grid-cols-3"
-                  }
+        ${
+          post.images.length === 1
+            ? "grid-cols-1"
+            : post.images.length === 2
+            ? "grid-cols-2"
+            : post.images.length === 3
+            ? "grid-cols-2"
+            : post.images.length === 4
+            ? "grid-cols-2"
+            : "grid-cols-3"
+        }
       `}
               >
                 {post.images.map((img) => (
@@ -89,17 +92,17 @@ export const PopupDetail = ({ post, onClose }: PopupDetailProps) => {
                     className={`
             w-full rounded-xl border shadow-sm object-cover cursor-pointer
             transition hover:opacity-90
-            ${post.images.length === 1
-                        ? "aspect-video max-h-[400px]"
-                        : "aspect-[4/3] max-h-[240px]"
-                      }
+            ${
+              post.images.length === 1
+                ? "aspect-video max-h-[400px]"
+                : "aspect-[4/3] max-h-[240px]"
+            }
           `}
                   />
                 ))}
               </div>
             </section>
           )}
-
 
           {/* Nội dung */}
           <section>
