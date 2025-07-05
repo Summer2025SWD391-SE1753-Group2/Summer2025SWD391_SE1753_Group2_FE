@@ -1,5 +1,10 @@
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PaginationProps {
@@ -13,11 +18,25 @@ export const Pagination = ({
   currentPage,
   totalPages,
   onPageChange,
+  className,
 }: PaginationProps) => {
   const renderPages = () => {
     const pages = [];
-
-    for (let i = 1; i <= totalPages; i++) {
+    let start = 1;
+    let end = totalPages;
+    if (totalPages > 5) {
+      if (currentPage <= 3) {
+        start = 1;
+        end = 5;
+      } else if (currentPage >= totalPages - 2) {
+        start = totalPages - 4;
+        end = totalPages;
+      } else {
+        start = currentPage - 2;
+        end = currentPage + 2;
+      }
+    }
+    for (let i = start; i <= end; i++) {
       pages.push(
         <Button
           key={i}
@@ -30,12 +49,19 @@ export const Pagination = ({
         </Button>
       );
     }
-
     return pages;
   };
 
   return (
-    <div className="flex items-center justify-end gap-2 pt-4">
+    <div className={cn("flex items-center justify-end gap-2 pt-4", className)}>
+      <Button
+        variant="outline"
+        size="icon"
+        disabled={currentPage === 1}
+        onClick={() => onPageChange(1)}
+      >
+        <ChevronsLeft className="h-4 w-4" />
+      </Button>
       <Button
         variant="outline"
         size="icon"
@@ -44,9 +70,7 @@ export const Pagination = ({
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
-
       {renderPages()}
-
       <Button
         variant="outline"
         size="icon"
@@ -54,6 +78,14 @@ export const Pagination = ({
         onClick={() => onPageChange(currentPage + 1)}
       >
         <ChevronRight className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        disabled={currentPage === totalPages}
+        onClick={() => onPageChange(totalPages)}
+      >
+        <ChevronsRight className="h-4 w-4" />
       </Button>
     </div>
   );
