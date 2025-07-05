@@ -87,9 +87,9 @@ export function EditPostPage() {
           ]);
 
         // Set reference data
-        setTags(tagsData);
-        setTopics(topicsData);
-        setMaterials(materialsData);
+        setTags(tagsData.tags);
+        setTopics(topicsData.topics);
+        setMaterials(materialsData.materials);
         setPost(postData);
 
         // Pre-fill form with existing post data
