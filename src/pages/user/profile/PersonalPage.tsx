@@ -1,13 +1,16 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getProfileByUsername } from "@/services/accounts/accountService";
 import { sendFriendRequest } from "@/services/friends/friendService";
+import { getUserPostsById } from "@/services/posts/postService";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { UserProfile } from "@/types/account";
+import { Post } from "@/types/post";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const getRoleStyle = (role: string) => {
   switch (role) {
@@ -21,65 +24,125 @@ const getRoleStyle = (role: string) => {
 };
 
 const getStatusStyle = (status: string) => {
-  return status === "active"
-    ? "bg-black text-white"
-    : "bg-gray-300 text-gray-700";
+  return status === "active" ? "bg-black text-white" : "bg-gray-300 text-gray-700";
 };
 
 export function PersonalPage() {
   const { username } = useParams<{ username: string }>();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [errorProfile, setErrorProfile] = useState<string | null>(null);
+  const [myPosts, setMyPosts] = useState<Post[]>([]);
+  const [loadingMyPosts, setLoadingMyPosts] = useState(false);
+  const [errorPosts, setErrorPosts] = useState<string | null>(null);
 
+  // Fetch profile
   useEffect(() => {
     const controller = new AbortController();
     const fetchProfile = async () => {
       if (!username) {
-        setError("Không tìm thấy tên người dùng");
-        setLoading(false);
+        setErrorProfile("Không tìm thấy tên người dùng");
+        setLoadingProfile(false);
         return;
       }
       try {
         const data = await getProfileByUsername(username);
         setProfile(data);
+        setMyPosts([]); // Reset posts when profile changes
       } catch (err: unknown) {
         const error = err as Error;
         if (error.name === "AbortError") return;
-        setError(error.message || "Không thể tải hồ sơ. Vui lòng thử lại.");
+        setErrorProfile(error.message || "Không thể tải hồ sơ. Vui lòng thử lại.");
       } finally {
-        setLoading(false);
+        setLoadingProfile(false);
       }
     };
     fetchProfile();
     return () => controller.abort();
   }, [username]);
 
+  // Fetch all approved posts by user's account_id
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (!profile) return;
+      setLoadingMyPosts(true);
+      try {
+        const postsData = await getUserPostsById(profile.account_id);
+        // Verify posts are approved
+        const approvedPosts = postsData.filter(post => post.status === 'approved');
+        if (postsData.length > approvedPosts.length) {
+          console.warn('Some posts returned are not approved:', postsData);
+        }
+        setMyPosts(approvedPosts);
+      } catch (err: unknown) {
+        const error = err as Error;
+        setErrorPosts(error.message || "Không thể tải bài viết đã phê duyệt. Vui lòng thử lại.");
+      } finally {
+        setLoadingMyPosts(false);
+      }
+    };
+    fetchPosts();
+  }, [profile]);
+
   const handleAddFriend = async () => {
     if (!profile) return;
-
     try {
       await sendFriendRequest({ receiver_id: profile.account_id });
       toast.success("Đã gửi lời mời kết bạn!");
     } catch (err: unknown) {
       const error = err as Error;
       toast.error(error.message || "Lỗi khi gửi lời mời kết bạn");
-      console.error("Lỗi khi thêm bạn:", err);
     }
   };
 
-  if (loading)
-    return <div className="p-6 text-center">Đang tải dữ liệu...</div>;
-  if (error) return <div className="p-6 text-center text-red-500">{error}</div>;
-  if (!profile)
-    return <div className="p-6 text-center">Không tìm thấy hồ sơ</div>;
+  const renderPost = (post: Post) => (
+    <Link to={`/posts/${post.post_id}`} key={post.post_id} className="block">
+      <Card
+        className="w-64 overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+      >
+        <div className="w-full h-60 overflow-hidden">
+          <img
+            src={post.images.length > 0 ? post.images[0].image_url : "/default-image.png"}
+            alt={post.images[0]?.caption || "Hình ảnh bài viết"}
+            className="w-full h-full object-cover"
+            style={{ marginTop: 0 }} // Remove top margin
+          />
+        </div>
+        <div className="pb-2 text-center">
+          <h3 className="text-sm font-semibold line-clamp-2">{post.title || "Không có tiêu đề"}</h3>
+          {post.tags?.length > 0 && (
+            <p className="text-xs text-gray-600 mt-1">
+              <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+                #{post.tags[0].name}
+              </Badge>
+            </p>
+          )}
+          {post.topics?.length > 0 && (
+            <p className="text-xs text-gray-600 mt-1">{post.topics[0].name}</p>
+          )}
+          <p className="text-xs text-gray-600 mt-1">
+            Ngày tạo: {post.created_at ? new Date(post.created_at).toLocaleDateString("vi-VN") : "Không có ngày"}
+          </p>
+        </div>
+      </Card>
+    </Link>
+  );
+
+  if (loadingProfile) {
+    return (
+      <div className="p-6 text-center min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+      </div>
+    );
+  }
+  if (errorProfile) return <div className="p-6 text-center text-red-500">{errorProfile}</div>;
+  if (!profile) return <div className="p-6 text-center">Không tìm thấy hồ sơ</div>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-3xl mx-auto">
         <Card className="p-6 rounded-2xl shadow-sm">
           <div className="flex items-center justify-between gap-6">
-            {/* Info */}
             <div className="space-y-1 w-[55%]">
               <div className="flex items-center gap-1">
                 <p className="text-xl font-semibold leading-none">
@@ -89,9 +152,7 @@ export function PersonalPage() {
                   <span className="text-blue-500 text-xs">✔</span>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">
-                @{profile.username}
-              </p>
+              <p className="text-sm text-muted-foreground">@{profile.username}</p>
               <p className="text-sm text-muted-foreground">{profile.email}</p>
               <p>{profile.bio || "Chưa có tiểu sử"}</p>
               <p>
@@ -100,40 +161,17 @@ export function PersonalPage() {
                   ? new Date(profile.date_of_birth).toLocaleDateString("vi-VN")
                   : "Không có"}
               </p>
-              {/* <p className="text-sm text-gray-500">
-                {(profile.friends || 0).toLocaleString()} bạn bè
-              </p> */}
-
               <div className="flex gap-3 mt-3">
-                {/* Role badge */}
                 <Badge
                   variant="outline"
-                  className={cn(
-                    "px-4 py-1.5 text-sm border-none font-semibold",
-                    getRoleStyle(profile.role.role_name)
-                  )}
+                  className={cn("px-4 py-1.5 text-sm border-none font-semibold", getRoleStyle(profile.role.role_name))}
                 >
-                  {profile.role.role_name === "admin"
-                    ? "Quản trị viên"
-                    : profile.role.role_name === "moderator"
-                    ? "Kiểm duyệt viên"
-                    : "Thành viên"}
+                  {profile.role.role_name === "admin" ? "Quản trị viên" : profile.role.role_name === "moderator" ? "Kiểm duyệt viên" : "Thành viên"}
                 </Badge>
-
-                {/* Status badge */}
-                <Badge
-                  className={cn(
-                    "px-4 py-1.5 text-sm font-semibold",
-                    getStatusStyle(profile.status)
-                  )}
-                >
-                  {profile.status === "active"
-                    ? "Hoạt động"
-                    : "Không hoạt động"}
+                <Badge className={cn("px-4 py-1.5 text-sm font-semibold", getStatusStyle(profile.status))}>
+                  {profile.status === "active" ? "Hoạt động" : "Không hoạt động"}
                 </Badge>
               </div>
-
-              {/* Add Friend Button */}
               <div className="mt-4">
                 <Button
                   variant="default"
@@ -145,9 +183,7 @@ export function PersonalPage() {
                 </Button>
               </div>
             </div>
-
-            {/* Image Section */}
-            <div className="w-[45%] flex justify-center ">
+            <div className="w-[45%] flex justify-center">
               <img
                 src={profile.avatar || "/default-profile-image.png"}
                 alt={`Ảnh của ${profile.full_name || profile.username}`}
@@ -159,8 +195,21 @@ export function PersonalPage() {
             </div>
           </div>
         </Card>
-        <div className="text-center text-gray-500 text-sm mt-2">
-          Đã tạo · Đã lưu
+      </div>
+
+      <div className="mt-6 px-4">
+        <h2 className="text-xl font-semibold mb-4 text-center">Bài viết đã tạo</h2>
+        <div className="flex flex-row flex-wrap gap-4 justify-center">
+          {loadingMyPosts && (
+            <div className="text-center w-full flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+            </div>
+          )}
+          {errorPosts && <div className="text-center text-red-500 w-full">{errorPosts}</div>}
+          {!loadingMyPosts && myPosts.length === 0 && !errorPosts && (
+            <div className="text-center w-full">Chưa có bài viết nào</div>
+          )}
+          {myPosts.map(renderPost)}
         </div>
       </div>
     </div>

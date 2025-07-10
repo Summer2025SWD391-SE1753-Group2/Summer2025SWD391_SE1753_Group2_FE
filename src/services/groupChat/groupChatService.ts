@@ -31,6 +31,37 @@ export const createGroupChat = async (data: {
   return res.data;
 };
 
+// Tạo group chat với thành viên ban đầu (2 bước)
+export const createGroupChatWithMembers = async (data: {
+  topic_id: string;
+  name: string;
+  description?: string;
+  max_members?: number;
+  member_ids: string[];
+}) => {
+  // Bước 1: Tạo group chat
+  const groupRes = await axiosInstance.post("/api/v1/group-chat/create", {
+    topic_id: data.topic_id,
+    name: data.name,
+    description: data.description,
+    max_members: data.max_members,
+  });
+
+  const groupId = groupRes.data.group_id;
+
+  // Bước 2: Thêm tất cả members
+  const addMemberPromises = data.member_ids.map((memberId) =>
+    axiosInstance.post(`/api/v1/group-chat/${groupId}/members`, {
+      account_id: memberId,
+      role: "member",
+    })
+  );
+
+  await Promise.all(addMemberPromises);
+
+  return groupRes.data;
+};
+
 // Lấy group chat theo topic
 export const getGroupChatByTopic = async (topic_id: string) => {
   const res = await axiosInstance.get(

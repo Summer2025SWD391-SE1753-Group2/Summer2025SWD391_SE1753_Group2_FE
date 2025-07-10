@@ -27,6 +27,7 @@ import {
   searchPostsByTopic,
 } from "@/services/posts/postService";
 import { searchUsersByUsername } from "@/services/accounts/accountService";
+import { getAllTags } from "@/services/tags/tagsService";
 import { Post } from "@/types/post";
 import { UserProfile } from "@/types/account";
 
@@ -142,11 +143,8 @@ const Header = () => {
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:8000/api/v1/tags/?skip=0&limit=100"
-        );
-        const data = await response.json();
-        setTags(data);
+        const response = await getAllTags(0, 100);
+        setTags(response.tags);
       } catch (error) {
         console.error("Error fetching tags:", error);
       }

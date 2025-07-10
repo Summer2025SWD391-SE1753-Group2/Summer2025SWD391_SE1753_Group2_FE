@@ -4,8 +4,6 @@ import { AppRouter } from "@/router/AppRouter";
 import { useAuthStore } from "@/stores/auth";
 import { useEffect } from "react";
 
-
-
 function App() {
   const checkAuth = useAuthStore((state) => state.checkAuth);
 
@@ -15,7 +13,6 @@ function App() {
 
   return (
     <>
-
       <Toaster position="bottom-right" />
       <AppRouter />
     </>
