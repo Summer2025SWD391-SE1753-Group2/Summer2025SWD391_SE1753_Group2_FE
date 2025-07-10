@@ -5,7 +5,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PopupDetail } from "./PopupDetail";
@@ -121,68 +120,56 @@ export const PostActions: React.FC<Props> = ({
           {new Date(post.created_at).toLocaleDateString("vi-VN")}
         </TableCell>
         <TableCell className="text-center">
-          <div className="flex items-center justify-center gap-2">
-            {/* Nút action chính cho bài viết chờ duyệt */}
-            {post.status === "waiting" && (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleApprove}
-                  className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                >
-                  <CheckCircle className="w-4 h-4 mr-1" />
-                  Duyệt
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setRejectingPost(post)}
-                  className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
-                >
-                  <XCircle className="w-4 h-4 mr-1" />
-                  Từ chối
-                </Button>
-              </>
-            )}
+          <div className="flex items-center justify-center gap-2 min-h-[36px]">
+            {/* Nút xem bài viết - luôn hiển thị */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleView}
+              className="h-8 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+            >
+              <Eye className="w-4 h-4 mr-1" />
+              Xem nhanh
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleReview}
+              className="h-8 bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+            >
+              <FileText className="w-4 h-4 mr-1" />
+              Xem chi tiết
+            </Button>
 
-            {/* Dropdown menu cho các action phụ */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={handleView}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  Xem nhanh
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleReview}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  Xem chi tiết
-                </DropdownMenuItem>
-                {post.status === "waiting" && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={handleApprove}
-                      className="text-green-600"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Duyệt bài viết
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setRejectingPost(post)}
-                      className="text-red-600"
-                    >
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Từ chối bài viết
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Dropdown menu cho các action duyệt/từ chối */}
+            {post.status === "waiting" ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={handleApprove}
+                    className="text-green-600"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Duyệt bài viết
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setRejectingPost(post)}
+                    className="text-red-600"
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Từ chối bài viết
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              /* Placeholder để giữ alignment cho các bài viết đã duyệt/từ chối */
+              <div className="w-8 h-8"></div>
+            )}
           </div>
         </TableCell>
       </TableRow>

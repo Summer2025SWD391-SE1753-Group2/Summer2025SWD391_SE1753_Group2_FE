@@ -207,7 +207,7 @@ const ApprovePostPage = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50/50">
-                  <TableHead className="font-semibold text-gray-900 w-[35%]">
+                  <TableHead className="font-semibold text-gray-900 w-[30%]">
                     Tiêu đề
                   </TableHead>
                   <TableHead className="font-semibold text-gray-900 w-[15%]">
@@ -219,7 +219,7 @@ const ApprovePostPage = () => {
                   <TableHead className="font-semibold text-gray-900 w-[13%]">
                     Ngày tạo
                   </TableHead>
-                  <TableHead className="font-semibold text-gray-900 text-center w-[25%]">
+                  <TableHead className="font-semibold text-gray-900 text-center w-[30%]">
                     Hành động
                   </TableHead>
                 </TableRow>
