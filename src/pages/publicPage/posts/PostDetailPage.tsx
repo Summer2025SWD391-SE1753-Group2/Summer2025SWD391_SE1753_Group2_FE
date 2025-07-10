@@ -12,9 +12,7 @@ import {
   CheckCircle,
   XCircle,
   ArrowLeft,
-  Heart,
   MessageCircle,
-  Share2,
   Bookmark,
 } from "lucide-react";
 import { ImageLightbox } from "@/components/posts/ImageLightbox";
@@ -49,7 +47,6 @@ export const PostDetailPage = () => {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(
     new Set()
   );
-  const [isLiked, setIsLiked] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [deletingComments, setDeletingComments] = useState<Set<string>>(
@@ -160,13 +157,24 @@ export const PostDetailPage = () => {
   useEffect(() => {
     if (!post || post.status !== "approved" || !commentsLoaded) return;
 
-    const intervalId = setInterval(() => {
+    const interval = setInterval(() => {
       fetchComments();
-      setLastRefresh(new Date());
-    }, 30000); // 30 seconds
+    }, 30000);
 
-    return () => clearInterval(intervalId);
+    return () => clearInterval(interval);
   }, [post, commentsLoaded, fetchComments]);
+
+  // Scroll to comments section if hash is #comments
+  useEffect(() => {
+    if (window.location.hash === "#comments" && commentsLoaded) {
+      setTimeout(() => {
+        const commentsSection = document.getElementById("comments-section");
+        if (commentsSection) {
+          commentsSection.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+  }, [commentsLoaded]);
 
   // Force re-render every 60 seconds to update relative time display
   useEffect(() => {
@@ -527,24 +535,11 @@ export const PostDetailPage = () => {
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsLiked(!isLiked)}
-                className={isLiked ? "text-red-600" : ""}
-              >
-                <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
-                <span className="ml-1 text-sm">Thích</span>
-              </Button>
               <Button variant="ghost" size="sm">
                 <MessageCircle className="h-4 w-4" />
                 <span className="ml-1 text-sm">
                   Bình luận ({comments.length})
                 </span>
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Share2 className="h-4 w-4" />
-                <span className="ml-1 text-sm">Chia sẻ</span>
               </Button>
             </div>
             <BookmarkModal postId={post.post_id}>
@@ -561,7 +556,7 @@ export const PostDetailPage = () => {
         </CardContent>
       </Card>
       {/* Comments Section */}
-      <Card>
+      <Card id="comments-section">
         <CardHeader>
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">

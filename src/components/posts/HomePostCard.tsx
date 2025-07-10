@@ -1,46 +1,23 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Heart,
-  MessageCircle,
-  Share2,
-  Bookmark,
-  ExternalLink,
-} from "lucide-react";
+import { MessageCircle, Bookmark, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { Post } from "@/types/post";
 import { BookmarkModal } from "@/components/posts/BookmarkModal";
-import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useAuthStore } from "@/stores/auth";
 
 interface HomePostCardProps {
   post: Post;
-  onLike?: () => void;
-  onComment?: () => void;
-  onShare?: () => void;
   className?: string;
 }
 
-export function HomePostCard({
-  post,
-  onLike,
-  onComment,
-  onShare,
-  className,
-}: HomePostCardProps) {
-  const { isPostSaved, initializeFavorites } = useFavoriteStore();
-  const [isBookmarked, setIsBookmarked] = useState(false);
-
-  useEffect(() => {
-    setIsBookmarked(isPostSaved(post.post_id));
-  }, [post.post_id, isPostSaved]);
-
+export function HomePostCard({ post, className }: HomePostCardProps) {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
-  const role = user?.role?.role_name || "user"; 
+  const role = user?.role?.role_name || "user";
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -60,6 +37,10 @@ export function HomePostCard({
       .join("")
       .substring(0, 2)
       .toUpperCase();
+  };
+
+  const handleCommentClick = () => {
+    navigate(`/${role}/posts/${post.post_id}#comments`);
   };
 
   return (
@@ -151,29 +132,11 @@ export function HomePostCard({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 px-3 text-muted-foreground hover:text-red-500"
-              onClick={onLike}
-            >
-              <Heart className="h-4 w-4 mr-1" />
-              Thích
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
               className="h-8 px-3 text-muted-foreground hover:text-blue-500"
-              onClick={onComment}
+              onClick={handleCommentClick}
             >
               <MessageCircle className="h-4 w-4 mr-1" />
               Bình luận
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-3 text-muted-foreground hover:text-green-500"
-              onClick={onShare}
-            >
-              <Share2 className="h-4 w-4 mr-1" />
-              Chia sẻ
             </Button>
           </div>
           <div className="flex items-center gap-2">
