@@ -208,7 +208,7 @@ export default function TagManagementPage() {
           <Dialog>
             <DialogTrigger asChild>
               <Button
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg"
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg text-white"
                 size="lg"
               >
                 <PlusCircle className="w-5 h-5" />
