@@ -10,6 +10,7 @@ export interface GroupChat {
   leader_name: string;
   created_at: string;
   joined_at: string;
+  is_active: boolean;
 }
 
 export interface GroupChatSender {

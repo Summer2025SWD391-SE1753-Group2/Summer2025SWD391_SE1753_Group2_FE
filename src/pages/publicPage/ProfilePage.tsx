@@ -5,10 +5,11 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { UserProfile } from "@/types/account";
-import { Check, Crown, Shield, User } from "lucide-react";
+import { Check, Crown, Loader2, Shield, User } from "lucide-react";
 import { GoogleUserSetup } from "@/components/auth/GoogleUserSetup";
-
-// Icons
+import { getMyPosts } from "@/services/posts/postService";
+import { Post } from "@/types/post";
+import { Link } from "react-router-dom";
 
 const getInitials = (name: string = "") =>
   name
@@ -17,7 +18,6 @@ const getInitials = (name: string = "") =>
     .join("")
     .toUpperCase();
 
-// Thêm icon + class cho mỗi role
 const getRoleInfo = (role: string) => {
   switch (role) {
     case "admin":
@@ -47,24 +47,44 @@ const getStatusStyle = (status: string) => {
     : "bg-gray-300 text-gray-700";
 };
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("vi-VN");
+};
+
 const ProfilePage = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const data = await accountService.getOwnProfile();
         setProfile(data);
-      } catch {
-        // handle error
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      }
+    };
+
+    const fetchPosts = async () => {
+      try {
+        const data = await getMyPosts(0, 10);
+        setPosts(data);
+      } catch (error) {
+        console.error("Failed to fetch posts:", error);
       }
     };
 
     fetchProfile();
+    fetchPosts();
   }, []);
 
   if (!profile) {
-    return <p className="p-6 text-center">Đang tải dữ liệu...</p>;
+    return (
+      <div className="p-6 text-center min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+      </div>
+    );
   }
 
   const roleName = profile?.role?.role_name;
@@ -78,7 +98,6 @@ const ProfilePage = () => {
       {/* Avatar + Info */}
       <div className="flex justify-start relative pl-30">
         <div className="flex items-center space-x-4 justify-between absolute -top-12">
-          {/* Avatar */}
           <Avatar className="h-40 w-40 mb-4 border-4 border-white shadow-md">
             <AvatarImage
               src={profile.avatar ?? undefined}
@@ -88,15 +107,12 @@ const ProfilePage = () => {
               {getInitials(profile.full_name ?? profile.username)}
             </AvatarFallback>
           </Avatar>
-
-          {/* Thông tin */}
           <div>
             <p className="text-xl font-semibold leading-none">
               @{profile.username}
             </p>
 
             <div className="flex gap-3 mt-3">
-              {/* Role badge with icon */}
               <Badge
                 variant="outline"
                 className={cn(
@@ -107,8 +123,6 @@ const ProfilePage = () => {
                 {roleInfo.icon}
                 {roleInfo.label}
               </Badge>
-
-              {/* Status badge */}
               <Badge
                 className={cn(
                   "px-4 py-1.5 text-sm font-semibold flex items-center gap-1",
@@ -144,6 +158,52 @@ const ProfilePage = () => {
             window.location.reload();
           }}
         />
+      </div>
+      {/* Posts Section */}
+      <div className="mt-8 ml-12 mr-12">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">Bài viết đã tạo</h2>
+        {posts.length === 0 ? (
+          <p className="text-center text-gray-500 text-lg py-8 bg-gray-50 rounded-lg">
+            Chưa có bài viết nào
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {posts.map((post) => (
+              <li key={post.post_id}>
+                <Link
+                  to={`/posts/${post.post_id}`}
+                  className="block"
+                >
+                  <div className="flex items-center py-4 px-4 bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200">
+                    <div className="w-20 h-20 flex-shrink-0">
+                      <img
+                        src={post.images.length > 0 ? post.images[0].image_url : "/placeholder-image.jpg"}
+                        alt={post.title}
+                        className="w-full h-full object-cover rounded-md"
+                      />
+                    </div>
+                    <div className="ml-4 flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{post.title}</h3>
+                      {post.topics.length > 0 && (
+                        <p className="text-sm text-gray-500 mt-1">{post.topics[0].name}</p>
+                      )}
+                      {post.tags.length > 0 && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5">
+                            #{post.tags[0].name}
+                          </Badge>
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-400 mt-1">
+                        Ngày tạo: {formatDate(post.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
