@@ -1,7 +1,13 @@
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PopupDetail } from "./PopupDetail";
 import { PopupReject } from "./PopupReject";
 import { getPostById, moderatePost } from "@/services/posts/postService";
@@ -10,6 +16,14 @@ import { useNavigate } from "react-router-dom";
 import type { Post } from "@/types/post";
 import { useAuthStore } from "@/stores/auth";
 import { paths } from "@/utils/constant/path";
+import {
+  MoreHorizontal,
+  CheckCircle,
+  XCircle,
+  Eye,
+  FileText,
+  Calendar,
+} from "lucide-react";
 
 type Props = {
   post: Post;
@@ -59,62 +73,123 @@ export const PostActions: React.FC<Props> = ({
 
   return (
     <>
-      <TableRow>
-        <TableCell>{post.title}</TableCell>
-        <TableCell>{post.creator?.username || "Ẩn danh"}</TableCell>
-        <TableCell
-          className={cn(
-            "font-medium",
-            post.status === "waiting"
-              ? "text-yellow-500"
-              : post.status === "approved"
-              ? "text-green-600"
-              : post.status === "rejected"
-              ? "text-red-600"
-              : "text-gray-600"
-          )}
-        >
-          {post.status === "waiting"
-            ? "Chờ duyệt"
-            : post.status === "approved"
-            ? "Đã duyệt"
-            : post.status === "rejected"
-            ? "Bị từ chối"
-            : "Không xác định"}
+      <TableRow className="hover:bg-gray-50/50">
+        <TableCell className="font-medium">
+          <div className="max-w-[250px] truncate" title={post.title}>
+            {post.title}
+          </div>
         </TableCell>
-        <TableCell>{new Date(post.created_at).toLocaleDateString()}</TableCell>
-        <TableCell className="text-right space-x-1">
-          <Button
-            className="text-red-400"
-            onClick={() => setRejectingPost(post)}
-            disabled={post.status === "rejected"}
-          >
-            Từ chối
-          </Button>
-          <Button
-            className="text-green-600"
-            onClick={handleApprove}
-            disabled={post.status !== "waiting"}
-          >
-            Duyệt
-          </Button>
-          <Button className="text-blue-500" onClick={handleReview}>
-            Review
-          </Button>
-          <Button
-            className="text-gray-500"
-            onClick={handleView}
-            variant="outline"
-            size="sm"
-          >
-            Xem nhanh
-          </Button>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-medium">
+              {(post.creator?.username || "A")[0].toUpperCase()}
+            </div>
+            <span className="text-sm">
+              {post.creator?.username || "Ẩn danh"}
+            </span>
+          </div>
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center gap-1">
+            {post.status === "waiting" && (
+              <>
+                <Calendar className="w-4 h-4 text-yellow-500" />
+                <span className="text-yellow-600 font-medium text-sm">
+                  Chờ duyệt
+                </span>
+              </>
+            )}
+            {post.status === "approved" && (
+              <>
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span className="text-green-600 font-medium text-sm">
+                  Đã duyệt
+                </span>
+              </>
+            )}
+            {post.status === "rejected" && (
+              <>
+                <XCircle className="w-4 h-4 text-red-500" />
+                <span className="text-red-600 font-medium text-sm">
+                  Từ chối
+                </span>
+              </>
+            )}
+          </div>
+        </TableCell>
+        <TableCell className="text-sm text-gray-600">
+          {new Date(post.created_at).toLocaleDateString("vi-VN")}
+        </TableCell>
+        <TableCell className="text-center">
+          <div className="flex items-center justify-center gap-2">
+            {/* Nút action chính cho bài viết chờ duyệt */}
+            {post.status === "waiting" && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleApprove}
+                  className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                >
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  Duyệt
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setRejectingPost(post)}
+                  className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                >
+                  <XCircle className="w-4 h-4 mr-1" />
+                  Từ chối
+                </Button>
+              </>
+            )}
+
+            {/* Dropdown menu cho các action phụ */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleView}>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Xem nhanh
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleReview}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Xem chi tiết
+                </DropdownMenuItem>
+                {post.status === "waiting" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleApprove}
+                      className="text-green-600"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Duyệt bài viết
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setRejectingPost(post)}
+                      className="text-red-600"
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Từ chối bài viết
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </TableCell>
       </TableRow>
 
       {/* Popup xem chi tiết */}
       <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
-        <DialogContent className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
           {selectedPost && (
             <PopupDetail
               post={selectedPost}

@@ -29,12 +29,16 @@ export function StepsDisplay({ steps, className }: StepsDisplayProps) {
           {sortedSteps.map((step) => (
             <div
               key={step.step_id || step.order_number}
-              className="flex gap-3 items-start"
+              className="border rounded-lg p-4 bg-gray-50"
             >
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
-                {step.order_number}
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 min-w-fit">
+                  <h4 className="font-medium text-blue-600 mb-2">
+                    Bước {step.order_number}:
+                  </h4>
+                </div>
               </div>
-              <div className="flex-1 pt-1">
+              <div className="ml-0">
                 <p className="text-gray-700 leading-relaxed">{step.content}</p>
               </div>
             </div>
