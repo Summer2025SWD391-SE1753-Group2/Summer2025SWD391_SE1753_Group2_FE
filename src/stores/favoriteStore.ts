@@ -7,7 +7,7 @@ import {
   createFavoriteFolder,
 } from "@/services/favorites/favoriteService";
 import { Favorite } from "@/types/favorite";
-import { Post } from "@/types/post";
+// import { Post } from "@/types/post";
 import { toast } from "sonner";
 
 interface FavoriteState {
@@ -15,8 +15,16 @@ interface FavoriteState {
   savedPosts: Map<string, Set<string>>; // Map<favourite_id, Set<post_id>>
   isLoading: boolean;
   initializeFavorites: (forceRefresh?: boolean) => Promise<void>;
-  addPost: (favourite_id: string, post_id: string, favourite_name: string) => Promise<void>;
-  removePost: (favourite_id: string, post_id: string, favourite_name: string) => Promise<void>;
+  addPost: (
+    favourite_id: string,
+    post_id: string,
+    favourite_name: string
+  ) => Promise<void>;
+  removePost: (
+    favourite_id: string,
+    post_id: string,
+    favourite_name: string
+  ) => Promise<void>;
   createFolder: (name: string, post_id?: string) => Promise<void>;
   isPostSaved: (post_id: string) => boolean;
   getSavedFoldersForPost: (post_id: string) => Set<string>;
@@ -93,7 +101,10 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
         savedPosts.set(favourite_id, posts);
         const folders = state.folders.map((folder) =>
           folder.favourite_id === favourite_id
-            ? { ...folder, post_count: Math.max(0, (folder.post_count || 0) - 1) }
+            ? {
+                ...folder,
+                post_count: Math.max(0, (folder.post_count || 0) - 1),
+              }
             : folder
         );
         return { savedPosts, folders };
@@ -120,7 +131,9 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
       if (post_id) {
         await get().addPost(newFolder.favourite_id, post_id, name);
       }
-      toast.success(`Đã tạo thư mục "${name}"${post_id ? " và thêm bài viết" : ""}`);
+      toast.success(
+        `Đã tạo thư mục "${name}"${post_id ? " và thêm bài viết" : ""}`
+      );
     } catch (error) {
       console.error("Error creating folder:", error);
       toast.error("Không thể tạo thư mục mới");
