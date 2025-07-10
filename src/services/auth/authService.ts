@@ -255,7 +255,7 @@ export const authService = {
    * Google login redirect
    */
   async loginWithGoogle(): Promise<void> {
-    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const baseUrl = import.meta.env.VITE_API_URL;
     window.location.href = `${baseUrl}/api/v1/auth/google/login`;
   },
 
@@ -359,7 +359,11 @@ export const authService = {
   /**
    * Reset password with token
    */
-  async resetPassword(token: string, new_password: string, confirm_password: string): Promise<ApiResponse<null>> {
+  async resetPassword(
+    token: string,
+    new_password: string,
+    confirm_password: string
+  ): Promise<ApiResponse<null>> {
     if (!token || token.trim().length === 0) {
       throw new Error("Token không hợp lệ");
     }
@@ -400,7 +404,11 @@ export const authService = {
     }
 
     try {
-      const res = await axiosInstance.post<{ message: string; method?: string; username?: string }>(
+      const res = await axiosInstance.post<{
+        message: string;
+        method?: string;
+        username?: string;
+      }>(
         "/api/v1/auth/forgot-password",
         { username },
         {
