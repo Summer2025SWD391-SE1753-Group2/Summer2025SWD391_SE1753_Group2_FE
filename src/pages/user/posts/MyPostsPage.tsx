@@ -28,6 +28,7 @@ import {
   AlertCircle,
   Edit,
   Eye,
+  ExternalLink,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,6 +107,11 @@ const MyPostsPage = () => {
   const counts = getPostCounts();
 
   const handleUpdatePost = (post: Post) => {
+    // Show informative message for rejected posts
+    if (post.status === "rejected") {
+      // Optional: Could show a toast here for better UX
+      // toast.info("Bạn đang chỉnh sửa bài viết bị từ chối. Sau khi cập nhật, bài viết sẽ được gửi lại để duyệt.");
+    }
     navigate(`/user/posts/edit/${post.post_id}`);
   };
 
@@ -240,27 +246,62 @@ const MyPostsPage = () => {
                     </TableCell>
                     <TableCell className="max-w-xs">
                       {post.rejection_reason ? (
-                        <div
-                          className="truncate text-red-600"
-                          title={post.rejection_reason}
-                        >
-                          {post.rejection_reason}
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="truncate text-red-600 text-sm"
+                            title={post.rejection_reason}
+                          >
+                            {post.rejection_reason}
+                          </div>
+                          {post.status === "rejected" && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs px-1.5 py-0.5 bg-red-50 text-red-600 border-red-200"
+                            >
+                              Cần chỉnh sửa
+                            </Badge>
+                          )}
                         </div>
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right space-x-2">
-                      {/* Button Xem - chỉ hiển thị cho bài chờ duyệt/từ chối */}
-                      {(post.status === "waiting" ||
-                        post.status === "rejected") && (
+                      {/* Button Xem - hiển thị cho tất cả trạng thái */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedPost(post)}
+                      >
+                        <Eye className="h-4 w-4" />
+                        Xem
+                      </Button>
+
+                      {/* Button Chỉnh sửa - cho bài bị từ chối */}
+                      {post.status === "rejected" && (
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          onClick={() => setSelectedPost(post)}
+                          onClick={() => handleUpdatePost(post)}
+                          title="Chỉnh sửa bài viết bị từ chối để gửi lại duyệt"
+                          className="border-red-200 text-red-700 hover:bg-red-50"
                         >
-                          <Eye className="h-4 w-4" />
-                          Xem
+                          <Edit className="h-4 w-4" />
+                          Chỉnh sửa
+                        </Button>
+                      )}
+
+                      {/* Button Chỉnh sửa - cho bài chờ duyệt */}
+                      {post.status === "waiting" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleUpdatePost(post)}
+                          title="Chỉnh sửa bài viết đang chờ duyệt"
+                          className="border-yellow-200 text-yellow-700 hover:bg-yellow-50"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Chỉnh sửa
                         </Button>
                       )}
 
@@ -268,8 +309,8 @@ const MyPostsPage = () => {
                       {post.status === "approved" && (
                         <Button variant="ghost" size="sm" asChild>
                           <Link to={`/posts/${post.post_id}`} target="_blank">
-                            <Eye className="h-4 w-4" />
-                            Xem chi tiết
+                            <ExternalLink className="h-4 w-4" />
+                            Xem công khai
                           </Link>
                         </Button>
                       )}
@@ -277,10 +318,11 @@ const MyPostsPage = () => {
                       {/* Button Cập nhật - chỉ hiển thị cho bài đã duyệt */}
                       {post.status === "approved" && (
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => handleUpdatePost(post)}
                           title="Cập nhật bài viết sẽ chuyển về trạng thái chờ duyệt"
+                          className="border-green-200 text-green-700 hover:bg-green-50"
                         >
                           <Edit className="h-4 w-4" />
                           Cập nhật

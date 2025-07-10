@@ -308,14 +308,16 @@ export function PostReviewPage() {
                       className="border rounded-lg p-4 bg-gray-50"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
-                          {step.order_number}
+                        <div className="flex-shrink-0 min-w-fit">
+                          <h4 className="font-medium text-primary mb-2">
+                            Bước {step.order_number}:
+                          </h4>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm leading-relaxed">
-                            {step.content}
-                          </p>
-                        </div>
+                      </div>
+                      <div className="ml-0">
+                        <p className="text-sm leading-relaxed">
+                          {step.content}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -415,7 +417,7 @@ export function PostReviewPage() {
           {post.status === "waiting" && (
             <Card className="sticky top-6">
               <CardHeader>
-                <CardTitle>Hành động duyệt</CardTitle>
+                <CardTitle>Lựa chọn</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">

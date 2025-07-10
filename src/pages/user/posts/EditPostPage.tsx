@@ -222,9 +222,13 @@ export function EditPostPage() {
 
       await updatePost(postId, requestData);
 
-      toast.success(
-        "Bài viết đã được cập nhật thành công! Bài viết sẽ chuyển về trạng thái chờ duyệt và các bình luận cũ sẽ bị xóa."
-      );
+      // Dynamic success message based on post status
+      const successMessage =
+        post?.status === "rejected"
+          ? "Bài viết đã được cập nhật và gửi lại để duyệt thành công!"
+          : "Bài viết đã được cập nhật thành công! Bài viết sẽ chuyển về trạng thái chờ duyệt và các bình luận cũ sẽ bị xóa.";
+
+      toast.success(successMessage);
       navigate("/user/my-posts");
     } catch (err) {
       console.error("Error updating post:", err);
@@ -286,12 +290,34 @@ export function EditPostPage() {
           <p className="text-muted-foreground">
             Cập nhật thông tin bài viết của bạn
           </p>
+          {/* Warning message */}
           <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
             <p className="text-sm text-amber-800">
               ⚠️ <strong>Lưu ý:</strong> Khi cập nhật bài viết, trạng thái sẽ
               chuyển về "chờ duyệt" và tất cả bình luận hiện tại sẽ bị xóa.
             </p>
           </div>
+
+          {/* Rejection reason display */}
+          {post?.status === "rejected" && post?.rejection_reason && (
+            <div className="mt-2 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="text-sm font-semibold text-red-800 mb-1">
+                    Bài viết bị từ chối
+                  </h4>
+                  <p className="text-sm text-red-700">
+                    <strong>Lý do:</strong> {post.rejection_reason}
+                  </p>
+                  <p className="text-xs text-red-600 mt-2">
+                    Vui lòng chỉnh sửa theo phản hồi trên và gửi lại để được
+                    duyệt.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

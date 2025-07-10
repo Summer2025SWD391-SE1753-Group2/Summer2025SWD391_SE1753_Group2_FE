@@ -398,7 +398,7 @@ export default function GroupChatManagementPage() {
   const goToNextPage = () => goToPage(Math.min(totalPages, currentPage + 1));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+    <div className="min-h-screen bg-gray-50/50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -417,7 +417,7 @@ export default function GroupChatManagementPage() {
           </div>
           {(isAdmin || user?.role?.role_name === "moderator") && (
             <Button
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg text-white"
               size="lg"
               onClick={() => setCreateOpen(true)}
             >
