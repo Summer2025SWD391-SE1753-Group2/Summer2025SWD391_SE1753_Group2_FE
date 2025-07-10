@@ -34,6 +34,7 @@ import ChatPage from "@/pages/publicPage/ChatPage";
 import ForgotPasswordPage from "@/pages/publicPage/auth/ForgotPasswordPage";
 import ChangePasswordPage from "@/pages/publicPage/auth/ChangePasswordPage";
 import GroupChatManagementPage from "@/pages/private/management/GroupChatManagementPage";
+import NotificationsPage from "@/pages/private/NotificationsPage";
 
 const router = createBrowserRouter([
   {
@@ -92,6 +93,7 @@ const router = createBrowserRouter([
       //
       { path: paths.user.chat, element: <ChatPage /> },
       { path: "/user/chat/:friendId", element: <ChatPage /> },
+      { path: paths.user.notifications, element: <NotificationsPage /> },
     ],
   },
   //moderator
@@ -130,6 +132,7 @@ const router = createBrowserRouter([
         path: paths.moderator.groupChatManagement,
         element: <GroupChatManagementPage />,
       },
+      { path: paths.moderator.notifications, element: <NotificationsPage /> },
     ],
   },
   //admin

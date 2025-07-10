@@ -1,56 +1,83 @@
+import * as React from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Popover,
-  PopoverTrigger,
   PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Command, CommandInput, CommandList, CommandItem } from "@/components/ui/command";
-import { Check, ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { Unit } from "@/types/unit";
+import { Unit } from "@/types/unit";
 
 interface UnitComboboxProps {
   units: Unit[];
   value: string;
-  onChange: (value: string) => void;
+  onValueChange: (value: string) => void;
   placeholder?: string;
+  disabled?: boolean;
 }
 
-export const UnitCombobox = ({ units, value, onChange, placeholder = "Chọn đơn vị" }: UnitComboboxProps) => {
+export function UnitCombobox({
+  units,
+  value,
+  onValueChange,
+  placeholder = "Chọn đơn vị...",
+  disabled = false,
+}: UnitComboboxProps) {
+  const [open, setOpen] = React.useState(false);
+
+  const selectedUnit = units.find((unit) => unit.unit_id === value);
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           role="combobox"
-          className="w-full justify-between"
+          aria-expanded={open}
+          className="w-full justify-between h-12"
+          disabled={disabled}
         >
-          {value || placeholder}
-          <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+          {selectedUnit ? selectedUnit.name : placeholder}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full h-40 p-0 overflow-y-auto">
+      <PopoverContent className="w-full p-0" align="start">
         <Command>
-          <CommandInput placeholder="Tìm đơn vị..." />
-          <CommandList >
-            {units.map((unit) => (
-              <CommandItem
-                key={unit.unit_id}
-                value={unit.name}
-                onSelect={() => onChange(unit.name)}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    value === unit.name ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                {unit.name}
-              </CommandItem>
-            ))}
+          <CommandInput placeholder="Tìm kiếm đơn vị..." />
+          <CommandList>
+            <CommandEmpty>Không tìm thấy đơn vị.</CommandEmpty>
+            <CommandGroup>
+              {units.map((unit) => (
+                <CommandItem
+                  key={unit.unit_id}
+                  value={unit.name}
+                  onSelect={() => {
+                    onValueChange(unit.unit_id);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === unit.unit_id ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {unit.name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
           </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
   );
-};
+}

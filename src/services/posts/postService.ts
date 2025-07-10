@@ -306,3 +306,38 @@ export const getMyPosts = async (
     throw new Error("Không thể tải bài viết của bạn");
   }
 };
+
+// New function to get posts by user ID
+export const getUserPostsById = async (
+  userId: string,
+  skip: number = 0,
+  limit: number = 10
+): Promise<Post[]> => {
+  try {
+    const response = await axiosInstance.get(`/api/v1/posts/user/${userId}/`, {
+      params: { 
+        skip, 
+        limit, 
+        status: 'approved'
+      },
+    });
+    return response.data || [];
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as {
+        response: { status: number; data?: { message?: string } };
+      };
+      if (axiosError.response?.status === 401) {
+        throw new Error("Không tìm thấy token đăng nhập");
+      }
+      if (axiosError.response?.status === 404) {
+        return [];
+      }
+      throw new Error(
+        axiosError.response?.data?.message || 
+        `Không thể tải bài viết của người dùng với ID: ${userId}`
+      );
+    }
+    throw new Error("Lỗi khi tải bài viết của người dùng");
+  }
+};
