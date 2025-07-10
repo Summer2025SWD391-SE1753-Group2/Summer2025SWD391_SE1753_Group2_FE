@@ -8,9 +8,7 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Heart,
   MessageCircle,
-  Share2,
   Bookmark,
 } from "lucide-react";
 import { ImageLightbox } from "@/components/posts/ImageLightbox";
@@ -23,10 +21,17 @@ interface PostDetailPopupProps {
 }
 
 export const PostDetailPopup = ({ post, onClose }: PostDetailPopupProps) => {
-  const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const handleCommentClick = () => {
+    const commentsSection = document.getElementById("comments-section");
+    if (commentsSection) {
+      commentsSection.scrollIntoView({ behavior: "smooth" });
+    }
+    onClose(); // Close popup after clicking
+  };
 
   const getStatusIcon = (status: Post["status"]) => {
     switch (status) {
@@ -252,32 +257,11 @@ export const PostDetailPopup = ({ post, onClose }: PostDetailPopupProps) => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={cn(
-                    "text-muted-foreground hover:text-red-500",
-                    isLiked && "text-red-500"
-                  )}
-                  onClick={() => setIsLiked(!isLiked)}
-                >
-                  <Heart
-                    className={cn("h-4 w-4 mr-1", isLiked && "fill-current")}
-                  />
-                  Thích
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
                   className="text-muted-foreground hover:text-blue-500"
+                  onClick={handleCommentClick}
                 >
                   <MessageCircle className="h-4 w-4 mr-1" />
                   Bình luận
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-green-500"
-                >
-                  <Share2 className="h-4 w-4 mr-1" />
-                  Chia sẻ
                 </Button>
               </div>
               <Button

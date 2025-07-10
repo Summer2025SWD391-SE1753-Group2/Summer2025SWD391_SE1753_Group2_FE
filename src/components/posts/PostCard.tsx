@@ -3,9 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Heart,
   MessageCircle,
-  Share2,
   Bookmark,
   Clock,
   CheckCircle,
@@ -14,25 +12,25 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { Post } from "@/types/post";
 import { BookmarkModal } from "./BookmarkModal";
+import { useAuthStore } from "@/stores/auth";
 
 interface PostCardProps {
   post: Post;
-  onLike?: () => void;
-  onComment?: () => void;
-  onShare?: () => void;
   className?: string;
 }
 
-export function PostCard({
-  post,
-  onLike,
-  onComment,
-  onShare,
-  className,
-}: PostCardProps) {
+export function PostCard({ post, className }: PostCardProps) {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const role = user?.role?.role_name || "user";
+
+  const handleCommentClick = () => {
+    navigate(`/${role}/posts/${post.post_id}#comments`);
+  };
+
   const getStatusIcon = (status: Post["status"]) => {
     switch (status) {
       case "approved":
@@ -235,20 +233,12 @@ export function PostCard({
         {/* Actions */}
         <div className="flex items-center justify-between pt-2 border-t">
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={onLike}>
-              <Heart className="h-4 w-4" />
-              <span className="ml-1 text-sm">Thích</span>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onComment}>
+            <Button variant="ghost" size="sm" onClick={handleCommentClick}>
               <MessageCircle className="h-4 w-4" />
               <span className="ml-1 text-sm">Bình luận</span>
             </Button>
-            <Button variant="ghost" size="sm" onClick={onShare}>
-              <Share2 className="h-4 w-4" />
-              <span className="ml-1 text-sm">Chia sẻ</span>
-            </Button>
             <Button variant="ghost" size="sm" asChild>
-              <Link to={`/posts/${post.post_id}`}>
+              <Link to={`/${role}/posts/${post.post_id}`}>
                 <ExternalLink className="h-4 w-4" />
                 <span className="ml-1 text-sm">Xem chi tiết</span>
               </Link>
