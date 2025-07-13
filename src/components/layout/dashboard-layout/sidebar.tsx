@@ -65,12 +65,6 @@ const sidebarLinks: SidebarLink[] = [
     roles: ["user"],
   },
   {
-    title: "Chat",
-    href: paths.chat,
-    icon: <MessageCircle className="h-5 w-5" />,
-    roles: ["user", "moderator", "admin"],
-  },
-  {
     title: "Thông báo",
     href: paths.user.notifications,
     icon: <Bell className="h-5 w-5" />,
