@@ -72,12 +72,6 @@ const sidebarLinks: SidebarLink[] = [
   },
   // Moderator
   {
-    title: "Tổng quan",
-    href: paths.moderator.dashboard,
-    icon: <LayoutDashboard className="h-5 w-5" />,
-    roles: ["moderator"],
-  },
-  {
     title: "Duyệt bài viết",
     href: paths.moderator.approvePost,
     icon: <ListCheck className="h-5 w-5" />,

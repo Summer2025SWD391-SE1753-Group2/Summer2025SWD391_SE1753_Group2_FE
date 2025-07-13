@@ -35,9 +35,9 @@ export default function Dashboard() {
       ]);
 
       setTotalUsers(allAccounts.length);
-      setTotalTopics(allTopics.length);
-      setTotalTags(allTags.length);
-      setTotalMaterials(allMaterials.length);
+      setTotalTopics(allTopics.total);
+      setTotalTags(allTags.total);
+      setTotalMaterials(allMaterials.total);
 
       const approved = allPosts.filter((p) => p.status === "approved").length;
       const rejected = allPosts.filter((p) => p.status === "rejected").length;
