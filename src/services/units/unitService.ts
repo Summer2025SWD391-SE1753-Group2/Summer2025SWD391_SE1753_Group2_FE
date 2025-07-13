@@ -1,10 +1,28 @@
 import axiosInstance from "@/lib/api/axios";
 import type { Unit } from "@/types/unit";
 
+// Interface cho response phân trang
+export interface PaginatedResponse {
+  total: number;
+  skip: number;
+  limit: number;
+  has_more: boolean;
+}
+
+// Interface cho units response
+export interface UnitsPaginatedResponse extends PaginatedResponse {
+  units: Unit[];
+}
+
 // Lấy tất cả đơn vị
-export const getAllUnits = async (): Promise<Unit[]> => {
+export const getAllUnits = async (
+  skip: number = 0,
+  limit: number = 20
+): Promise<UnitsPaginatedResponse> => {
   try {
-    const response = await axiosInstance.get<Unit[]>("/api/v1/units/");
+    const response = await axiosInstance.get<UnitsPaginatedResponse>(
+      `/api/v1/units/?skip=${skip}&limit=${limit}`
+    );
     return response.data;
   } catch {
     throw new Error("Không thể tải danh sách đơn vị");
@@ -54,7 +72,10 @@ export const updateUnit = async (
   data: Partial<Pick<Unit, "name" | "description" | "status" | "updated_by">>
 ): Promise<Unit> => {
   try {
-    const response = await axiosInstance.put<Unit>(`/api/v1/units/${unit_id}`, data);
+    const response = await axiosInstance.put<Unit>(
+      `/api/v1/units/${unit_id}`,
+      data
+    );
     return response.data;
   } catch {
     throw new Error("Không thể cập nhật đơn vị");

@@ -9,8 +9,9 @@ export const paths = {
   register: "/auth/register",
   googleCallback: "/auth/google-callback",
   postDetail: "/posts/:postId",
-  search: "/searchPage",
-  chat: "chat",
+  search: "/searchPage",  chat: "chat",
+  forgotPassword: "/auth/forgot-password",
+  changePassword: "/auth/change-password",
 
   //user
   user: {
@@ -25,6 +26,7 @@ export const paths = {
     favoritesDetail: "/user/favorites/:favouriteId",
     friends: "/user/friends",
     chat: "/user/chat",
+    notifications: "/user/notifications",
   },
 
   // Moderator
@@ -35,12 +37,14 @@ export const paths = {
     setting: "/moderator/setting",
     postDetail: "/moderator/posts/:postId",
     approvePost: "/moderator/approvepost",
+    postReview: "/moderator/posts/review/:postId",
     tagManagement: "/moderator/tag-management",
     materialManagement: "/moderator/material-management",
     topicManagement: "/moderator/topic-management",
     unitManagement: "/moderator/unit-management",
     groupChatManagement: "/moderator/group-chat-management",
     chat: "/moderator/chat",
+    notifications: "/moderator/notifications",
   },
   //admin
   admin: {
@@ -50,6 +54,7 @@ export const paths = {
     setting: "/admin/setting",
     postDetail: "/admin/posts/:postId",
     approvePost: "/admin/approvepost",
+    postReview: "/admin/posts/review/:postId",
     tagManagement: "/admin/tag-management",
     materialManagement: "/admin/material-management",
     topicManagement: "/admin/topic-management",

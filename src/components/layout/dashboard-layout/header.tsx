@@ -6,15 +6,20 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useAuthStore } from '@/stores/auth';
+} from "@/components/ui/dropdown-menu";
+import { useAuthStore } from "@/stores/auth";
+import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
+import {
+  searchPostsByTitle,
+  searchPostsByTag,
+  searchPostsByTopic,
+} from "@/services/posts/postService";
+import { searchUsersByUsername } from "@/services/accounts/accountService";
+import { getAllTags } from "@/services/tags/tagsService";
+import { Post } from "@/types/post";
+import { UserProfile } from "@/types/account";
 import { useRoleStore } from '@/stores/roleStore';
-import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { searchPostsByTitle, searchPostsByTag, searchPostsByTopic } from '@/services/posts/postService';
-import { searchUsersByUsername } from '@/services/accounts/accountService';
-import { Post } from '@/types/post';
-import { UserProfile } from '@/types/account';
 
 const DashboardHeader = () => {
   const { user } = useAuthStore();
@@ -112,11 +117,11 @@ const DashboardHeader = () => {
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/v1/tags/?skip=0&limit=100');
-        const data = await response.json();
-        setTags(data);
+        const data = await getAllTags(0, 100);
+        setTags(data.tags || []);
       } catch (error) {
-        console.error('Error fetching tags:', error);
+        console.error("Error fetching tags:", error);
+        setTags([]);
       }
     };
     fetchTags();
@@ -153,19 +158,31 @@ const DashboardHeader = () => {
                   <Sliders className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48 max-h-40 overflow-y-auto mt-2 bg-background border border-gray-200 rounded-md shadow-lg" align="start">
-                {tags.filter((tag) => tag.status === 'active').map((tag) => (
-                  <DropdownMenuItem key={tag.tag_id} onSelect={(e) => e.preventDefault()} className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
-                    <input
-                      type="checkbox"
-                      checked={selectedTags.includes(tag.name)}
-                      onChange={() => handleTagToggle(tag.name)}
-                      className="h-4 w-4"
-                      disabled={selectedTags.length >= 3 && !selectedTags.includes(tag.name)}
-                    />
-                    <span>{tag.name}</span>
-                  </DropdownMenuItem>
-                ))}
+              <DropdownMenuContent
+                className="w-48 max-h-40 overflow-y-auto mt-2 bg-background border border-gray-200 rounded-md shadow-lg"
+                align="start"
+              >
+                {(Array.isArray(tags) ? tags : [])
+                  .filter((tag) => tag.status === "active")
+                  .map((tag) => (
+                    <DropdownMenuItem
+                      key={tag.tag_id}
+                      onSelect={(e) => e.preventDefault()}
+                      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedTags.includes(tag.name)}
+                        onChange={() => handleTagToggle(tag.name)}
+                        className="h-4 w-4"
+                        disabled={
+                          selectedTags.length >= 3 &&
+                          !selectedTags.includes(tag.name)
+                        }
+                      />
+                      <span>{tag.name}</span>
+                    </DropdownMenuItem>
+                  ))}
               </DropdownMenuContent>
             </DropdownMenu>
             <div className="flex-1 flex items-center flex-wrap gap-2 p-2 border border-gray-300 rounded-full bg-background">

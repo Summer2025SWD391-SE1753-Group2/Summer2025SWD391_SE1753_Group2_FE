@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from "react";
 import type { Post } from "@/types/post";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import {
-  getAllPosts, getPostById, moderatePost,
-} from "@/services/posts/postService";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getAllPosts } from "@/services/posts/postService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/stores/auth";
-
+import { FileText, Clock, CheckCircle2, XCircle } from "lucide-react";
 
 import { Pagination } from "@/components/ui/pagination";
 import { PostFilter } from "@/components/management/approve/PostFilter";
@@ -23,11 +27,85 @@ const ApprovePostPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searching, setSearching] = useState(false);
 
   const { user } = useAuthStore();
   const moderatorId = user?.account_id || "";
-  const handleUpdatePostStatus = (id: string, status: "approved" | "rejected") => {
+
+  // Tính toán statistics
+  const getStatistics = () => {
+    const total = posts.length;
+    const waiting = posts.filter((p) => p.status === "waiting").length;
+    const approved = posts.filter((p) => p.status === "approved").length;
+    const rejected = posts.filter((p) => p.status === "rejected").length;
+
+    return { total, waiting, approved, rejected };
+  };
+
+  const stats = getStatistics();
+
+  // Statistics Cards Component
+  const StatisticsCards = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Tổng bài viết</CardTitle>
+          <FileText className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.total}</div>
+          <p className="text-xs text-muted-foreground">
+            Tất cả bài viết trong hệ thống
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
+          <Clock className="h-4 w-4 text-yellow-500" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-yellow-600">
+            {stats.waiting}
+          </div>
+          <p className="text-xs text-muted-foreground">Cần xem xét và duyệt</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Đã duyệt</CardTitle>
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-green-600">
+            {stats.approved}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Bài viết đã được phê duyệt
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Đã từ chối</CardTitle>
+          <XCircle className="h-4 w-4 text-red-500" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-red-600">
+            {stats.rejected}
+          </div>
+          <p className="text-xs text-muted-foreground">Bài viết bị từ chối</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const handleUpdatePostStatus = (
+    id: string,
+    status: "approved" | "rejected"
+  ) => {
     setPosts((prev) =>
       prev.map((p) => (p.post_id === id ? { ...p, status } : p))
     );
@@ -91,58 +169,96 @@ const ApprovePostPage = () => {
   if (error) return <div className="p-4 text-red-500">Lỗi: {error}</div>;
 
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex items-center">
-        <h1 className="text-xl flex-1 font-semibold">Danh sách bài viết chờ duyệt</h1>
-        <div className="mt-6 mr-4">
-          <PostSearch
-            onSearchResults={(results) => {
-              setFilteredPosts(results);
-              setCurrentPage(1);
-            }}
-            onReset={() => {
-              setFilteredPosts(posts);
-            }}
-          />
-        </div>
-        <PostFilter onFilter={handleFilter} />
-      </div>
+    <div className="min-h-screen bg-gray-50/50">
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* Header Section */}
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Danh sách bài viết chờ duyệt
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Quản lý và xem xét các bài viết đã được đăng
+              </p>
+            </div>
 
-      <div className="border-2 rounded-3xl p-2 shadow">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-1/2">Tiêu đề</TableHead>
-              <TableHead>Tác giả</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead>Ngày tạo</TableHead>
-              <TableHead className="text-right pr-18">Hành động</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedPosts.map((post) => (
-              <PostActions
-                key={post.post_id}
-                post={post}
-                moderatorId={moderatorId}
-                updatePostStatus={handleUpdatePostStatus}
+            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+              <PostSearch
+                onSearchResults={(results) => {
+                  setFilteredPosts(results);
+                  setCurrentPage(1);
+                }}
+                onReset={() => {
+                  setFilteredPosts(posts);
+                }}
               />
-
-
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {totalPages > 1 && (
-        <div className="flex justify-cente">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={(page) => setCurrentPage(page)}
-          />
+              <PostFilter onFilter={handleFilter} />
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Statistics Cards */}
+        <StatisticsCards />
+
+        {/* Content Section */}
+        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50/50">
+                  <TableHead className="font-semibold text-gray-900 w-[30%]">
+                    Tiêu đề
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-900 w-[15%]">
+                    Tác giả
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-900 w-[12%]">
+                    Trạng thái
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-900 w-[13%]">
+                    Ngày tạo
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-900 text-center w-[30%]">
+                    Hành động
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedPosts.map((post) => (
+                  <PostActions
+                    key={post.post_id}
+                    post={post}
+                    moderatorId={moderatorId}
+                    updatePostStatus={handleUpdatePostStatus}
+                  />
+                ))}
+                {paginatedPosts.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="text-gray-400 text-lg">📝</div>
+                        <p className="text-gray-500">Không có bài viết nào</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center py-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => setCurrentPage(page)}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

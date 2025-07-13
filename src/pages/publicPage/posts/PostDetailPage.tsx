@@ -12,9 +12,7 @@ import {
   CheckCircle,
   XCircle,
   ArrowLeft,
-  Heart,
   MessageCircle,
-  Share2,
   Bookmark,
 } from "lucide-react";
 import { ImageLightbox } from "@/components/posts/ImageLightbox";
@@ -49,8 +47,6 @@ export const PostDetailPage = () => {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(
     new Set()
   );
-  const [isLiked, setIsLiked] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [deletingComments, setDeletingComments] = useState<Set<string>>(
@@ -60,15 +56,16 @@ export const PostDetailPage = () => {
   const [showDeletedComments, setShowDeletedComments] =
     useState<boolean>(false);
 
- useEffect(() => {
+  useEffect(() => {
     initializeFavorites();
   }, [initializeFavorites]);
 
   useEffect(() => {
     if (!postId) return;
-    setIsBookmarked(isPostSaved(postId));
+    // Check if post is bookmarked - not needed for UI state
+    isPostSaved(postId);
   }, [postId, isPostSaved]);
-  
+
   const role = user?.role?.role_name || "user";
   // Count deleted comments to show in toggle button
   const countDeletedComments = (commentsList: Comment[]): number => {
@@ -118,7 +115,9 @@ export const PostDetailPage = () => {
 
         // Check quyền truy cập nếu bài viết chưa được duyệt
         const isAuthor = user?.account_id === postData.created_by;
-        const isModerator = user?.role.role_name === "moderator" || user?.role.role_name === "admin";
+        const isModerator =
+          user?.role.role_name === "moderator" ||
+          user?.role.role_name === "admin";
 
         if (
           (postData.status === "waiting" || postData.status === "rejected") &&
@@ -148,8 +147,7 @@ export const PostDetailPage = () => {
   useEffect(() => {
     if (post && post.status === "approved" && !commentsLoaded) {
       fetchComments();
-    }
-    else if (post && post.status !== "approved") {
+    } else if (post && post.status !== "approved") {
       setComments([]);
       setCommentsLoaded(false);
     }
@@ -159,19 +157,30 @@ export const PostDetailPage = () => {
   useEffect(() => {
     if (!post || post.status !== "approved" || !commentsLoaded) return;
 
-    const intervalId = setInterval(() => {
+    const interval = setInterval(() => {
       fetchComments();
-      setLastRefresh(new Date());
-    }, 30000);// 30 seconds
+    }, 30000);
 
-    return () => clearInterval(intervalId);
+    return () => clearInterval(interval);
   }, [post, commentsLoaded, fetchComments]);
+
+  // Scroll to comments section if hash is #comments
+  useEffect(() => {
+    if (window.location.hash === "#comments" && commentsLoaded) {
+      setTimeout(() => {
+        const commentsSection = document.getElementById("comments-section");
+        if (commentsSection) {
+          commentsSection.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+  }, [commentsLoaded]);
 
   // Force re-render every 60 seconds to update relative time display
   useEffect(() => {
     const intervalId = setInterval(() => {
       setLastRefresh(new Date());
-    }, 60000);// 60 seconds for time display update
+    }, 60000); // 60 seconds for time display update
 
     return () => clearInterval(intervalId);
   }, []);
@@ -369,17 +378,19 @@ export const PostDetailPage = () => {
                 </p>
               </div>
             </div>
-            {/* Status Badge */}
-            <Badge
-              variant="outline"
-              className={cn(
-                "flex items-center gap-1",
-                getStatusColor(post.status)
-              )}
-            >
-              {getStatusIcon(post.status)}
-              {getStatusText(post.status)}
-            </Badge>
+            {/* Status Badge - Chỉ hiển thị khi không phải đã duyệt */}
+            {post.status !== "approved" && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "flex items-center gap-1",
+                  getStatusColor(post.status)
+                )}
+              >
+                {getStatusIcon(post.status)}
+                {getStatusText(post.status)}
+              </Badge>
+            )}
           </div>
           {/* Title */}
           <h1 className="text-2xl font-bold mt-4">{post.title}</h1>
@@ -524,24 +535,11 @@ export const PostDetailPage = () => {
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsLiked(!isLiked)}
-                className={isLiked ? "text-red-600" : ""}
-              >
-                <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
-                <span className="ml-1 text-sm">Thích</span>
-              </Button>
               <Button variant="ghost" size="sm">
                 <MessageCircle className="h-4 w-4" />
                 <span className="ml-1 text-sm">
                   Bình luận ({comments.length})
                 </span>
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Share2 className="h-4 w-4" />
-                <span className="ml-1 text-sm">Chia sẻ</span>
               </Button>
             </div>
             <BookmarkModal postId={post.post_id}>
@@ -558,7 +556,7 @@ export const PostDetailPage = () => {
         </CardContent>
       </Card>
       {/* Comments Section */}
-      <Card>
+      <Card id="comments-section">
         <CardHeader>
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">

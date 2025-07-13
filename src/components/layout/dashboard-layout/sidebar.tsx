@@ -22,6 +22,7 @@ import {
   UserCheck2,
   MessageCircle,
   UserPlus,
+  Bell,
 } from "lucide-react";
 import BrandLogo from "@/components/common/brand-logo";
 import { paths } from "@/utils/constant/path";
@@ -63,7 +64,18 @@ const sidebarLinks: SidebarLink[] = [
     icon: <UserPlus className="h-5 w-5" />,
     roles: ["user"],
   },
-
+  {
+    title: "Chat",
+    href: paths.chat,
+    icon: <MessageCircle className="h-5 w-5" />,
+    roles: ["user", "moderator", "admin"],
+  },
+  {
+    title: "Thông báo",
+    href: paths.user.notifications,
+    icon: <Bell className="h-5 w-5" />,
+    roles: ["user"],
+  },
   // Moderator
   {
     title: "Tổng quan",
@@ -114,6 +126,12 @@ const sidebarLinks: SidebarLink[] = [
         roles: ["moderator"],
       },
     ],
+  },
+  {
+    title: "Thông báo",
+    href: paths.moderator.notifications,
+    icon: <Bell className="h-5 w-5" />,
+    roles: ["moderator"],
   },
   //Admin
   {

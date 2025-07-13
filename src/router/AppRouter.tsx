@@ -6,6 +6,7 @@ import TagManagementPage from "@/pages/private/management/TagManagementPage";
 import MaterialManagementPage from "@/pages/private/management/MaterialManagementPage";
 import TopicManagementPage from "@/pages/private/management/TopicManagementPage";
 import ApprovePostPage from "@/pages/private/management/ApprovePostPage";
+import { PostReviewPage } from "@/pages/private/management/PostReviewPage";
 import PublicRoute from "./public-route";
 import ProtectedRoute from "./protected-route";
 import { paths } from "@/utils/constant/path";
@@ -30,7 +31,10 @@ import { SettingPage } from "@/pages/private/management/SettingPage";
 import SearchPage from "@/pages/publicPage/SearchPage";
 import UserManagementPage from "@/pages/private/management/UserManagementPage";
 import ChatPage from "@/pages/publicPage/ChatPage";
+import ForgotPasswordPage from "@/pages/publicPage/auth/ForgotPasswordPage";
+import ChangePasswordPage from "@/pages/publicPage/auth/ChangePasswordPage";
 import GroupChatManagementPage from "@/pages/private/management/GroupChatManagementPage";
+import NotificationsPage from "@/pages/private/NotificationsPage";
 
 const router = createBrowserRouter([
   {
@@ -44,6 +48,8 @@ const router = createBrowserRouter([
           { path: paths.login, element: <LoginPage /> },
           { path: paths.register, element: <RegisterPage /> },
           { path: paths.googleCallback, element: <GoogleCallbackPage /> },
+          { path: paths.forgotPassword, element: <ForgotPasswordPage /> },
+          { path: paths.changePassword, element: <ChangePasswordPage/> },
         ],
       },
     ],
@@ -87,6 +93,7 @@ const router = createBrowserRouter([
       //
       { path: paths.user.chat, element: <ChatPage /> },
       { path: "/user/chat/:friendId", element: <ChatPage /> },
+      { path: paths.user.notifications, element: <NotificationsPage /> },
     ],
   },
   //moderator
@@ -106,6 +113,7 @@ const router = createBrowserRouter([
       { path: paths.moderator.dashboard, element: <DashboardPage /> },
 
       { path: paths.moderator.approvePost, element: <ApprovePostPage /> },
+      { path: paths.moderator.postReview, element: <PostReviewPage /> },
       {
         path: paths.moderator.materialManagement,
         element: <MaterialManagementPage />,
@@ -124,6 +132,7 @@ const router = createBrowserRouter([
         path: paths.moderator.groupChatManagement,
         element: <GroupChatManagementPage />,
       },
+      { path: paths.moderator.notifications, element: <NotificationsPage /> },
     ],
   },
   //admin
@@ -144,6 +153,7 @@ const router = createBrowserRouter([
       { path: paths.admin.userManagement, element: <UserManagementPage /> },
 
       { path: paths.admin.approvePost, element: <ApprovePostPage /> },
+      { path: paths.admin.postReview, element: <PostReviewPage /> },
       {
         path: paths.admin.materialManagement,
         element: <MaterialManagementPage />,

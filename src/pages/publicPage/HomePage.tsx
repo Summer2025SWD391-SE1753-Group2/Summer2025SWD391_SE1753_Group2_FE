@@ -34,10 +34,6 @@ export const HomePage = () => {
     fetchPosts();
   }, []);
 
-  const handlePostAction = (action: string, postId: string) => {
-    toast.success(`${action} bài viết ${postId}`);
-  };
-
   return (
     <div className="space-y-6 justify-start">
       {/* Welcome Section */}
@@ -86,13 +82,7 @@ export const HomePage = () => {
         ) : (
           <div className="space-y-6">
             {posts.map((post) => (
-              <HomePostCard
-                key={post.post_id}
-                post={post}
-                onLike={() => handlePostAction("Đã thích", post.post_id)}
-                onComment={() => handlePostAction("Đã bình luận", post.post_id)}
-                onShare={() => handlePostAction("Đã chia sẻ", post.post_id)}
-              />
+              <HomePostCard key={post.post_id} post={post} />
             ))}
           </div>
         )}

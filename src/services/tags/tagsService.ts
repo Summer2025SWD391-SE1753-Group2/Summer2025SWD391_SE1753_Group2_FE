@@ -1,11 +1,27 @@
-
 import axiosInstance from "@/lib/api/axios";
 import { Tag } from "@/types/tag";
 
+// Interface cho response phân trang
+export interface PaginatedResponse {
+  total: number;
+  skip: number;
+  limit: number;
+  has_more: boolean;
+}
 
-export const getAllTags = async (): Promise<Tag[]> => {
+// Interface cho tags response
+export interface TagsPaginatedResponse extends PaginatedResponse {
+  tags: Tag[];
+}
+
+export const getAllTags = async (
+  skip: number = 0,
+  limit: number = 20
+): Promise<TagsPaginatedResponse> => {
   try {
-    const response = await axiosInstance.get("/api/v1/tags/");
+    const response = await axiosInstance.get(
+      `/api/v1/tags/?skip=${skip}&limit=${limit}`
+    );
     return response.data;
   } catch {
     throw new Error("Không thể tải danh sách tags");
