@@ -209,28 +209,10 @@ const bottomLinks: SidebarLink[] = [
   },
   {
     title: "Người dùng",
-    href: paths.user.profile,
+    href: paths.profile,
     icon: <Users className="h-5 w-5" />,
     roles: ["user", "moderator", "admin"],
   },
-  // {
-  //   title: "Người dùng",
-  //   href: paths.user.profile,
-  //   icon: <Users className="h-5 w-5" />,
-  //   roles: ["user"],
-  // },
-  // {
-  //   title: "Người dùng",
-  //   href: paths.moderator.profile,
-  //   icon: <Users className="h-5 w-5" />,
-  //   roles: ["moderator"],
-  // },
-  // {
-  //   title: "Người dùng",
-  //   href: paths.admin.profile,
-  //   icon: <Users className="h-5 w-5" />,
-  //   roles: ["admin"],
-  // },
   {
     title: "Cài đặt",
     href: paths.setting,
