@@ -150,11 +150,11 @@ const LoginPage: React.FC = () => {
       toast.success("Đăng nhập thành công!");
 
       const latestUser = authService.getUserInfo();
-    if (latestUser?.role?.role_name) {
-      setTempRole(latestUser.role.role_name);
-    } else {
-      setTempRole("user");
-    }
+      if (latestUser?.role?.role_name) {
+        setTempRole(latestUser.role.role_name);
+      } else {
+        setTempRole("user");
+      }
     } catch (loginError) {
       // Error is already handled by auth store
       console.error("Login failed:", loginError);
