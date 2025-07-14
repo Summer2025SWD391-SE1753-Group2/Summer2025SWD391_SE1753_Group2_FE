@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/stores/auth";
 import { getDefaultRouteByRole } from "@/utils/constant/path";
 import type { LoginRequest } from "@/types/auth";
+import { useRoleStore } from "@/stores/roleStore";
+import { authService } from "@/services/auth/authService";
 
 interface ValidationResult {
   isValid: boolean;
@@ -68,6 +70,7 @@ const validateLoginForm = (data: LoginRequest): ValidationResult => {
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { setTempRole } = useRoleStore();
   const {
     login,
     loginWithGoogle,
@@ -145,6 +148,13 @@ const LoginPage: React.FC = () => {
     try {
       await login(formData);
       toast.success("Đăng nhập thành công!");
+
+      const latestUser = authService.getUserInfo();
+    if (latestUser?.role?.role_name) {
+      setTempRole(latestUser.role.role_name);
+    } else {
+      setTempRole("user");
+    }
     } catch (loginError) {
       // Error is already handled by auth store
       console.error("Login failed:", loginError);

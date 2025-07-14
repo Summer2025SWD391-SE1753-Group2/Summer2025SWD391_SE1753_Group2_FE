@@ -63,6 +63,22 @@ const updatePassword = async (data: PasswordUpdateData): Promise<void> => {
   await axiosInstance.put("/api/v1/accounts/password", data);
 };
 
+// Get all accounts, optional status filter
+const getAllAccounts = async (status?: string): Promise<UserProfile[]> => {
+  const params: any = {};
+  if (status) params.status = status;
+
+  const response = await axiosInstance.get<UserProfile[]>(`/api/v1/accounts/all`, { params });
+  return response.data;
+};
+
+
+// Ban account by ID
+const banAccount = async (accountId: string): Promise<void> => {
+  await axiosInstance.put(`/api/v1/accounts/ban/${accountId}`);
+};
+
+
 // Create accountService object for default export
 const accountService = {
   getOwnProfile,
@@ -72,9 +88,12 @@ const accountService = {
   isGoogleUser,
   updateUsername,
   updatePassword,
+  getAllAccounts,
+  banAccount,
 };
 
 // Named exports for backward compatibility
+
 export {
   getOwnProfile,
   updateOwnProfile,
@@ -83,6 +102,8 @@ export {
   isGoogleUser,
   updateUsername,
   updatePassword,
+  getAllAccounts,
+  banAccount,
 };
 
 // Default export

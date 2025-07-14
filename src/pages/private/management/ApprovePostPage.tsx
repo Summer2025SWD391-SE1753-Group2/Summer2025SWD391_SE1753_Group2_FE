@@ -15,9 +15,9 @@ import { useAuthStore } from "@/stores/auth";
 import { FileText, Clock, CheckCircle2, XCircle } from "lucide-react";
 
 import { Pagination } from "@/components/ui/pagination";
-import { PostFilter } from "@/components/management/PostFilter";
-import { PostActions } from "@/components/management/PostActions";
-import { PostSearch } from "@/components/management/PostSearch";
+import { PostFilter } from "@/components/management/approve/PostFilter";
+import { PostActions } from "@/components/management/approve/PostActions";
+import { PostSearch } from "@/components/management/approve/PostSearch";
 
 const PAGE_SIZE = 8;
 
