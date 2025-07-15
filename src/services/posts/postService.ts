@@ -3,7 +3,7 @@ import type { Post, CreatePostRequest } from "@/types/post";
 
 export const createPost = async (data: CreatePostRequest): Promise<void> => {
   try {
-    const response = await axiosInstance.post("/api/v1/posts", data);
+    const response = await axiosInstance.post("/api/v1/posts/", data);
     return response.data;
   } catch (error: unknown) {
     if (error && typeof error === "object" && "response" in error) {
