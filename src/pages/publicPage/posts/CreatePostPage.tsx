@@ -66,10 +66,14 @@ export function CreatePostPage() {
           getAllMaterials(),
         ]);
 
-        setTags(tagsData.filter((tag) => tag.status === "active"));
-        setTopics(topicsData.filter((topic) => topic.status === "active"));
+        setTags(tagsData.tags.filter((tag) => tag.status === "active"));
+        setTopics(
+          topicsData.topics.filter((topic) => topic.status === "active")
+        );
         setMaterials(
-          materialsData.filter((material) => material.status === "active")
+          materialsData.materials.filter(
+            (material) => material.status === "active"
+          )
         );
       } catch (error) {
         console.error("Error loading data:", error);

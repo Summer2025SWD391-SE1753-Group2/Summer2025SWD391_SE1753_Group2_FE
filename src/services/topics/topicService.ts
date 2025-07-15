@@ -3,10 +3,27 @@
 import axiosInstance from "@/lib/api/axios";
 import { Topic } from "@/types/topic";
 
+// Interface cho response phân trang
+export interface PaginatedResponse {
+  total: number;
+  skip: number;
+  limit: number;
+  has_more: boolean;
+}
 
-export const getAllTopics = async (): Promise<Topic[]> => {
+// Interface cho topics response
+export interface TopicsPaginatedResponse extends PaginatedResponse {
+  topics: Topic[];
+}
+
+export const getAllTopics = async (
+  skip: number = 0,
+  limit: number = 20
+): Promise<TopicsPaginatedResponse> => {
   try {
-    const response = await axiosInstance.get("/api/v1/topics/");
+    const response = await axiosInstance.get(
+      `/api/v1/topics/?skip=${skip}&limit=${limit}`
+    );
     return response.data;
   } catch {
     throw new Error("Không thể tải danh sách chủ đề");
