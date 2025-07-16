@@ -314,7 +314,7 @@ export const getUserPostsById = async (
   limit: number = 10
 ): Promise<Post[]> => {
   try {
-    const response = await axiosInstance.get(`/api/v1/posts/user/${userId}/`, {
+    const response = await axiosInstance.get(`/api/v1/posts/user/${userId}`, {
       params: {
         skip,
         limit,
