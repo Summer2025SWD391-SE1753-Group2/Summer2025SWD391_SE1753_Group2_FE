@@ -28,18 +28,18 @@ export function SimpleMaterialInput({
 
   const filteredMaterials = searchTerm.trim()
     ? materials.filter(
-      (material) =>
-        material.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !selectedMaterials.some(
-          (selected) => selected.material_id === material.material_id
-        )
-    )
+        (material) =>
+          material.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          !selectedMaterials.some(
+            (selected) => selected.material_id === material.material_id
+          )
+      )
     : materials.filter(
-      (material) =>
-        !selectedMaterials.some(
-          (selected) => selected.material_id === material.material_id
-        )
-    );
+        (material) =>
+          !selectedMaterials.some(
+            (selected) => selected.material_id === material.material_id
+          )
+      );
 
   const handleAddMaterial = (material: Material) => {
     if (selectedMaterials.length < maxItems) {
@@ -132,7 +132,7 @@ export function SimpleMaterialInput({
                           </div>
                           <div className="flex-shrink-0 ml-2">
                             <Badge variant="outline" className="text-xs">
-                              {material.unit_name || "N/A"}
+                              {material.unit || material.default_unit || "N/A"}
                             </Badge>
                           </div>
                         </div>
@@ -210,7 +210,9 @@ export function SimpleMaterialInput({
                         variant="outline"
                         className="text-xs flex-shrink-0"
                       >
-                        {postMaterial.material?.unit_name || "N/A"}
+                        {postMaterial.material?.unit ||
+                          postMaterial.material?.default_unit ||
+                          "N/A"}
                       </Badge>
                     </div>
                   </div>

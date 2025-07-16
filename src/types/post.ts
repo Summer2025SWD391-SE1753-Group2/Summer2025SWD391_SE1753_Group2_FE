@@ -30,9 +30,8 @@ export interface Material {
   name: string;
   description?: string;
   image_url?: string;
-  unit_id?: string;
-  unit_name?: string;
-  // default_unit?: string;
+  unit?: string;
+  default_unit?: string;
   status: "active" | "inactive";
 }
 
