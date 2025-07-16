@@ -65,8 +65,8 @@ const sidebarLinks: SidebarLink[] = [
     roles: ["user"],
   },
   {
-    title: "Thông báo",
-    href: paths.user.notifications,
+    title: "Báo cáo",
+    href: paths.user.createReport,
     icon: <Bell className="h-5 w-5" />,
     roles: ["user"],
   },
@@ -116,8 +116,8 @@ const sidebarLinks: SidebarLink[] = [
     ],
   },
   {
-    title: "Thông báo",
-    href: paths.moderator.notifications,
+    title: "Báo cáo",
+    href: paths.moderator.report,
     icon: <Bell className="h-5 w-5" />,
     roles: ["moderator"],
   },
