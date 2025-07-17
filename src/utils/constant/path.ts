@@ -27,6 +27,7 @@ export const paths = {
     friends: "/user/friends",
     chat: "/user/chat",
     createReport: "/user/report/create",
+    userReport: "/user/report/:userId",
   },
 
   // Moderator

@@ -23,6 +23,7 @@ import {
   MessageCircle,
   UserPlus,
   Bell,
+  FileText,
 } from "lucide-react";
 import BrandLogo from "@/components/common/brand-logo";
 import { paths } from "@/utils/constant/path";
@@ -68,6 +69,12 @@ const sidebarLinks: SidebarLink[] = [
     title: "Báo cáo",
     href: paths.user.createReport,
     icon: <Bell className="h-5 w-5" />,
+    roles: ["user"],
+  },
+  {
+    title: "Quản lý Báo cáo",
+    href: paths.user.userReport,
+    icon: <FileText className="h-5 w-5" />,
     roles: ["user"],
   },
   // Moderator

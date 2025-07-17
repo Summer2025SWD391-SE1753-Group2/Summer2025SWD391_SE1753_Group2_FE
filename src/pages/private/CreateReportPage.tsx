@@ -143,7 +143,7 @@ const CreateReportPage = () => {
                   <SelectContent>
                     <SelectItem value="report_topic">Báo cáo chủ đề</SelectItem>
                     <SelectItem value="report_tag">Báo cáo thẻ</SelectItem>
-                    <SelectItem value="report_material">Báo cáo tài liệu</SelectItem>
+                    <SelectItem value="report_material">Báo cáo nguyên liệu</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

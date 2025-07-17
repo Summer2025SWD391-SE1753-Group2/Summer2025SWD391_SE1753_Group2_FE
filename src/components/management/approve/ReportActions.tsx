@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MoreHorizontal, CheckCircle2, XCircle, Clock } from "lucide-react";
@@ -80,12 +80,12 @@ export const ReportActions = ({ report, updateReportStatus, showUnitColumn, fetc
         {icon}
         {report.status}
       </TableCell>
-      <TableCell>{report.reject_reason || "N/A"}</TableCell>
+      <TableCell>{report.reject_reason || "-"}</TableCell>
       {showUnitColumn && (
-        <TableCell>{report.unit || "N/A"}</TableCell>
+        <TableCell>{report.unit || "-"}</TableCell>
       )}
-      <TableCell>{report.object_add || "N/A"}</TableCell>
-      <TableCell>{formatRelativeTime(report.created_at)}</TableCell>
+      <TableCell>{report.object_add || "-"}</TableCell>
+      <TableCell>{new Date(report.created_at).toLocaleDateString()}</TableCell>
       <TableCell className="text-center">
         {report.status === "pending" ? (
           <Popover open={open} onOpenChange={setOpen}>
