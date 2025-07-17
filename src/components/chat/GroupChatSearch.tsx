@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  searchGroupChats,
+  getAllGroupChats,
   joinGroupChat,
+  checkMembershipBatch,
 } from "@/services/groupChat/groupChatService";
 import { toast } from "sonner";
-// Nếu chưa cài: npm install lodash.debounce
 import debounce from "lodash.debounce";
 
 interface GroupChatSearchProps {
   token: string;
-  joinedGroupIds: string[]; // List group user đã join (nếu có)
 }
 
 interface GroupChatSearchResult {
@@ -20,27 +19,49 @@ interface GroupChatSearchResult {
   member_count: number;
 }
 
-export default function GroupChatSearch({
-  token,
-  joinedGroupIds,
-}: GroupChatSearchProps) {
+const PAGE_LIMIT = 20;
+
+export default function GroupChatSearch({ token }: GroupChatSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [groups, setGroups] = useState<GroupChatSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [skip, setSkip] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [joinedMap, setJoinedMap] = useState<Record<string, boolean>>({});
 
-  // Debounced search
-  const doSearch = useCallback(
-    debounce(async (term: string) => {
-      if (term.length < 2) {
-        setGroups([]);
-        return;
-      }
+  // Debounced fetch
+  const doFetch = useCallback(
+    debounce(async (term: string, skipParam = 0, append = false) => {
       setLoading(true);
       try {
-        const data = await searchGroupChats(term, 0, 20, token);
-        setGroups(data.groups || []);
+        const data = await getAllGroupChats({
+          search: term,
+          skip: skipParam,
+          limit: PAGE_LIMIT,
+          token,
+        });
+        const newGroups = data.groups || [];
+        const allGroups = append ? [...groups, ...newGroups] : newGroups;
+        setGroups(allGroups);
+        setHasMore(data.has_more || false);
+        setSkip(skipParam + newGroups.length);
+        // Batch check membership (dùng biến cục bộ, không phụ thuộc state)
+        if (allGroups.length > 0) {
+          const memberships = await checkMembershipBatch(
+            allGroups.map((g: GroupChatSearchResult) => g.group_id),
+            token
+          );
+          const map: Record<string, boolean> = {};
+          memberships.forEach((m: { group_id: string; is_member: boolean }) => {
+            map[m.group_id] = m.is_member;
+          });
+          setJoinedMap(map);
+        } else {
+          setJoinedMap({});
+        }
       } catch {
-        toast.error("Lỗi khi tìm kiếm group chat");
+        toast.error("Lỗi khi tải group chat");
+        setHasMore(false);
       } finally {
         setLoading(false);
       }
@@ -48,10 +69,15 @@ export default function GroupChatSearch({
     [token]
   );
 
+  // Load group chat khi searchTerm thay đổi
   useEffect(() => {
-    doSearch(searchTerm);
-    return doSearch.cancel;
-  }, [searchTerm, doSearch]);
+    doFetch(searchTerm, 0, false);
+    return doFetch.cancel;
+  }, [searchTerm, doFetch]);
+
+  const handleLoadMore = () => {
+    doFetch(searchTerm, skip, true);
+  };
 
   const handleJoin = async (groupId: string) => {
     try {
@@ -64,6 +90,7 @@ export default function GroupChatSearch({
             : g
         )
       );
+      setJoinedMap((prev) => ({ ...prev, [groupId]: true }));
     } catch (err: unknown) {
       if (
         typeof err === "object" &&
@@ -82,14 +109,14 @@ export default function GroupChatSearch({
     <div className="p-4">
       <input
         className="border rounded px-3 py-2 w-full mb-4"
-        placeholder="Tìm group chat (tối thiểu 2 ký tự)..."
+        placeholder="Tìm group chat (có thể để trống hoặc bất kỳ độ dài nào)..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
       {loading && <div>Đang tìm kiếm...</div>}
       <ul className="space-y-3">
         {groups.map((group) => {
-          const isJoined = joinedGroupIds.includes(group.group_id);
+          const isJoined = joinedMap[group.group_id] === true;
           const isFull = group.member_count >= 50;
           return (
             <li
@@ -127,10 +154,18 @@ export default function GroupChatSearch({
           );
         })}
       </ul>
-      {groups.length === 0 && searchTerm.length >= 2 && !loading && (
+      {groups.length === 0 && !loading && (
         <div className="text-gray-500 mt-4">
           Không tìm thấy group nào phù hợp.
         </div>
+      )}
+      {hasMore && !loading && (
+        <button
+          className="mt-4 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 rounded py-2 font-semibold"
+          onClick={handleLoadMore}
+        >
+          Xem thêm
+        </button>
       )}
     </div>
   );

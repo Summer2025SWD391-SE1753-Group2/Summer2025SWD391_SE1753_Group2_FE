@@ -8,6 +8,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "@/lib/api/axios";
 import type { GroupChat } from "@/types/group-chat";
 import GroupChatContainer from "@/components/chat/GroupChatContainer";
+import GroupChatSearch from "@/components/chat/GroupChatSearch";
 
 const ChatPage = () => {
   const { user } = useAuthStore();
@@ -101,6 +102,10 @@ const ChatPage = () => {
             </li>
           ))}
         </ul>
+        {/* Search Group Chat dưới danh sách group chat */}
+        <div className="mt-4">
+          <GroupChatSearch token={token} />
+        </div>
       </div>
       {/* Khung chat */}
       <div className="flex-1 flex items-center justify-center bg-gray-50">
