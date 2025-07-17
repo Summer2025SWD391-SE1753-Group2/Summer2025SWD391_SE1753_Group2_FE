@@ -46,12 +46,9 @@ export class GroupChatWebSocketService {
 
   private getWebSocketUrl(): string {
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    // Use WebSocket URL from environment or fallback to API URL
-    const wsHost =
-      import.meta.env.VITE_WS_URL ||
-      import.meta.env.VITE_API_URL ||
-      "localhost:8000";
-    return `${proto}://${wsHost}/api/v1/group-chat/ws/group/${this.groupId}?token=${this.token}`;
+    const wsHost = import.meta.env.VITE_API_URL || "http://54.169.148.165:8000";
+    const host = wsHost.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    return `${proto}://${host}/api/v1/group-chat/ws/group/${this.groupId}?token=${this.token}`;
   }
 
   public connect(): Promise<void> {

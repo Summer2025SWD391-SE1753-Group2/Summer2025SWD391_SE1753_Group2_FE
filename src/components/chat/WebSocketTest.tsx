@@ -16,15 +16,11 @@ export default function WebSocketTest({ groupId, token }: WebSocketTestProps) {
     setStatus("Connecting...");
     setMessages([]);
 
-    // Test different WebSocket URLs
-    const urls = [
-      `ws://localhost:8000/api/v1/group-chat/ws/group/${groupId}?token=${token}`,
-      `ws://127.0.0.1:8000/api/v1/group-chat/ws/group/${groupId}?token=${token}`,
-      `ws://localhost:3000/api/v1/group-chat/ws/group/${groupId}?token=${token}`,
-      `ws://localhost:8080/api/v1/group-chat/ws/group/${groupId}?token=${token}`,
-    ];
-
-    const testUrl = urls[0]; // Start with first URL
+    // Generate WebSocket URL based on environment
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
+    const wsHost = import.meta.env.VITE_API_URL || "http://54.169.148.165:8000";
+    const host = wsHost.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const testUrl = `${proto}://${host}/api/v1/group-chat/ws/group/${groupId}?token=${token}`;
     console.log("Testing WebSocket URL:", testUrl);
 
     const websocket = new WebSocket(testUrl);
@@ -129,7 +125,16 @@ export default function WebSocketTest({ groupId, token }: WebSocketTestProps) {
             </p>
             <p>
               <strong>Test URL:</strong>{" "}
-              ws://localhost:8000/api/v1/group-chat/ws/group/{groupId}?token=...
+              {(() => {
+                const proto =
+                  window.location.protocol === "https:" ? "wss" : "ws";
+                const wsHost =
+                  import.meta.env.VITE_API_URL || "http://54.169.148.165:8000";
+                const host = wsHost
+                  .replace(/^https?:\/\//, "")
+                  .replace(/\/$/, "");
+                return `${proto}://${host}/api/v1/group-chat/ws/group/${groupId}?token=...`;
+              })()}
             </p>
           </div>
         </div>

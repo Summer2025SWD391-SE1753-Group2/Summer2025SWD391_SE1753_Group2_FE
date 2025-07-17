@@ -42,10 +42,12 @@ interface ChatboxProps {
   token: string;
 }
 
-const WS_URL = (token: string) =>
-  `${
-    import.meta.env.VITE_API_WS_URL || "ws://localhost:8000"
-  }/api/v1/chat/ws/chat?token=${token}`;
+const WS_URL = (token: string) => {
+  const proto = window.location.protocol === "https:" ? "wss" : "ws";
+  const wsHost = import.meta.env.VITE_API_URL || "http://54.169.148.165:8000";
+  const host = wsHost.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  return `${proto}://${host}/api/v1/chat/ws/chat?token=${token}`;
+};
 
 const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
   // Lưu lịch sử chat riêng cho từng bạn

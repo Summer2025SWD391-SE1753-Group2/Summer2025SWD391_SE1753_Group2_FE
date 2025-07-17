@@ -22,11 +22,9 @@ export default function GroupChatDebug({
   useEffect(() => {
     // Generate WebSocket URL
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsHost =
-      import.meta.env.VITE_WS_URL ||
-      import.meta.env.VITE_API_URL ||
-      "localhost:8000";
-    const url = `${proto}://${wsHost}/api/v1/group-chat/ws/group/${groupId}?token=${token}`;
+    const wsHost = import.meta.env.VITE_API_URL || "http://54.169.148.165:8000";
+    const host = wsHost.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const url = `${proto}://${host}/api/v1/group-chat/ws/group/${groupId}?token=${token}`;
     setWsUrl(url);
 
     // Test WebSocket connection
