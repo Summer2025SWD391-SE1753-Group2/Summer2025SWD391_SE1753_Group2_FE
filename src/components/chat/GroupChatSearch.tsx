@@ -7,7 +7,7 @@ import {
 import { toast } from "sonner";
 import debounce from "lodash.debounce";
 import type { AxiosError } from "axios";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface GroupChatSearchProps {
   token: string;
@@ -19,24 +19,29 @@ interface GroupChatSearchResult {
   group_description: string;
   leader_name: string;
   member_count: number;
-  topic_name: string; // thêm dòng này
+  topic_name: string;
 }
 
-const PAGE_LIMIT = 50;
+const PAGE_LIMIT = 5;
 
 export default function GroupChatSearch({ token }: GroupChatSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [groups, setGroups] = useState<GroupChatSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [skip, setSkip] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
+  // Bỏ hasMore, dùng totalCount từ API
   const [joinedMap, setJoinedMap] = useState<Record<string, boolean>>({});
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Tính tổng số trang dựa vào tổng số kết quả
+  const totalPages = Math.ceil(totalCount / PAGE_LIMIT);
 
   // Debounced fetch
   const doFetch = useCallback(
-    debounce(async (term: string, skipParam = 0, append = false) => {
+    debounce(async (term: string, pageNum = 1) => {
       setLoading(true);
       try {
+        const skipParam = (pageNum - 1) * PAGE_LIMIT;
         const data = await getAllGroupChats({
           search: term,
           skip: skipParam,
@@ -44,14 +49,16 @@ export default function GroupChatSearch({ token }: GroupChatSearchProps) {
           token,
         });
         const newGroups = data.groups || [];
-        const allGroups = append ? [...groups, ...newGroups] : newGroups;
-        setGroups(allGroups);
-        setHasMore(data.has_more || false);
-        setSkip(skipParam + newGroups.length);
-        // Batch check membership (dùng biến cục bộ, không phụ thuộc state)
-        if (allGroups.length > 0) {
+        setGroups(newGroups);
+        setTotalCount(
+          typeof data.total === "number"
+            ? data.total
+            : data.total_count || newGroups.length
+        );
+        // Batch check membership
+        if (newGroups.length > 0) {
           const memberships = await checkMembershipBatch(
-            allGroups.map((g: GroupChatSearchResult) => g.group_id),
+            newGroups.map((g: GroupChatSearchResult) => g.group_id),
             token
           );
           const map: Record<string, boolean> = {};
@@ -64,7 +71,8 @@ export default function GroupChatSearch({ token }: GroupChatSearchProps) {
         }
       } catch {
         toast.error("Lỗi khi tải group chat");
-        setHasMore(false);
+        setGroups([]);
+        setTotalCount(0);
       } finally {
         setLoading(false);
       }
@@ -74,12 +82,21 @@ export default function GroupChatSearch({ token }: GroupChatSearchProps) {
 
   // Load group chat khi searchTerm thay đổi
   useEffect(() => {
-    doFetch(searchTerm, 0, false);
+    setPage(1);
+    doFetch(searchTerm, 1);
     return doFetch.cancel;
   }, [searchTerm, doFetch]);
 
-  const handleLoadMore = () => {
-    doFetch(searchTerm, skip, true);
+  // Load group chat khi page thay đổi
+  useEffect(() => {
+    if (page === 1) return;
+    doFetch(searchTerm, page);
+  }, [page, searchTerm, doFetch]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
   };
 
   const handleJoin = async (groupId: string) => {
@@ -112,22 +129,55 @@ export default function GroupChatSearch({ token }: GroupChatSearchProps) {
     }
   };
 
+  // Tạo array các trang để hiển thị
+  const getVisiblePages = () => {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+
+    for (
+      let i = Math.max(2, page - delta);
+      i <= Math.min(totalPages - 1, page + delta);
+      i++
+    ) {
+      range.push(i);
+    }
+
+    if (page - delta > 2) {
+      rangeWithDots.push(1, "...");
+    } else if (totalPages > 1) {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (page + delta < totalPages - 1) {
+      rangeWithDots.push("...", totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots;
+  };
+
   return (
     <div className="p-4 max-w-2xl mx-auto">
       <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300 w-5 h-5" />
         <input
-          className="border border-gray-300 rounded-full pl-10 pr-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 transition mb-0 shadow-sm bg-white placeholder-gray-400"
+          className="border border-blue-200 rounded-full pl-10 pr-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 transition mb-0 shadow bg-white placeholder-gray-400"
           placeholder="Tìm tên group chat"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+
       {loading && (
         <div className="flex justify-center items-center text-blue-500 font-medium py-8 animate-pulse">
           Đang tìm kiếm...
         </div>
       )}
+
       <ul className="space-y-5">
         {groups.map((group) => {
           const isJoined = joinedMap[group.group_id] === true;
@@ -135,21 +185,23 @@ export default function GroupChatSearch({ token }: GroupChatSearchProps) {
           return (
             <li
               key={group.group_id}
-              className="bg-white border border-gray-200 rounded-2xl shadow-md p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 hover:shadow-lg transition"
+              className="bg-white border border-gray-200 hover:border-blue-400 rounded-2xl shadow-md p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 hover:shadow-lg transition"
             >
               <div className="flex-1 min-w-0">
-                <div className="font-bold text-lg text-gray-800 truncate">
+                <div className="font-bold text-lg text-gray-800 truncate group-hover:text-blue-700 transition">
                   {group.group_name}
                 </div>
-                <div className="text-xs text-blue-500 mt-1 font-medium">
+                <div className="text-xs text-blue-600 mt-1 font-medium">
                   Chủ đề: {group.topic_name}
                 </div>
                 <div className="text-xs text-gray-400 mt-2">
                   Thành viên:{" "}
                   <span className="font-semibold text-gray-700">
                     {group.member_count}/50
-                  </span>{" "}
-                  &nbsp;|&nbsp; Chủ nhóm:{" "}
+                  </span>
+                </div>
+                <div className="text-xs text-gray-400 mt-1">
+                  Chủ nhóm:{" "}
                   <span className="font-medium text-gray-600">
                     {group.leader_name}
                   </span>
@@ -178,19 +230,77 @@ export default function GroupChatSearch({ token }: GroupChatSearchProps) {
           );
         })}
       </ul>
+
       {groups.length === 0 && !loading && (
         <div className="flex flex-col items-center justify-center text-gray-400 mt-10 select-none">
           <span className="text-3xl mb-2">😕</span>
           <span className="font-medium">Không tìm thấy group nào phù hợp.</span>
         </div>
       )}
-      {hasMore && !loading && (
-        <button
-          className="mt-8 w-full bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-full py-2 font-semibold shadow-sm transition border border-blue-100"
-          onClick={handleLoadMore}
-        >
-          Xem thêm
-        </button>
+
+      {totalPages > 1 && !loading && (
+        <div className="flex items-center justify-center gap-1 mt-8">
+          {/* Previous button */}
+          <button
+            className={`flex items-center justify-center w-10 h-10 rounded-lg border transition-all duration-200 ${
+              page === 1
+                ? "border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50"
+                : "border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 bg-white shadow-sm"
+            }`}
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page === 1}
+            aria-label="Trang trước"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          {/* Page numbers */}
+          <div className="flex items-center gap-1">
+            {getVisiblePages().map((pageNum, index) => (
+              <React.Fragment key={index}>
+                {pageNum === "..." ? (
+                  <span className="px-3 py-2 text-gray-400 select-none">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    className={`w-10 h-10 rounded-lg font-medium text-sm transition-all duration-200 ${
+                      pageNum === page
+                        ? "bg-blue-600 text-white shadow-lg transform scale-105"
+                        : "bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 hover:border-blue-300 hover:scale-105 shadow-sm"
+                    }`}
+                    onClick={() => handlePageChange(pageNum as number)}
+                    disabled={pageNum === page}
+                  >
+                    {pageNum}
+                  </button>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+
+          {/* Next button */}
+          <button
+            className={`flex items-center justify-center w-10 h-10 rounded-lg border transition-all duration-200 ${
+              page === totalPages
+                ? "border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50"
+                : "border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 bg-white shadow-sm"
+            }`}
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page === totalPages}
+            aria-label="Trang sau"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Pagination info */}
+      {totalCount > 0 && !loading && (
+        <div className="text-center text-sm text-gray-500 mt-4">
+          Hiển thị {(page - 1) * PAGE_LIMIT + 1} -{" "}
+          {Math.min(page * PAGE_LIMIT, totalCount)} của {totalCount} kết quả
+        </div>
       )}
     </div>
   );

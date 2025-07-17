@@ -413,7 +413,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
     <div className="flex items-center justify-center w-full h-full">
       <div className="max-w-4xl w-full md:w-4/5 mx-auto my-8 bg-white border rounded-2xl shadow-2xl flex flex-col h-[80vh]">
         {/* Header */}
-        <div className="p-4 border-b flex items-center gap-3 bg-gradient-to-r from-orange-100 to-orange-50 rounded-t-2xl">
+        <div className="p-4 border-b flex items-center gap-3 bg-gradient-to-r from-blue-100 to-blue-50 rounded-t-2xl">
           <img
             src={friend.avatar || "/default-profile-image.png"}
             alt={friend.full_name}
@@ -428,14 +428,14 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
               >
                 <PopoverTrigger asChild>
                   <button
-                    className="ml-1 p-1 rounded hover:bg-orange-100"
+                    className="ml-1 p-1 rounded hover:bg-blue-100"
                     title="Đổi nickname"
                     onClick={() => {
                       setNicknamePopoverOpen(true);
                       setNicknameInput(nicknameInput || "");
                     }}
                   >
-                    <Pencil className="w-4 h-4 text-orange-500" />
+                    <Pencil className="w-4 h-4 text-blue-500" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent align="start" className="w-64">
@@ -451,7 +451,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
                     />
                     <div className="flex gap-2 justify-end">
                       <button
-                        className="text-orange-600 font-semibold px-2 py-1 rounded hover:bg-orange-100"
+                        className="text-blue-600 font-semibold px-2 py-1 rounded hover:bg-blue-100"
                         onClick={handleSaveNickname}
                         disabled={nicknameLoading}
                       >
@@ -485,10 +485,10 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="p-2 rounded-full hover:bg-orange-200 transition"
+                className="p-2 rounded-full hover:bg-blue-200 transition"
                 title="Cài đặt chat"
               >
-                <Settings className="w-6 h-6" />
+                <Settings className="w-6 h-6 text-blue-500" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -558,7 +558,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
                       <div
                         className={`px-4 py-2 rounded-2xl shadow-sm text-sm break-words ${
                           isMe
-                            ? "bg-orange-200 text-gray-900 rounded-br-md"
+                            ? "bg-blue-200 text-gray-900 rounded-br-md"
                             : "bg-white text-gray-900 border rounded-bl-md"
                         }`}
                       >
@@ -587,7 +587,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
                                 className="w-5 h-5 rounded-full border object-cover shadow ml-1"
                                 title="Đã xem"
                               />
-                              <span className="text-xs text-green-500 font-semibold ml-1">
+                              <span className="text-xs text-blue-500 font-semibold ml-1">
                                 Đã xem
                               </span>
                             </>
@@ -615,7 +615,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
         {/* Input */}
         <div className="p-4 border-t flex gap-2 bg-white rounded-b-2xl">
           <input
-            className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300 shadow-sm"
+            className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-sm"
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
@@ -643,7 +643,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
           />
           <button
             onClick={handleSend}
-            className="bg-gradient-to-r from-orange-400 to-orange-500 text-white px-6 py-2 rounded-full font-semibold shadow hover:from-orange-500 hover:to-orange-600 transition"
+            className="bg-gradient-to-r from-blue-400 to-blue-500 text-white px-6 py-2 rounded-full font-semibold shadow hover:from-blue-500 hover:to-blue-600 transition"
           >
             Gửi
           </button>
@@ -674,14 +674,14 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
               >
                 <input
                   ref={searchInputRef}
-                  className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
                   placeholder="Nhập từ khóa..."
                   value={searchKeyword}
                   onChange={(e) => setSearchKeyword(e.target.value)}
                 />
                 <button
                   type="submit"
-                  className="bg-orange-500 text-white px-4 py-2 rounded font-semibold"
+                  className="bg-blue-500 text-white px-4 py-2 rounded font-semibold"
                 >
                   Tìm
                 </button>
@@ -731,7 +731,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ currentUser, friend, token }) => {
               </ul>
               {searchResults.length > 0 && (
                 <button
-                  className="mt-3 w-full text-center text-orange-600 hover:underline"
+                  className="mt-3 w-full text-center text-blue-600 hover:underline"
                   onClick={() =>
                     handleSearchMessages(searchKeyword, searchSkip)
                   }
