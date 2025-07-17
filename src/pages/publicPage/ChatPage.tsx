@@ -54,9 +54,9 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="flex h-[90vh]">
+    <div className="flex h-[90vh] w-full max-w-none">
       {/* Danh sách bạn bè + group chat */}
-      <div className="w-64 border-r p-4 bg-white overflow-y-auto">
+      <div className="hidden sm:block w-112 border-r p-4 bg-white overflow-y-auto sm:relative sm:z-10">
         <h2 className="font-bold mb-4">Bạn bè</h2>
         {friends.length === 0 && <div>Không có bạn bè nào</div>}
         <ul>
@@ -108,7 +108,7 @@ const ChatPage = () => {
         </div>
       </div>
       {/* Khung chat */}
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
+      <div className="flex-1 flex items-center justify-center bg-gray-50 min-w-0">
         {selectedFriend ? (
           <Chatbox currentUser={user} friend={selectedFriend} token={token} />
         ) : selectedGroup ? (
