@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { getFriendsList } from "@/services/friends/friendService";
 import { toast } from "sonner";
 
 export function SettingPage() {
@@ -24,6 +25,7 @@ export function SettingPage() {
     bio: "",
   });
   const [saving, setSaving] = useState(false);
+  const [friendCount, setFriendCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -44,6 +46,16 @@ export function SettingPage() {
       }
     };
 
+    const fetchFriendCount = async () => {
+      try {
+        const friends = await getFriendsList();
+        setFriendCount(friends.length);
+      } catch (error) {
+        console.error("Failed to fetch friends:", error);
+      }
+    };
+
+    fetchFriendCount();
     fetchProfile();
   }, []);
 
@@ -279,7 +291,7 @@ export function SettingPage() {
 
                   <div>
                     <Label>Số bạn bè</Label>
-                    <p className="text-lg">{profile.friend_count || 0}</p>
+                    <p className="text-lg">{friendCount}</p>
                   </div>
 
                   <div>

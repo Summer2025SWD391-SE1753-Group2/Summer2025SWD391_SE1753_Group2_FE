@@ -129,7 +129,7 @@ const CreateReportPage = () => {
                   name="title"
                   value={formData.title}
                   onChange={handleChange}
-                  placeholder="Nhập tiêu đề báo cáo"
+                  placeholder="VD: Báo cáo thêm chủ đề, thẻ hay nguyên liệu mới"
                   required
                 />
               </div>
@@ -155,7 +155,7 @@ const CreateReportPage = () => {
                   name="reason"
                   value={formData.reason}
                   onChange={handleChange}
-                  placeholder="Nhập lý do báo cáo"
+                  placeholder="VD: Lý do báo cáo chủ đề, thẻ hay nguyên liệu mới là..."
                   required
                 />
               </div>
@@ -167,7 +167,7 @@ const CreateReportPage = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Nhập mô tả chi tiết"
+                  placeholder="Mô tả chi tiết về vấn đề bạn gặp phải là gì?"
                   required
                 />
               </div>
@@ -180,7 +180,7 @@ const CreateReportPage = () => {
                     name="unit"
                     value={formData.unit}
                     onChange={handleChange}
-                    placeholder="Nhập đơn vị (nếu có)"
+                    placeholder="VD: gam, ml, cái..."
                   />
                 </div>
               )}
@@ -192,7 +192,7 @@ const CreateReportPage = () => {
                   name="object_add"
                   value={formData.object_add}
                   onChange={handleChange}
-                  placeholder="Nhập đối tượng bổ sung"
+                  placeholder="VD: Đường, Bột mì, Bột ngô, Tên thẻ, Tên Tiêu Đề..."
                   required
                 />
               </div>
