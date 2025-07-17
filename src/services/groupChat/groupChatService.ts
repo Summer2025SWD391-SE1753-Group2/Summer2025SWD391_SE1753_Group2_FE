@@ -157,3 +157,27 @@ export const getGroupMessages = async (
   );
   return res.data;
 };
+
+export async function searchGroupChats(
+  searchTerm: string,
+  skip = 0,
+  limit = 20,
+  token: string
+) {
+  const res = await axiosInstance.get("/api/v1/group-chat/search", {
+    params: { search_term: searchTerm, skip, limit },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+}
+
+export async function joinGroupChat(groupId: string, token: string) {
+  const res = await axiosInstance.post(
+    `/api/v1/group-chat/${groupId}/join`,
+    null,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  return res.data;
+}
