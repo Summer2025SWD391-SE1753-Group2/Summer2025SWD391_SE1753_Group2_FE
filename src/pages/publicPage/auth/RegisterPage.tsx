@@ -253,7 +253,10 @@ const RegisterPage: React.FC = () => {
     try {
       console.log("📤 Sending data to register:", formData);
       await authService.register(formData);
-      toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+      toast.success(
+        "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.",
+        { duration: 5000 }
+      );
       navigate("/auth/login");
     } catch (error: unknown) {
       const errorData = error as { response?: { data?: ErrorResponse } };

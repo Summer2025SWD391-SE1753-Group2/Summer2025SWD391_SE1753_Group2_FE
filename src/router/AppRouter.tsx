@@ -35,6 +35,7 @@ import ForgotPasswordPage from "@/pages/publicPage/auth/ForgotPasswordPage";
 import ChangePasswordPage from "@/pages/publicPage/auth/ChangePasswordPage";
 import GroupChatManagementPage from "@/pages/private/management/GroupChatManagementPage";
 import NotificationsPage from "@/pages/private/NotificationsPage";
+import VerifyEmailPage from "@/pages/publicPage/verify-email";
 
 const router = createBrowserRouter([
   {
@@ -49,7 +50,8 @@ const router = createBrowserRouter([
           { path: paths.register, element: <RegisterPage /> },
           { path: paths.googleCallback, element: <GoogleCallbackPage /> },
           { path: paths.forgotPassword, element: <ForgotPasswordPage /> },
-          { path: paths.changePassword, element: <ChangePasswordPage/> },
+          { path: paths.changePassword, element: <ChangePasswordPage /> },
+          { path: paths.verifyEmail, element: <VerifyEmailPage /> },
         ],
       },
     ],

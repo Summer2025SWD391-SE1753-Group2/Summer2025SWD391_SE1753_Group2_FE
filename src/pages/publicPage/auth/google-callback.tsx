@@ -9,9 +9,9 @@ export default function GoogleCallback() {
     const token = params.get("token");
     if (token) {
       localStorage.setItem("token", token);
-      navigate("/");
+      navigate("/"); // về trang chủ
     } else {
-      navigate("/login");
+      navigate("/auth/login"); // về trang login nếu lỗi
     }
   }, [navigate]);
 
