@@ -5,11 +5,13 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { UserProfile } from "@/types/account";
-import { Check, Crown, Loader2, Shield, User } from "lucide-react";
+import { Check, Crown, Loader2, Pencil, Shield, User } from "lucide-react";
 import { GoogleUserSetup } from "@/components/auth/GoogleUserSetup";
 import { getMyPosts } from "@/services/posts/postService";
 import { Post } from "@/types/post";
 import { Link } from "react-router-dom";
+import { getFriendsList } from "@/services/friends/friendService";
+import { Button } from "@/components/ui/button"; // Assuming Button is available
 
 const getInitials = (name: string = "") =>
   name
@@ -55,6 +57,7 @@ const formatDate = (dateString: string) => {
 const ProfilePage = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [friendCount, setFriendCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -75,8 +78,18 @@ const ProfilePage = () => {
       }
     };
 
+    const fetchFriendCount = async () => {
+      try {
+        const friends = await getFriendsList();
+        setFriendCount(friends.length);
+      } catch (error) {
+        console.error("Failed to fetch friends:", error);
+      }
+    };
+
     fetchProfile();
     fetchPosts();
+    fetchFriendCount();
   }, []);
 
   if (!profile) {
@@ -108,10 +121,19 @@ const ProfilePage = () => {
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-xl font-semibold leading-none">
-              @{profile.username}
+            <p className="text-xl font-semibold leading-none mt-10 mb-2">
+              {profile.full_name || profile.username}
             </p>
-
+            <div className="mt-1">
+              <Link to={roleName === "moderator" ? "/moderator/setting" : "/user/friends"}>
+                <Badge
+                  variant="secondary"
+                  className="bg-gray-700 text-white text-sm font-normal cursor-pointer"
+                >
+                  {friendCount} người bạn
+                </Badge>
+              </Link>
+            </div>
             <div className="flex gap-3 mt-3">
               <Badge
                 variant="outline"
@@ -125,7 +147,7 @@ const ProfilePage = () => {
               </Badge>
               <Badge
                 className={cn(
-                  "px-4 py-1.5 text-sm font-semibold flex items-center gap-1",
+                  "px-4 py-2 text-sm font-semibold flex items-center gap-1",
                   getStatusStyle(profile.status)
                 )}
               >
@@ -138,6 +160,16 @@ const ProfilePage = () => {
                   <>Không hoạt động</>
                 )}
               </Badge>
+              <Link to={roleName === "moderator" ? "/moderator/setting" : "/user/setting"}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-gray-800 text-white hover:brightness-110 rounded-md px-4 py-1.5 text-sm font-semibold border-none transition-all duration-200 flex items-center gap-1"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Chỉnh sửa trang cá nhân
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -167,34 +199,34 @@ const ProfilePage = () => {
             Chưa có bài viết nào
           </p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-4">
             {posts.map((post) => (
               <li key={post.post_id}>
                 <Link
                   to={`/posts/${post.post_id}`}
                   className="block"
                 >
-                  <div className="flex items-center py-4 px-4 bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200">
-                    <div className="w-20 h-20 flex-shrink-0">
+                  <div className="flex items-start py-3 px-4 bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <div className="w-32 h-32 flex-shrink-0">
                       <img
                         src={post.images.length > 0 ? post.images[0].image_url : "/placeholder-image.jpg"}
                         alt={post.title}
                         className="w-full h-full object-cover rounded-md"
                       />
                     </div>
-                    <div className="ml-4 flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{post.title}</h3>
+                    <div className="ml-6 flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{post.title}</h3>
                       {post.topics.length > 0 && (
-                        <p className="text-sm text-gray-500 mt-1">{post.topics[0].name}</p>
+                        <p className="text-sm text-gray-600 mt-2">{post.topics[0].name}</p>
                       )}
                       {post.tags.length > 0 && (
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-gray-600 mt-1">
                           <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5">
                             #{post.tags[0].name}
                           </Badge>
                         </p>
                       )}
-                      <p className="text-sm text-gray-400 mt-1">
+                      <p className="text-sm text-gray-500 mt-2">
                         Ngày tạo: {formatDate(post.created_at)}
                       </p>
                     </div>

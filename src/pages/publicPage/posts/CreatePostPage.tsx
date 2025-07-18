@@ -10,7 +10,7 @@ import { FileUpload } from "@/components/posts/FileUpload";
 import { MultiSelect } from "@/components/posts/MultiSelect";
 import { SimpleMaterialInput } from "@/components/posts/SimpleMaterialInput";
 import { StepsInput } from "@/components/posts/StepsInput";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle, Flag } from "lucide-react";
 import { toast } from "sonner";
 import type { Tag, Topic, Material, PostMaterial, Step } from "@/types/post";
 import { createPost } from "@/services/posts/postService";
@@ -266,22 +266,33 @@ export function CreatePostPage() {
   return (
     <div className="container mx-auto py-6 px-4 max-w-4xl">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Quay lại
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Tạo bài viết mới</h1>
+            <p className="text-sm text-muted-foreground">
+              Chia sẻ món ăn và công thức nấu ăn với cộng đồng
+            </p>
+          </div>
+        </div>
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/user/report/create")}
           className="flex items-center gap-2"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Quay lại
+          <Flag className="h-4 w-4" />
+          Báo cáo
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Tạo bài viết mới</h1>
-          <p className="text-sm text-muted-foreground">
-            Chia sẻ món ăn và công thức nấu ăn với cộng đồng
-          </p>
-        </div>
       </div>
 
       {/* Post Status Info */}
@@ -615,7 +626,7 @@ export function CreatePostPage() {
               >
                 {isSubmitting ? "Đang gửi..." : "Gửi bài để duyệt"}
               </Button>
-
+              
               {/* Post Info */}
             </CardContent>
           </Card>
