@@ -307,8 +307,9 @@ export const PostDetailPage = () => {
   };
 
   const formatDate = (dateString: string) => {
-    // Use lastRefresh to trigger re-calculation of relative time
-    return formatRelativeTime(dateString, lastRefresh);
+    const date = new Date(dateString);
+    date.setHours(date.getHours() + 7);
+    return formatRelativeTime(date.toISOString(), lastRefresh);
   };
 
   const getInitials = (name: string) => {
