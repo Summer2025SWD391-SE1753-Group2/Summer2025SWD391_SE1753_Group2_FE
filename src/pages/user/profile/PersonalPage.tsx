@@ -11,6 +11,9 @@ import { UserProfile } from "@/types/account";
 import { Post } from "@/types/post";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import axiosInstance from "@/lib/api/axios";
+import { FriendshipStatus } from "@/types/friend";
+
 
 const getRoleStyle = (role: string) => {
   switch (role) {
@@ -27,6 +30,15 @@ const getStatusStyle = (status: string) => {
   return status === "active" ? "bg-black text-white" : "bg-gray-300 text-gray-700";
 };
 
+const getFriendshipStatus = async (
+  friend_id: string
+): Promise<FriendshipStatus> => {
+  const response = await axiosInstance.get<FriendshipStatus>(
+    `/api/v1/friends/status/${friend_id}`
+  );
+  return response.data;
+};
+
 export function PersonalPage() {
   const { username } = useParams<{ username: string }>();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -35,6 +47,7 @@ export function PersonalPage() {
   const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [loadingMyPosts, setLoadingMyPosts] = useState(false);
   const [errorPosts, setErrorPosts] = useState<string | null>(null);
+  const [friendshipStatus, setFriendshipStatus] = useState<FriendshipStatus | null>(null);
 
   // Fetch profile
   useEffect(() => {
@@ -60,6 +73,21 @@ export function PersonalPage() {
     fetchProfile();
     return () => controller.abort();
   }, [username]);
+
+  // Fetch friendship status
+  useEffect(() => {
+    const fetchFriendshipStatus = async () => {
+      if (!profile) return;
+      try {
+        const status = await getFriendshipStatus(profile.account_id);
+        setFriendshipStatus(status);
+      } catch (err: unknown) {
+        const error = err as Error;
+        toast.error(error.message || "Không thể tải trạng thái kết bạn. Vui lòng thử lại.");
+      }
+    };
+    fetchFriendshipStatus();
+  }, [profile]);
 
   // Fetch all approved posts by user's account_id
   useEffect(() => {
@@ -89,6 +117,8 @@ export function PersonalPage() {
     try {
       await sendFriendRequest({ receiver_id: profile.account_id });
       toast.success("Đã gửi lời mời kết bạn!");
+      // Update friendship status to request_sent after sending request
+      setFriendshipStatus({ status: "request_sent", can_send_request: false });
     } catch (err: unknown) {
       const error = err as Error;
       toast.error(error.message || "Lỗi khi gửi lời mời kết bạn");
@@ -177,9 +207,9 @@ export function PersonalPage() {
                   variant="default"
                   className="bg-red-500 hover:bg-red-600 text-white transition-colors duration-200"
                   onClick={handleAddFriend}
-                  aria-label={`Thêm bạn ${profile.username}`}
+                  disabled={friendshipStatus?.status === "friends" || friendshipStatus?.status === "request_sent" || friendshipStatus?.status === "self"}
                 >
-                  Thêm bạn
+                  {friendshipStatus?.status === "friends" ? "Bạn bè" : "Thêm bạn"}
                 </Button>
               </div>
             </div>
