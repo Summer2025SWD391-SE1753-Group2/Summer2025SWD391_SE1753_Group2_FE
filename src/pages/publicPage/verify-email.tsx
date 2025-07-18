@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import axiosInstance from "@/lib/api/axios";
+import { Button } from "@/components/ui/button";
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
@@ -20,17 +19,15 @@ export default function VerifyEmailPage() {
       return;
     }
     axiosInstance
-      .post(`/api/v1/accounts/confirm-email?token=${token}`)
+      .get("/api/v1/accounts/confirm-email", { params: { token } })
       .then((res) => {
         setStatus("success");
         setMessage(res.data.message || "Xác thực email thành công!");
-        toast.success("Xác thực email thành công!");
         setTimeout(() => navigate("/auth/login"), 3000);
       })
       .catch(() => {
         setStatus("error");
         setMessage("Xác thực email thất bại hoặc liên kết đã hết hạn.");
-        toast.error("Xác thực email thất bại.");
       });
   }, [searchParams, navigate]);
 
