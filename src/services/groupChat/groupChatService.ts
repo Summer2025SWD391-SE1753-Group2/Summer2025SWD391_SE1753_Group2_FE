@@ -157,3 +157,62 @@ export const getGroupMessages = async (
   );
   return res.data;
 };
+
+export async function getAllGroupChats({
+  skip = 0,
+  limit = 20,
+  search = "",
+  topic_id = "",
+  token,
+}: {
+  skip?: number;
+  limit?: number;
+  search?: string;
+  topic_id?: string;
+  token: string;
+}) {
+  const params: any = { skip, limit };
+  if (search) params.search = search;
+  if (topic_id) params.topic_id = topic_id;
+  const res = await axiosInstance.get("/api/v1/group-chat/all", {
+    params,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+}
+
+export async function checkMembershipBatch(groupIds: string[], token: string) {
+  const res = await axiosInstance.post(
+    "/api/v1/group-chat/membership/batch",
+    { group_ids: groupIds },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  return res.data.memberships as { group_id: string; is_member: boolean }[];
+}
+
+export async function searchGroupChats(
+  searchTerm: string,
+  skip = 0,
+  limit = 20,
+  token: string
+) {
+  if (searchTerm.length < 2) return { groups: [], has_more: false };
+  const res = await axiosInstance.get("/api/v1/group-chat/search", {
+    params: { search_term: searchTerm, skip, limit },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+}
+
+export async function joinGroupChat(groupId: string, token: string) {
+  const res = await axiosInstance.post(
+    `/api/v1/group-chat/${groupId}/join`,
+    null,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  return res.data;
+}

@@ -19,6 +19,7 @@ import type { CreatePostRequest } from "@/types/post";
 import { getAllTopics } from "@/services/topics/topicService";
 import { getAllMaterials } from "@/services/materials/materialService";
 import { getAllTags } from "@/services/tags/tagsService";
+import { paths } from "@/utils/constant/path";
 
 interface FileUploadItem {
   file: File;
@@ -236,7 +237,7 @@ export function CreatePostPage() {
       await createPost(requestData);
 
       toast.success("Bài viết của bạn đã được gửi và đang chờ duyệt");
-      navigate("/");
+      navigate(paths.user.dashboard);
     } catch (err) {
       console.error("Error creating post:", err);
       toast.error(

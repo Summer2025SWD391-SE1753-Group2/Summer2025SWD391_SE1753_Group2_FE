@@ -33,6 +33,8 @@ export class GroupChatWebSocketService {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private connecting = false;
   private isManualClose = false;
+  private hadConnectionEstablished = false;
+  private errorTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     groupId: string,
@@ -46,12 +48,9 @@ export class GroupChatWebSocketService {
 
   private getWebSocketUrl(): string {
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    // Use WebSocket URL from environment or fallback to API URL
-    const wsHost =
-      import.meta.env.VITE_WS_URL ||
-      import.meta.env.VITE_API_URL ||
-      "localhost:8000";
-    return `${proto}://${wsHost}/api/v1/group-chat/ws/group/${this.groupId}?token=${this.token}`;
+    const wsHost = import.meta.env.VITE_API_URL || "http://54.169.148.165:8000";
+    const host = wsHost.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    return `${proto}://${host}/api/v1/group-chat/ws/group/${this.groupId}?token=${this.token}`;
   }
 
   public connect(): Promise<void> {
@@ -63,6 +62,11 @@ export class GroupChatWebSocketService {
 
       this.connecting = true;
       this.isManualClose = false;
+      this.hadConnectionEstablished = false;
+      if (this.errorTimeout) {
+        clearTimeout(this.errorTimeout);
+        this.errorTimeout = null;
+      }
 
       try {
         this.ws = new WebSocket(this.getWebSocketUrl());
@@ -77,6 +81,16 @@ export class GroupChatWebSocketService {
         this.ws.onmessage = (event) => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
+            if (message.type === "connection_established") {
+              this.hadConnectionEstablished = true;
+              if (this.errorTimeout) {
+                clearTimeout(this.errorTimeout);
+                this.errorTimeout = null;
+              }
+              // Optionally: log or handle connection established event
+              // console.info("WebSocket connection established", message);
+              return;
+            }
             this.handleMessage(message);
           } catch (error) {
             console.error("Failed to parse WebSocket message:", error);
@@ -118,8 +132,27 @@ export class GroupChatWebSocketService {
 
         this.ws.onerror = (error) => {
           this.connecting = false;
-          console.error("WebSocket error:", error);
-          reject(new Error("Không thể kết nối WebSocket"));
+          // Only log as error if connection was never established
+          if (!this.hadConnectionEstablished) {
+            if (!this.errorTimeout) {
+              this.errorTimeout = setTimeout(() => {
+                if (!this.hadConnectionEstablished) {
+                  console.error(
+                    "WebSocket error (no connection established):",
+                    error
+                  );
+                  reject(new Error("Không thể kết nối WebSocket"));
+                }
+                this.errorTimeout = null;
+              }, 1000); // Delay error reporting by 1s
+            }
+          } else {
+            // If connection was established before, just warn
+            console.warn(
+              "WebSocket error after connection established:",
+              error
+            );
+          }
         };
       } catch (error) {
         this.connecting = false;
@@ -135,7 +168,6 @@ export class GroupChatWebSocketService {
           this.callbacks.onMessage?.(message.data);
         }
         break;
-
       case "typing_indicator":
         if (message.user_id && typeof message.is_typing === "boolean") {
           this.callbacks.onTypingIndicator?.(
@@ -144,23 +176,23 @@ export class GroupChatWebSocketService {
           );
         }
         break;
-
       case "online_members":
         if (message.members) {
           this.callbacks.onOnlineMembers?.(message.members);
         }
         break;
-
       case "message_sent":
         // Optional: Handle message sent confirmation
         break;
-
       case "error":
         this.callbacks.onError?.(message.detail || "Lỗi WebSocket");
         break;
-
+      case "connection_established":
+        // Already handled in onmessage
+        break;
       default:
-        console.log("Unknown WebSocket message type:", message.type);
+        // Only log unknown types as warning
+        console.warn("Unknown WebSocket message type:", message.type);
     }
   }
 

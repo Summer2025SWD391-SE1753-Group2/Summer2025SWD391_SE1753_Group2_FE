@@ -10,7 +10,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Check, X, Search, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -19,6 +18,7 @@ import axiosInstance from "@/lib/api/axios";
 import { createGroupChatWithMembers } from "@/services/groupChat/groupChatService";
 import type { AvailableTopic } from "@/types/topic";
 import type { UserProfile } from "@/types/account";
+import type { AxiosError } from "axios";
 
 interface CreateGroupChatDialogProps {
   open: boolean;
@@ -46,7 +46,7 @@ export default function CreateGroupChatDialog({
   open,
   onOpenChange,
   onSuccess,
-}: CreateGroupChatDialogProps) {
+}: Readonly<CreateGroupChatDialogProps>) {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [availableTopics, setAvailableTopics] = useState<AvailableTopic[]>([]);
@@ -92,8 +92,21 @@ export default function CreateGroupChatDialog({
         "/api/v1/group-chat/topics/available"
       );
       setAvailableTopics(response.data);
-    } catch (error) {
-      toast.error("Không thể tải danh sách chủ đề");
+    } catch (error: unknown) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "isAxiosError" in error &&
+        (error as AxiosError).isAxiosError &&
+        ((error as AxiosError).response?.data as { detail?: string })?.detail
+      ) {
+        toast.error(
+          ((error as AxiosError).response?.data as { detail?: string })
+            ?.detail || "Không thể tải danh sách chủ đề"
+        );
+      } else {
+        toast.error("Không thể tải danh sách chủ đề");
+      }
     } finally {
       setTopicsLoading(false);
     }
@@ -114,8 +127,21 @@ export default function CreateGroupChatDialog({
           )
       );
       setStep3Data((prev) => ({ ...prev, searchResults: results }));
-    } catch (error) {
-      toast.error("Không thể tìm kiếm thành viên");
+    } catch (error: unknown) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "isAxiosError" in error &&
+        (error as AxiosError).isAxiosError &&
+        ((error as AxiosError).response?.data as { detail?: string })?.detail
+      ) {
+        toast.error(
+          ((error as AxiosError).response?.data as { detail?: string })
+            ?.detail || "Không thể tìm kiếm thành viên"
+        );
+      } else {
+        toast.error("Không thể tìm kiếm thành viên");
+      }
     } finally {
       setStep3Data((prev) => ({ ...prev, searching: false }));
     }
@@ -193,8 +219,21 @@ export default function CreateGroupChatDialog({
       toast.success("Tạo group chat thành công");
       onSuccess();
       handleClose();
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Tạo group chat thất bại");
+    } catch (error: unknown) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "isAxiosError" in error &&
+        (error as AxiosError).isAxiosError &&
+        ((error as AxiosError).response?.data as { detail?: string })?.detail
+      ) {
+        toast.error(
+          ((error as AxiosError).response?.data as { detail?: string })
+            ?.detail || "Tạo group chat thất bại"
+        );
+      } else {
+        toast.error("Tạo group chat thất bại");
+      }
     } finally {
       setLoading(false);
     }
@@ -213,28 +252,26 @@ export default function CreateGroupChatDialog({
     onOpenChange(false);
   };
 
-  const renderStep1 = () => (
-    <div className="space-y-4">
-      <div>
-        <h3 className="font-medium mb-2">Chọn chủ đề cho group chat</h3>
-        <p className="text-sm text-gray-600 mb-4">
-          Chọn một chủ đề chưa có group chat để tạo group mới
-        </p>
-      </div>
-
-      {topicsLoading ? (
+  const renderStep1 = () => {
+    let topicContent;
+    if (topicsLoading) {
+      topicContent = (
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Đang tải danh sách chủ đề...</p>
         </div>
-      ) : availableTopics.length === 0 ? (
+      );
+    } else if (availableTopics.length === 0) {
+      topicContent = (
         <div className="text-center py-8">
           <Users className="h-12 w-12 text-gray-400 mx-auto mb-2" />
           <p className="text-gray-600">
             Không có chủ đề nào có thể tạo group chat
           </p>
         </div>
-      ) : (
+      );
+    } else {
+      topicContent = (
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {availableTopics.map((topic) => (
             <div
@@ -260,9 +297,20 @@ export default function CreateGroupChatDialog({
             </div>
           ))}
         </div>
-      )}
-    </div>
-  );
+      );
+    }
+    return (
+      <div className="space-y-4">
+        <div>
+          <h3 className="font-medium mb-2">Chọn chủ đề cho group chat</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Chọn một chủ đề chưa có group chat để tạo group mới
+          </p>
+        </div>
+        {topicContent}
+      </div>
+    );
+  };
 
   const renderStep2 = () => (
     <div className="space-y-4">

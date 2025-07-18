@@ -3,7 +3,7 @@ import type { Post, CreatePostRequest } from "@/types/post";
 
 export const createPost = async (data: CreatePostRequest): Promise<void> => {
   try {
-    const response = await axiosInstance.post("/api/v1/posts", data);
+    const response = await axiosInstance.post("/api/v1/posts/", data);
     return response.data;
   } catch (error: unknown) {
     if (error && typeof error === "object" && "response" in error) {
@@ -93,7 +93,7 @@ const searchPostsByTopic = async (
         topicName
       )}&skip=${skip}&limit=${limit}`
     );
-    return response.data.filter(post => post.status === 'approved') || [];
+    return response.data.filter((post) => post.status === "approved") || [];
   } catch (error: unknown) {
     if (error && typeof error === "object" && "response" in error) {
       const axiosError = error as {
@@ -123,7 +123,7 @@ const searchPostsByTag = async (
         tagName
       )}&skip=${skip}&limit=${limit}`
     );
-    return response.data.filter(post => post.status === 'approved') || [];
+    return response.data.filter((post) => post.status === "approved") || [];
   } catch (error: unknown) {
     if (error && typeof error === "object" && "response" in error) {
       const axiosError = error as {
@@ -153,7 +153,7 @@ const searchPostsByTitle = async (
         title
       )}&skip=${skip}&limit=${limit}`
     );
-    return response.data.filter(post => post.status === 'approved') || [];
+    return response.data.filter((post) => post.status === "approved") || [];
   } catch (error: unknown) {
     if (error && typeof error === "object" && "response" in error) {
       const axiosError = error as {
@@ -314,11 +314,11 @@ export const getUserPostsById = async (
   limit: number = 10
 ): Promise<Post[]> => {
   try {
-    const response = await axiosInstance.get(`/api/v1/posts/user/${userId}/`, {
-      params: { 
-        skip, 
-        limit, 
-        status: 'approved'
+    const response = await axiosInstance.get(`/api/v1/posts/user/${userId}`, {
+      params: {
+        skip,
+        limit,
+        status: "approved",
       },
     });
     return response.data || [];
@@ -334,8 +334,8 @@ export const getUserPostsById = async (
         return [];
       }
       throw new Error(
-        axiosError.response?.data?.message || 
-        `Không thể tải bài viết của người dùng với ID: ${userId}`
+        axiosError.response?.data?.message ||
+          `Không thể tải bài viết của người dùng với ID: ${userId}`
       );
     }
     throw new Error("Lỗi khi tải bài viết của người dùng");
