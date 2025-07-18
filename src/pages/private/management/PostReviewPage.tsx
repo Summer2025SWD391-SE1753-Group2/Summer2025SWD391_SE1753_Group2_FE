@@ -371,7 +371,7 @@ export function PostReviewPage() {
                     </span>
                     <span className="text-sm text-muted-foreground">
                       {material.quantity}{" "}
-                      {material.unit || material.material?.unit}
+                      {material.unit || material.material?.unit_name}
                     </span>
                   </div>
                 ))}

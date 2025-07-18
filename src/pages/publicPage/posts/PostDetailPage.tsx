@@ -307,8 +307,9 @@ export const PostDetailPage = () => {
   };
 
   const formatDate = (dateString: string) => {
-    // Use lastRefresh to trigger re-calculation of relative time
-    return formatRelativeTime(dateString, lastRefresh);
+    const date = new Date(dateString);
+    date.setHours(date.getHours() + 7);
+    return formatRelativeTime(date.toISOString(), lastRefresh);
   };
 
   const getInitials = (name: string) => {
@@ -461,7 +462,7 @@ export const PostDetailPage = () => {
                     </span>
                     <span className="text-sm font-semibold bg-gray-100 px-2 py-1 rounded">
                       {material.quantity}{" "}
-                      {material.unit || material.material?.unit || "đv"}
+                      {material.unit || material.material?.unit_name || "đv"}
                     </span>
                   </div>
                 ))}

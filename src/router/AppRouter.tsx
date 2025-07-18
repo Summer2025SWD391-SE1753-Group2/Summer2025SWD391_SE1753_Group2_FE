@@ -34,7 +34,9 @@ import ChatPage from "@/pages/publicPage/ChatPage";
 import ForgotPasswordPage from "@/pages/publicPage/auth/ForgotPasswordPage";
 import ChangePasswordPage from "@/pages/publicPage/auth/ChangePasswordPage";
 import GroupChatManagementPage from "@/pages/private/management/GroupChatManagementPage";
-import NotificationsPage from "@/pages/private/NotificationsPage";
+import { ReportPage } from "@/pages/private/management/ReportPage";
+import CreateReportPage from "@/pages/private/CreateReportPage";
+import { UserReportPage } from "@/pages/private/UserReportPage";
 import VerifyEmailPage from "@/pages/publicPage/verify-email";
 
 const router = createBrowserRouter([
@@ -89,13 +91,14 @@ const router = createBrowserRouter([
       { path: paths.user.favorites, element: <FavoritesPage /> },
       { path: paths.user.favoritesDetail, element: <DetailFavoritePage /> },
       { path: paths.user.friends, element: <FriendManagementPage /> },
+      { path: paths.user.createReport, element: <CreateReportPage /> },
+      { path: paths.user.userReport, element: <UserReportPage /> },
 
       { path: paths.user.profile, element: <ProfilePage /> },
       { path: paths.user.setting, element: <SettingPage /> },
       //
       { path: paths.user.chat, element: <ChatPage /> },
       { path: "/user/chat/:friendId", element: <ChatPage /> },
-      { path: paths.user.notifications, element: <NotificationsPage /> },
     ],
   },
   //moderator
@@ -134,7 +137,7 @@ const router = createBrowserRouter([
         path: paths.moderator.groupChatManagement,
         element: <GroupChatManagementPage />,
       },
-      { path: paths.moderator.notifications, element: <NotificationsPage /> },
+      { path: paths.moderator.report, element: <ReportPage /> },
     ],
   },
   //admin

@@ -28,7 +28,8 @@ export const paths = {
     favoritesDetail: "/user/favorites/:favouriteId",
     friends: "/user/friends",
     chat: "/user/chat",
-    notifications: "/user/notifications",
+    createReport: "/user/report/create",
+    userReport: "/user/report/:userId",
   },
 
   // Moderator
@@ -46,7 +47,7 @@ export const paths = {
     unitManagement: "/moderator/unit-management",
     groupChatManagement: "/moderator/group-chat-management",
     chat: "/moderator/chat",
-    notifications: "/moderator/notifications",
+    report: "/moderator/report",
   },
   //admin
   admin: {
