@@ -46,6 +46,7 @@ export const paths = {
     topicManagement: "/moderator/topic-management",
     unitManagement: "/moderator/unit-management",
     groupChatManagement: "/moderator/group-chat-management",
+    friends: "/moderator/friends",
     chat: "/moderator/chat",
     report: "/moderator/report",
   },

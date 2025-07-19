@@ -125,7 +125,7 @@ const ProfilePage = () => {
               {profile.full_name || profile.username}
             </p>
             <div className="mt-1">
-              <Link to={roleName === "moderator" ? "/moderator/setting" : "/user/friends"}>
+              <Link to={roleName === "moderator" ? "/moderator/friends" : "/user/friends"}>
                 <Badge
                   variant="secondary"
                   className="bg-gray-700 text-white text-sm font-normal cursor-pointer"
