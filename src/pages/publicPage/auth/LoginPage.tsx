@@ -73,7 +73,7 @@ const LoginPage: React.FC = () => {
   const { setTempRole } = useRoleStore();
   const {
     login,
-    loginWithGoogle,
+    // loginWithGoogle,
     user,
     isAuthenticated,
     isLoading,
@@ -90,7 +90,7 @@ const LoginPage: React.FC = () => {
     Record<string, string>
   >({});
   const [isFormValid, setIsFormValid] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  // const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const from = location.state?.from?.pathname || "/";
 
@@ -161,17 +161,17 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      setIsGoogleLoading(true);
-      await loginWithGoogle();
-    } catch (googleError) {
-      console.error("Google login failed:", googleError);
-      toast.error("Đăng nhập Google thất bại. Vui lòng thử lại.");
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  };
+  // const handleGoogleLogin = async () => {
+  //   try {
+  //     setIsGoogleLoading(true);
+  //     await loginWithGoogle();
+  //   } catch (googleError) {
+  //     console.error("Google login failed:", googleError);
+  //     toast.error("Đăng nhập Google thất bại. Vui lòng thử lại.");
+  //   } finally {
+  //     setIsGoogleLoading(false);
+  //   }
+  // };
 
   // Auto redirect after successful login
   useEffect(() => {
@@ -289,7 +289,7 @@ const LoginPage: React.FC = () => {
               {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
             </Button>
 
-            <div className="relative">
+            {/* <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -298,9 +298,9 @@ const LoginPage: React.FC = () => {
                   Hoặc
                 </span>
               </div>
-            </div>
+            </div> */}
 
-            <Button
+            {/* <Button
               type="button"
               variant="outline"
               className="w-full border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors"
@@ -335,7 +335,7 @@ const LoginPage: React.FC = () => {
                   Đăng nhập với Google
                 </>
               )}
-            </Button>
+            </Button> */}
           </form>
 
           <div className="mt-6 text-center text-sm">
