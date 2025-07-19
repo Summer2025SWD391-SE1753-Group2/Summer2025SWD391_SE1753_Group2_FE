@@ -131,7 +131,7 @@ const router = createBrowserRouter([
 
       //
       { path: paths.moderator.chat, element: <ChatPage /> },
-      { path: "/moderator/friends", element: <FriendManagementPage /> },
+      { path: paths.moderator.friends, element: <FriendManagementPage /> },
       {
         path: paths.moderator.groupChatManagement,
         element: <GroupChatManagementPage />,

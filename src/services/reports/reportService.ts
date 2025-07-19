@@ -1,10 +1,10 @@
 import axios from "axios";
 import { Report } from "@/types/report";
 
-const API_URL = "http://localhost:8000/api/v1/report/";
+const API_URL = "https://nhducminhqt.name.vn";
 
 export const getAllReports = async (token: string): Promise<Report[]> => {
-  const response = await axios.get(API_URL, {
+  const response = await axios.get(`${API_URL}/api/v1/report/`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
@@ -15,7 +15,7 @@ export const updateReport = async (
   data: { status: string; reject_reason?: string },
   token: string
 ): Promise<void> => {
-  await axios.put(`${API_URL}${reportId}/`, data, {
+  await axios.put(`${API_URL}/api/v1/report/${reportId}`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
@@ -49,7 +49,7 @@ export const createReport = async (
   }
 
   try {
-    await axios.post(API_URL, data, {
+    await axios.post(`${API_URL}/api/v1/report/`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch (error) {
@@ -65,7 +65,7 @@ export const getReportsByUserId = async (
   limit: number = 100
 ): Promise<Report[]> => {
   try {
-    const response = await axios.get(`${API_URL}by-user/${userId}`, {
+    const response = await axios.get(`${API_URL}/api/v1/report/by-user/${userId}`, {
       headers: { Authorization: `Bearer ${token}` },
       params: { skip, limit },
     });

@@ -76,7 +76,7 @@ const CreateReportPage = () => {
       });
     } catch (err) {
       const errorMessage =
-        (err as any)?.response?.data?.detail || "Không thể tạo báo cáo";
+        (err as any)?.response?.data?.detail || "Không thể tạo báo cáo có thể do dữ liệu không hợp lệ";
       toast.error(errorMessage);
       if (errorMessage.includes("401")) {
         authService.clearTokens();
