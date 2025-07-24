@@ -9,17 +9,10 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { useNavigate, Link } from "react-router-dom";
+import { authService } from "@/services/auth/authService";
 import { toast } from "sonner";
 import { Eye, EyeOff, Pizza, CheckCircle } from "lucide-react";
-
-// Define interfaces
-interface RegisterFormData {
-  full_name: string;
-  username: string;
-  email: string;
-  password: string;
-  date_of_birth: string;
-}
+import type { ErrorResponse, RegisterRequest } from "@/types/auth";
 
 interface ValidationResult {
   isValid: boolean;
@@ -33,94 +26,54 @@ const isValidEmail = (email: string): boolean => {
 };
 
 const isValidPassword = (password: string): boolean => {
-  const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-/=\[\]{};':"\\|,.<>?]).{8,}$/;
-  return passwordRegex.test(password);
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-/=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/;
+  return passwordRegex.test(password) && !/\s/.test(password);
 };
 
 const isValidUsername = (username: string): boolean => {
-  const usernameRegex = /^[a-zA-Z0-9_.-]{3,20}$/;
+  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
   return usernameRegex.test(username);
 };
 
-const isValidFullName = (fullName: string): { isValid: boolean; error?: string } => {
-  if (fullName !== fullName.trim()) {
-    return { isValid: false, error: "Họ tên không được chứa khoảng trắng ở đầu hoặc cuối" };
-  }
-
-  const nameParts = fullName.trim().split(/\s+/);
+const isValidFullName = (fullName: string): boolean => {
   const nameRegex = /^[a-zA-ZÀ-ỹ\s]{2,50}$/;
-  if (!nameRegex.test(fullName.trim())) {
-    return { isValid: false, error: "Họ tên chỉ chứa chữ cái và khoảng trắng" };
-  }
-  if (nameParts.length < 2 || nameParts.some(part => part.length < 1)) {
-    return { isValid: false, error: "Họ tên phải có ít nhất 2 phần (họ và tên)" };
-  }
-
-  return { isValid: true };
+  return nameRegex.test(fullName) && fullName.trim() === fullName;
 };
 
-const isValidDateOfBirth = (dateOfBirth: string): { isValid: boolean; error?: string } => {
-  if (!dateOfBirth) {
-    return { isValid: false, error: "Vui lòng nhập ngày sinh" };
-  }
-
-  const [year, month, day] = dateOfBirth.split("-").map(Number);
-  
-  if (!year || !month || !day || isNaN(year) || isNaN(month) || isNaN(day)) {
-    return { isValid: false, error: "Định dạng ngày sinh không hợp lệ" };
-  }
-
-  if (month < 1 || month > 12) {
-    return { isValid: false, error: "Tháng phải từ 1 đến 12" };
-  }
-
-  const daysInMonth = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-  if (day < 1 || day > daysInMonth[month - 1]) {
-    return { isValid: false, error: `Ngày không hợp lệ cho tháng ${month}` };
-  }
-
-  const birthDate = new Date(year, month - 1, day);
+const isValidDateOfBirth = (dateOfBirth: string): boolean => {
   const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+
+  if (isNaN(birthDate.getTime())) return false;
+  if (birthDate >= today) return false;
+
+  const age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
 
   if (
-    birthDate.getFullYear() !== year ||
-    birthDate.getMonth() !== month - 1 ||
-    birthDate.getDate() !== day
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
   ) {
-    return { isValid: false, error: "Ngày sinh không hợp lệ" };
+    return age - 1 >= 13 && age - 1 <= 100;
   }
 
-  if (birthDate >= today) {
-    return { isValid: false, error: "Ngày sinh không được ở tương lai" };
-  }
-
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-
-  if (age < 13) {
-    return { isValid: false, error: "Bạn phải ít nhất 13 tuổi để đăng ký" };
-  }
-  if (age >= 100) {
-    return { isValid: false, error: "Bạn phải dưới 100 tuổi để đăng ký" };
-  }
-
-  return { isValid: true };
+  return age >= 13 && age <= 100;
 };
 
-const isLeapYear = (year: number): boolean => {
-  return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-};
-
-const validateRegisterForm = (data: RegisterFormData): ValidationResult => {
+const validateRegisterForm = (data: RegisterRequest): ValidationResult => {
   const errors: Record<string, string> = {};
+
+  if (!data.full_name) {
+    errors.full_name = "Vui lòng nhập họ và tên";
+  } else if (!isValidFullName(data.full_name)) {
+    errors.full_name = "Họ tên phải có ít nhất 2 ký tự, chỉ chứa chữ cái và không có khoảng trắng đầu cuối";
+  }
 
   if (!data.username) {
     errors.username = "Vui lòng nhập tên đăng nhập";
   } else if (!isValidUsername(data.username)) {
-    errors.username = "Tên đăng nhập chỉ chứa chữ cái, số, . hoặc - (3-20 ký tự)";
+    errors.username =
+      "Tên đăng nhập chỉ được chứa chữ cái, số và dấu gạch dưới (3-20 ký tự)";
   }
 
   if (!data.email) {
@@ -132,21 +85,14 @@ const validateRegisterForm = (data: RegisterFormData): ValidationResult => {
   if (!data.password) {
     errors.password = "Vui lòng nhập mật khẩu";
   } else if (!isValidPassword(data.password)) {
-    errors.password = "Mật khẩu phải có ít nhất 8 ký tự, chứa chữ hoa, chữ thường, số và ký tự đặc biệt";
+    errors.password =
+      "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số, ký tự đặc biệt và không chứa khoảng trắng";
   }
 
-  if (!data.full_name) {
-    errors.full_name = "Vui lòng nhập họ và tên";
-  } else {
-    const fullNameValidation = isValidFullName(data.full_name);
-    if (!fullNameValidation.isValid) {
-      errors.full_name = fullNameValidation.error || "Họ tên không hợp lệ";
-    }
-  }
-
-  const dateValidation = isValidDateOfBirth(data.date_of_birth);
-  if (!dateValidation.isValid) {
-    errors.date_of_birth = dateValidation.error || "Ngày sinh không hợp lệ";
+  if (!data.date_of_birth) {
+    errors.date_of_birth = "Vui lòng nhập ngày sinh";
+  } else if (!isValidDateOfBirth(data.date_of_birth)) {
+    errors.date_of_birth = "Ngày sinh không hợp lệ, tuổi phải từ 13 đến 100";
   }
 
   return {
@@ -167,12 +113,13 @@ const getPasswordStrength = (
   }
 
   let score = 0;
+
   if (password.length >= 8) score++;
   if (password.length >= 12) score++;
   if (/[a-z]/.test(password)) score++;
   if (/[A-Z]/.test(password)) score++;
   if (/[0-9]/.test(password)) score++;
-  if (/[!@#$%^&*()_+\-/=\[\]{};':"\\|,.<>?]/.test(password)) score++;
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++;
 
   const indicators = [
     { score: 0, label: "Rất yếu", color: "bg-red-500" },
@@ -188,6 +135,7 @@ const getPasswordStrength = (
 
 const debounce = (func: (value: string) => Promise<void>, wait: number) => {
   let timeout: NodeJS.Timeout;
+
   return (value: string) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func(value), wait);
@@ -196,7 +144,7 @@ const debounce = (func: (value: string) => Promise<void>, wait: number) => {
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<RegisterFormData>({
+  const [formData, setFormData] = useState<RegisterRequest>({
     full_name: "",
     username: "",
     email: "",
@@ -231,44 +179,36 @@ const RegisterPage: React.FC = () => {
     setPasswordStrength(getPasswordStrength(formData.password));
   }, [formData.password]);
 
-  // Debounced username availability check (mock)
+  // Debounced username availability check
   const checkUsernameAvailability = useCallback(
     debounce(async (username: string) => {
-      if (username.length >= 3 && isValidUsername(username)) {
+      if (username.length >= 3) {
         setIsUsernameChecking(true);
         try {
-          // Mock API call for username availability
+          // This would be an API call to check username availability
+          // For now, we'll just simulate it
           await new Promise((resolve) => setTimeout(resolve, 500));
-          // Simulate a check (e.g., username is always available for demo)
           setIsUsernameChecking(false);
         } catch {
           setIsUsernameChecking(false);
-          setValidationErrors((prev) => ({
-            ...prev,
-            username: "Tên đăng nhập không khả dụng",
-          }));
         }
       }
     }, 500),
     []
   );
 
-  // Debounced email availability check (mock)
+  // Debounced email availability check
   const checkEmailAvailability = useCallback(
     debounce(async (email: string) => {
-      if (email.includes("@") && isValidEmail(email)) {
+      if (email.includes("@")) {
         setIsEmailChecking(true);
         try {
-          // Mock API call for email availability
+          // This would be an API call to check email availability
+          // For now, we'll just simulate it
           await new Promise((resolve) => setTimeout(resolve, 500));
-          // Simulate a check (e.g., email is always available for demo)
           setIsEmailChecking(false);
         } catch {
           setIsEmailChecking(false);
-          setValidationErrors((prev) => ({
-            ...prev,
-            email: "Email đã được sử dụng",
-          }));
         }
       }
     }, 500),
@@ -304,34 +244,27 @@ const RegisterPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate form before submission
-    const validation = validateRegisterForm(formData);
-    if (!validation.isValid) {
-      const firstError = Object.values(validation.errors)[0];
-      toast.error(firstError, {
-        duration: 3000,
-        position: "top-right",
-      });
+    if (!isFormValid) {
+      toast.error("Vui lòng kiểm tra lại thông tin đã nhập");
       return;
     }
 
     setLoading(true);
 
     try {
-      // Mock API call for registration
       console.log("📤 Sending data to register:", formData);
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate network delay
-      toast.success("Đăng ký thành công! Vui lòng xác nhận Email của bạn.", {
-        duration: 3000,
-        position: "top-right",
-      });
+      await authService.register(formData);
+      toast.success("Đăng ký thành công! Vui lòng xác nhận Email và đăng nhập.");
       navigate("/auth/login");
-    } catch (error) {
-      console.error("❌ Register error:", error);
-      toast.error("Đã có lỗi xảy ra khi đăng ký. Vui lòng thử lại.", {
-        duration: 3000,
-        position: "top-right",
-      });
+    } catch (error: unknown) {
+      const errorData = error as { response?: { data?: ErrorResponse } };
+      console.error("❌ Register error:", errorData?.response?.data || error);
+
+      if (errorData?.response?.data?.detail) {
+        toast.error(`Đăng ký thất bại: ${errorData.response.data.detail}`);
+      } else {
+        toast.error("Đăng ký thất bại. Tên người dùng hoặc email đã tồn tại!");
+      }
     } finally {
       setLoading(false);
     }
@@ -356,7 +289,6 @@ const RegisterPage: React.FC = () => {
             Tạo tài khoản Food Forum để tham gia cộng đồng
           </CardDescription>
         </CardHeader>
-
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -385,7 +317,6 @@ const RegisterPage: React.FC = () => {
                 )}
               </div>
             </div>
-
             <div>
               <label
                 htmlFor="username"
@@ -424,9 +355,11 @@ const RegisterPage: React.FC = () => {
                 )}
               </div>
             </div>
-
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium mb-1"
+              >
                 Email
               </label>
               <div className="relative">
@@ -460,7 +393,6 @@ const RegisterPage: React.FC = () => {
                 )}
               </div>
             </div>
-
             <div>
               <label
                 htmlFor="password"
@@ -494,7 +426,6 @@ const RegisterPage: React.FC = () => {
                   )}
                 </button>
               </div>
-
               {formData.password && (
                 <div className="mt-2">
                   <div className="flex items-center justify-between text-xs">
@@ -502,12 +433,13 @@ const RegisterPage: React.FC = () => {
                       Độ mạnh mật khẩu:
                     </span>
                     <span
-                      className={`font-medium ${passwordStrength.score >= 3
+                      className={`font-medium ${
+                        passwordStrength.score >= 3
                           ? "text-green-600"
                           : passwordStrength.score >= 2
-                            ? "text-yellow-600"
-                            : "text-red-600"
-                        }`}
+                          ? "text-yellow-600"
+                          : "text-red-600"
+                      }`}
                     >
                       {passwordStrength.label}
                     </span>
@@ -522,7 +454,6 @@ const RegisterPage: React.FC = () => {
                   </div>
                 </div>
               )}
-
               <div className="h-5 mt-1">
                 {validationErrors.password && (
                   <p className="text-sm text-red-600">
@@ -531,7 +462,6 @@ const RegisterPage: React.FC = () => {
                 )}
               </div>
             </div>
-
             <div>
               <label
                 htmlFor="date_of_birth"
@@ -563,7 +493,6 @@ const RegisterPage: React.FC = () => {
                 Bạn phải ít nhất 13 tuổi để đăng ký
               </p>
             </div>
-
             <Button
               type="submit"
               className="w-full"
@@ -572,7 +501,6 @@ const RegisterPage: React.FC = () => {
               {loading ? "Đang đăng ký..." : "Đăng ký"}
             </Button>
           </form>
-
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">Đã có tài khoản? </span>
             <Link
