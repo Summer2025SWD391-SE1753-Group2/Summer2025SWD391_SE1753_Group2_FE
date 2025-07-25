@@ -7,7 +7,16 @@ import {
 import { toast } from "sonner";
 import debounce from "lodash.debounce";
 import type { AxiosError } from "axios";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  Crown,
+  Ban,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import type { GroupMembershipStatus } from "@/types/group-chat";
 
 interface GroupChatSearchProps {
   token: string;
@@ -20,6 +29,7 @@ interface GroupChatSearchResult {
   leader_name: string;
   member_count: number;
   topic_name: string;
+  is_active: boolean;
 }
 
 const PAGE_LIMIT = 5;
@@ -28,8 +38,9 @@ export default function GroupChatSearch({ token }: GroupChatSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [groups, setGroups] = useState<GroupChatSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  // Bỏ hasMore, dùng totalCount từ API
-  const [joinedMap, setJoinedMap] = useState<Record<string, boolean>>({});
+  const [membershipMap, setMembershipMap] = useState<
+    Record<string, GroupMembershipStatus>
+  >({});
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -55,19 +66,20 @@ export default function GroupChatSearch({ token }: GroupChatSearchProps) {
             ? data.total
             : data.total_count || newGroups.length
         );
-        // Batch check membership
+
+        // Batch check membership với status
         if (newGroups.length > 0) {
           const memberships = await checkMembershipBatch(
             newGroups.map((g: GroupChatSearchResult) => g.group_id),
             token
           );
-          const map: Record<string, boolean> = {};
-          memberships.forEach((m: { group_id: string; is_member: boolean }) => {
-            map[m.group_id] = m.is_member;
+          const map: Record<string, GroupMembershipStatus> = {};
+          memberships.forEach((m: GroupMembershipStatus) => {
+            map[m.group_id] = m;
           });
-          setJoinedMap(map);
+          setMembershipMap(map);
         } else {
-          setJoinedMap({});
+          setMembershipMap({});
         }
       } catch {
         toast.error("Lỗi khi tải group chat");
@@ -100,9 +112,19 @@ export default function GroupChatSearch({ token }: GroupChatSearchProps) {
   };
 
   const handleJoin = async (groupId: string) => {
+    const membership = membershipMap[groupId];
+
+    // Kiểm tra nếu user bị banned
+    if (membership?.status === "banned") {
+      toast.error("Bạn đã bị cấm tham gia group này");
+      return;
+    }
+
     try {
       await joinGroupChat(groupId, token);
       toast.success("Tham gia group thành công!");
+
+      // Cập nhật UI
       setGroups((prev) =>
         prev.map((g) =>
           g.group_id === groupId
@@ -110,7 +132,17 @@ export default function GroupChatSearch({ token }: GroupChatSearchProps) {
             : g
         )
       );
-      setJoinedMap((prev) => ({ ...prev, [groupId]: true }));
+
+      setMembershipMap((prev) => ({
+        ...prev,
+        [groupId]: {
+          ...prev[groupId],
+          is_member: true,
+          status: "active",
+          is_active: true,
+          role: "member",
+        },
+      }));
     } catch (err: unknown) {
       if (
         typeof err === "object" &&
@@ -119,13 +151,141 @@ export default function GroupChatSearch({ token }: GroupChatSearchProps) {
         (err as AxiosError).isAxiosError &&
         ((err as AxiosError).response?.data as { detail?: string })?.detail
       ) {
-        toast.error(
-          ((err as AxiosError).response?.data as { detail?: string })?.detail ||
-            "Lỗi khi tham gia group"
-        );
+        const errorDetail = (
+          (err as AxiosError).response?.data as { detail?: string }
+        )?.detail;
+
+        // Handle specific error messages
+        if (errorDetail?.includes("banned")) {
+          toast.error("Bạn đã bị cấm tham gia group này");
+        } else if (errorDetail?.includes("full")) {
+          toast.error("Group đã đầy thành viên");
+        } else {
+          toast.error(errorDetail || "Lỗi khi tham gia group");
+        }
       } else {
         toast.error("Lỗi khi tham gia group");
       }
+    }
+  };
+
+  // Get button status and text for join button
+  const getJoinButtonInfo = (group: GroupChatSearchResult) => {
+    const membership = membershipMap[group.group_id];
+    const isFull = group.member_count >= 50;
+    const isInactive = !group.is_active;
+
+    if (isInactive) {
+      return {
+        text: "Group không hoạt động",
+        disabled: true,
+        className: "bg-gray-200 text-gray-500 cursor-not-allowed",
+      };
+    }
+
+    if (!membership) {
+      if (isFull) {
+        return {
+          text: "Đã đủ 50 người",
+          disabled: true,
+          className: "bg-red-100 text-red-500 cursor-not-allowed",
+        };
+      }
+      return {
+        text: "Tham gia",
+        disabled: false,
+        className:
+          "bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700",
+      };
+    }
+
+    switch (membership.status) {
+      case "active":
+        return {
+          text: "Đã tham gia",
+          disabled: true,
+          className: "bg-green-100 text-green-600 cursor-not-allowed",
+        };
+      case "banned":
+        return {
+          text: "Đã bị cấm",
+          disabled: true,
+          className: "bg-red-100 text-red-500 cursor-not-allowed",
+        };
+      case "left":
+      case "removed":
+      case "inactive":
+        if (isFull) {
+          return {
+            text: "Đã đủ 50 người",
+            disabled: true,
+            className: "bg-red-100 text-red-500 cursor-not-allowed",
+          };
+        }
+        return {
+          text: "Tham gia lại",
+          disabled: false,
+          className:
+            "bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700",
+        };
+      default:
+        if (isFull) {
+          return {
+            text: "Đã đủ 50 người",
+            disabled: true,
+            className: "bg-red-100 text-red-500 cursor-not-allowed",
+          };
+        }
+        return {
+          text: "Tham gia",
+          disabled: false,
+          className:
+            "bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700",
+        };
+    }
+  };
+
+  // Get status badge for user's membership
+  const getMembershipBadge = (group: GroupChatSearchResult) => {
+    const membership = membershipMap[group.group_id];
+
+    if (!membership || !membership.is_member) return null;
+
+    switch (membership.status) {
+      case "active":
+        return (
+          <Badge variant="default" className="bg-green-100 text-green-700">
+            <Users className="w-3 h-3 mr-1" />
+            Thành viên
+          </Badge>
+        );
+      case "banned":
+        return (
+          <Badge variant="destructive" className="bg-red-100 text-red-700">
+            <Ban className="w-3 h-3 mr-1" />
+            Bị cấm
+          </Badge>
+        );
+      case "left":
+        return (
+          <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+            Đã rời
+          </Badge>
+        );
+      case "removed":
+        return (
+          <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+            Bị xóa
+          </Badge>
+        );
+      case "inactive":
+        return (
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+            Không hoạt động
+          </Badge>
+        );
+      default:
+        return null;
     }
   };
 
@@ -180,51 +340,63 @@ export default function GroupChatSearch({ token }: GroupChatSearchProps) {
 
       <ul className="space-y-5">
         {groups.map((group) => {
-          const isJoined = joinedMap[group.group_id] === true;
-          const isFull = group.member_count >= 50;
+          const buttonInfo = getJoinButtonInfo(group);
+          const membershipBadge = getMembershipBadge(group);
+
           return (
             <li
               key={group.group_id}
               className="bg-white border border-gray-200 hover:border-blue-400 rounded-2xl shadow-md p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 hover:shadow-lg transition"
             >
               <div className="flex-1 min-w-0">
-                <div className="font-bold text-lg text-gray-800 truncate group-hover:text-blue-700 transition">
-                  {group.group_name}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="font-bold text-lg text-gray-800 truncate group-hover:text-blue-700 transition">
+                    {group.group_name}
+                  </div>
+                  {membershipBadge}
+                  {!group.is_active && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-gray-200 text-gray-600"
+                    >
+                      Không hoạt động
+                    </Badge>
+                  )}
                 </div>
+
                 <div className="text-xs text-blue-600 mt-1 font-medium">
                   Chủ đề: {group.topic_name}
                 </div>
-                <div className="text-xs text-gray-400 mt-2">
-                  Thành viên:{" "}
-                  <span className="font-semibold text-gray-700">
-                    {group.member_count}/50
+
+                <div className="text-xs text-gray-400 mt-2 flex items-center gap-4">
+                  <span>
+                    Thành viên:{" "}
+                    <span className="font-semibold text-gray-700">
+                      {group.member_count}/50
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Crown className="w-3 h-3" />
+                    Chủ nhóm:{" "}
+                    <span className="font-medium text-gray-600">
+                      {group.leader_name}
+                    </span>
                   </span>
                 </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  Chủ nhóm:{" "}
-                  <span className="font-medium text-gray-600">
-                    {group.leader_name}
-                  </span>
-                </div>
+
+                {group.group_description && (
+                  <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                    {group.group_description}
+                  </div>
+                )}
               </div>
+
               <button
-                className={`w-full md:w-auto mt-2 md:mt-0 px-6 py-2 rounded-full font-semibold text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-300
-                  ${
-                    isJoined
-                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      : isFull
-                      ? "bg-red-100 text-red-500 cursor-not-allowed"
-                      : "bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700"
-                  }
-                `}
-                disabled={isJoined || isFull}
+                className={`w-full md:w-auto mt-2 md:mt-0 px-6 py-2 rounded-full font-semibold text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-300 ${buttonInfo.className}`}
+                disabled={buttonInfo.disabled}
                 onClick={() => handleJoin(group.group_id)}
               >
-                {isJoined
-                  ? "Đã tham gia"
-                  : isFull
-                  ? "Đã đủ 50 người"
-                  : "Tham gia"}
+                {buttonInfo.text}
               </button>
             </li>
           );

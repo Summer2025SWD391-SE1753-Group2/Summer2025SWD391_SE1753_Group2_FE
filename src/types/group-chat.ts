@@ -7,6 +7,7 @@ export interface GroupChat {
   member_count: number;
   max_members: number;
   my_role: "leader" | "moderator" | "member";
+  my_status: "active" | "inactive" | "left" | "removed" | "banned";
   leader_name: string;
   created_at: string;
   joined_at: string;
@@ -37,4 +38,45 @@ export interface GroupChatMessagesResponse {
   total: number;
   skip: number;
   limit: number;
+}
+
+export interface GroupMember {
+  group_member_id: string;
+  account_id: string;
+  group_id: string;
+  role: "leader" | "moderator" | "member";
+  status: "active" | "inactive" | "left" | "removed" | "banned";
+  joined_at: string;
+  username?: string;
+  full_name?: string;
+  avatar?: string;
+  email?: string;
+}
+
+export interface GroupMembershipStatus {
+  group_id: string;
+  is_member: boolean;
+  role: string | null;
+  status: string;
+  is_active: boolean;
+  joined_at?: string;
+}
+
+export interface BatchMembershipResponse {
+  memberships: GroupMembershipStatus[];
+}
+
+export enum GroupMemberStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  LEFT = "left",
+  REMOVED = "removed",
+  BANNED = "banned",
+  NO_JOIN = "no-join",
+}
+
+export enum GroupMemberRole {
+  LEADER = "leader",
+  MODERATOR = "moderator",
+  MEMBER = "member",
 }

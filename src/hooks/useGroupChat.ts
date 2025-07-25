@@ -1,11 +1,11 @@
-import { useEffect, useCallback, useRef, useState } from "react";
+// hooks/useGroupChat.ts
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
-import { useGroupChatWebSocket } from "@/services/groupChat/groupChatWebSocketService";
-import { useGroupChatStore } from "@/stores/groupChatStore";
 import { getGroupMessages } from "@/services/groupChat/groupChatService";
+import { useGroupChatWebSocket } from "@/services/groupChat/groupChatWebSocketService";
 import type { GroupChatMessage } from "@/types/group-chat";
 
-interface UseGroupChatOptions {
+export interface UseGroupChatOptions {
   groupId: string;
   token: string;
   currentUserId: string;
@@ -13,33 +13,22 @@ interface UseGroupChatOptions {
   messagesPerPage?: number;
 }
 
-interface UseGroupChatReturn {
-  // Messages
+export interface UseGroupChatReturn {
   messages: GroupChatMessage[];
   loading: boolean;
   loadingMore: boolean;
   hasMoreMessages: boolean;
-
-  // Connection status
   isConnected: boolean;
   isConnecting: boolean;
-  connectionError?: string;
-
-  // Typing and online status
+  connectionError: string | null;
   typingUsers: string[];
   onlineMembers: string[];
-
-  // Actions
+  memberStatus: string;
   sendMessage: (content: string) => boolean;
-  loadMessages: (skip?: number, limit?: number) => Promise<void>;
   loadMoreMessages: () => Promise<void>;
-  clearMessages: () => void;
-
-  // Typing indicator
   sendTypingIndicator: (isTyping: boolean) => boolean;
-
-  // Connection management
-  reconnect: () => Promise<void>;
+  reconnect: () => void;
+  loadMessages: () => Promise<void>;
 }
 
 export const useGroupChat = ({
@@ -49,107 +38,17 @@ export const useGroupChat = ({
   autoLoadMessages = true,
   messagesPerPage = 50,
 }: UseGroupChatOptions): UseGroupChatReturn => {
-  const {
-    addMessage,
-    setMessages,
-    prependMessages,
-    clearMessages: clearStoreMessages,
-    setTypingUser,
-    setOnlineMembers,
-    setConnectionStatus,
-    getMessages,
-    getTypingUsers,
-    getOnlineMembers,
-    getConnectionStatus,
-  } = useGroupChatStore();
-
-  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<GroupChatMessage[]>([]);
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [onlineMembers, setOnlineMembers] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
-  const typingTimeout = useRef<NodeJS.Timeout | null>(null);
-  const isTyping = useRef(false);
-
-  // Get current state from store
-  const currentMessages = getMessages(groupId);
-  const currentTypingUsers = getTypingUsers(groupId);
-  const currentOnlineMembers = getOnlineMembers(groupId);
-  const currentConnectionStatus = getConnectionStatus(groupId);
-
-  // WebSocket callbacks
-  const handleNewMessage = useCallback(
-    (message: GroupChatMessage) => {
-      addMessage(groupId, message);
-    },
-    [groupId, addMessage]
-  );
-
-  const handleTypingIndicator = useCallback(
-    (userId: string, isTyping: boolean) => {
-      if (userId === currentUserId) return;
-      setTypingUser(groupId, userId, isTyping);
-    },
-    [groupId, currentUserId, setTypingUser]
-  );
-
-  const handleOnlineMembers = useCallback(
-    (members: string[]) => {
-      setOnlineMembers(groupId, members);
-    },
-    [groupId, setOnlineMembers]
-  );
-
-  const handleConnectionEstablished = useCallback(() => {
-    setConnectionStatus(groupId, { isConnected: true, isConnecting: false });
-  }, [groupId, setConnectionStatus]);
-
-  const handleDisconnect = useCallback(
-    (code: number, reason: string) => {
-      setConnectionStatus(groupId, {
-        isConnected: false,
-        isConnecting: false,
-        lastError: `Mất kết nối: ${reason}`,
-      });
-    },
-    [groupId, setConnectionStatus]
-  );
-
-  const handleError = useCallback(
-    (error: string) => {
-      setConnectionStatus(groupId, {
-        isConnected: false,
-        isConnecting: false,
-        lastError: error,
-      });
-      toast.error(error);
-    },
-    [groupId, setConnectionStatus]
-  );
-
-  const handleReconnect = useCallback(() => {
-    setConnectionStatus(groupId, { isConnected: true, isConnecting: false });
-    toast.success("Đã kết nối lại thành công");
-  }, [groupId, setConnectionStatus]);
-
-  // WebSocket connection
-  const {
-    isConnected,
-    isConnecting,
-    sendMessage: wsSendMessage,
-    sendTypingIndicator: wsSendTypingIndicator,
-    service,
-  } = useGroupChatWebSocket(groupId, token, {
-    onMessage: handleNewMessage,
-    onTypingIndicator: handleTypingIndicator,
-    onOnlineMembers: handleOnlineMembers,
-    onConnectionEstablished: handleConnectionEstablished,
-    onDisconnect: handleDisconnect,
-    onError: handleError,
-    onReconnect: handleReconnect,
-  });
-
-  // Load messages from API
+  // Load messages function
   const loadMessages = useCallback(
     async (skip = 0, limit = messagesPerPage) => {
       try {
@@ -157,22 +56,26 @@ export const useGroupChat = ({
         const newMessages = response.messages || [];
 
         if (skip === 0) {
-          setMessages(groupId, newMessages);
+          setMessages(newMessages);
           setCurrentPage(0);
         } else {
-          prependMessages(groupId, newMessages);
+          setMessages((prev) => [...newMessages, ...prev]);
         }
 
         setHasMoreMessages(newMessages.length === limit);
+        return newMessages;
       } catch (error) {
-        toast.error("Không thể tải tin nhắn");
         console.error("Failed to load messages:", error);
+        if (skip === 0) {
+          toast.error("Không thể tải tin nhắn");
+        }
+        return [];
       }
     },
-    [groupId, messagesPerPage, setMessages, prependMessages]
+    [groupId, messagesPerPage]
   );
 
-  // Load more messages for infinite scroll
+  // Load more messages (infinite scroll)
   const loadMoreMessages = useCallback(async () => {
     if (loadingMore || !hasMoreMessages) return;
 
@@ -193,117 +96,195 @@ export const useGroupChat = ({
     loadMessages,
   ]);
 
-  // Send message
-  const sendMessage = useCallback(
-    (content: string): boolean => {
-      const trimmedContent = content.trim();
-      if (!trimmedContent || trimmedContent.length > 1000) return false;
+  // WebSocket callbacks
+  const handleNewMessage = useCallback((message: GroupChatMessage) => {
+    // Remove temp message if exists and add real message
+    setMessages((prev) => {
+      const filtered = prev.filter((m) => !m.message_id.startsWith("temp-"));
+      return [...filtered, message];
+    });
+  }, []);
 
-      if (wsSendMessage(trimmedContent)) {
-        // Stop typing indicator
-        wsSendTypingIndicator(false);
-        isTyping.current = false;
-        if (typingTimeout.current) {
-          clearTimeout(typingTimeout.current);
-          typingTimeout.current = null;
+  const handleTypingIndicator = useCallback(
+    (userId: string, isTyping: boolean) => {
+      if (userId === currentUserId) return;
+
+      // Clear existing timeout for this user
+      const existingTimeout = typingTimeouts.current.get(userId);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
+      setTypingUsers((prev) => {
+        if (isTyping) {
+          // Add user to typing list if not already there
+          if (!prev.includes(userId)) {
+            return [...prev, userId];
+          }
+          return prev;
+        } else {
+          // Remove user from typing list
+          return prev.filter((id) => id !== userId);
         }
-        return true;
-      } else {
-        toast.error("Không thể gửi tin nhắn");
-        return false;
+      });
+
+      // Set timeout to automatically remove typing indicator
+      if (isTyping) {
+        const timeout = setTimeout(() => {
+          setTypingUsers((prev) => prev.filter((id) => id !== userId));
+          typingTimeouts.current.delete(userId);
+        }, 3000); // 3 seconds timeout
+
+        typingTimeouts.current.set(userId, timeout);
       }
     },
-    [wsSendMessage, wsSendTypingIndicator]
+    [currentUserId]
   );
 
-  // Send typing indicator
-  const sendTypingIndicator = useCallback(
-    (isTypingStatus: boolean): boolean => {
-      if (!isConnected) return false;
+  const handleOnlineMembers = useCallback((members: string[]) => {
+    setOnlineMembers(members);
+  }, []);
 
-      if (isTypingStatus && !isTyping.current) {
-        isTyping.current = true;
-      }
+  const handleError = useCallback((error: string) => {
+    setConnectionError(error);
+    toast.error(error);
+  }, []);
 
-      if (typingTimeout.current) {
-        clearTimeout(typingTimeout.current);
-      }
+  const handleDisconnect = useCallback((code: number, reason: string) => {
+    // Handle different disconnect codes
+    if (code === 4003) {
+      setConnectionError("Bạn không còn là thành viên hoạt động của group này");
+    } else if (code === 4004) {
+      setConnectionError("Bạn đã bị cấm khỏi group này");
+    } else if (code === 1000) {
+      // Normal closure
+      setConnectionError(null);
+    } else {
+      setConnectionError("Mất kết nối với server");
+    }
+  }, []);
 
-      if (!isTypingStatus) {
-        isTyping.current = false;
-      } else {
-        typingTimeout.current = setTimeout(() => {
-          wsSendTypingIndicator(false);
-          isTyping.current = false;
-        }, 1200);
-      }
+  const handleReconnect = useCallback(() => {
+    setConnectionError(null);
+    toast.success("Đã kết nối lại thành công");
+  }, []);
 
-      return wsSendTypingIndicator(isTypingStatus);
-    },
-    [isConnected, wsSendTypingIndicator]
-  );
-
-  // Clear messages
-  const clearMessages = useCallback(() => {
-    clearStoreMessages(groupId);
-  }, [groupId, clearStoreMessages]);
-
-  // Reconnect
-  const reconnect = useCallback(async () => {
-    if (service) {
-      try {
-        await service.connect();
-      } catch (error) {
-        console.error("Reconnection failed:", error);
-        toast.error("Không thể kết nối lại");
+  const handleStatusChange = useCallback((status: string) => {
+    if (status !== "active") {
+      if (status === "banned") {
+        setConnectionError("Bạn đã bị cấm khỏi group này");
+        toast.error("Bạn đã bị cấm khỏi group này");
+      } else if (status === "removed") {
+        setConnectionError("Bạn đã bị xóa khỏi group");
+        toast.error("Bạn đã bị xóa khỏi group");
+      } else if (status === "left") {
+        setConnectionError("Bạn đã rời khỏi group");
       }
     }
+  }, []);
+
+  // WebSocket connection
+  const {
+    isConnected,
+    isConnecting,
+    memberStatus,
+    sendMessage: wsSendMessage,
+    sendTypingIndicator,
+    service,
+  } = useGroupChatWebSocket(groupId, token, {
+    onMessage: handleNewMessage,
+    onTypingIndicator: handleTypingIndicator,
+    onOnlineMembers: handleOnlineMembers,
+    onError: handleError,
+    onDisconnect: handleDisconnect,
+    onReconnect: handleReconnect,
+    onStatusChange: handleStatusChange,
+  });
+
+  // Enhanced send message with optimistic updates
+  const sendMessage = useCallback(
+    (content: string): boolean => {
+      if (!content.trim() || content.length > 1000) return false;
+
+      // Check if user can send messages
+      if (memberStatus !== "active") {
+        toast.error("Bạn không thể gửi tin nhắn trong trạng thái hiện tại");
+        return false;
+      }
+
+      // Add optimistic message
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMessage: GroupChatMessage = {
+        message_id: tempId,
+        group_id: groupId,
+        sender_id: currentUserId,
+        content: content.trim(),
+        status: "sent",
+        is_deleted: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sender: {
+          account_id: currentUserId,
+          username: "You", // Will be updated when real message arrives
+          full_name: "You",
+          avatar: "",
+        },
+      };
+
+      setMessages((prev) => [...prev, optimisticMessage]);
+
+      // Send via WebSocket
+      const success = wsSendMessage(content);
+
+      if (!success) {
+        // Remove optimistic message if send failed
+        setMessages((prev) => prev.filter((m) => m.message_id !== tempId));
+        toast.error("Không thể gửi tin nhắn");
+      }
+
+      return success;
+    },
+    [wsSendMessage, memberStatus, groupId, currentUserId]
+  );
+
+  // Reconnect function
+  const reconnect = useCallback(() => {
+    setConnectionError(null);
+    service?.disconnect();
+    // The useGroupChatWebSocket hook will automatically reconnect
   }, [service]);
 
-  // Auto-load messages on mount
+  // Load initial messages
   useEffect(() => {
     if (autoLoadMessages && groupId && token) {
       setLoading(true);
       loadMessages().finally(() => setLoading(false));
     }
-  }, [groupId, token, autoLoadMessages, loadMessages]);
+  }, [autoLoadMessages, groupId, token, loadMessages]);
 
-  // Cleanup on unmount
+  // Cleanup typing timeouts on unmount
   useEffect(() => {
     return () => {
-      if (typingTimeout.current) {
-        clearTimeout(typingTimeout.current);
-      }
-      // Don't clear group data on unmount to preserve state
+      typingTimeouts.current.forEach((timeout) => clearTimeout(timeout));
+      typingTimeouts.current.clear();
     };
   }, []);
 
   return {
-    // Messages
-    messages: currentMessages,
+    messages,
     loading,
     loadingMore,
     hasMoreMessages,
-
-    // Connection status
     isConnected,
     isConnecting,
-    connectionError: currentConnectionStatus.lastError,
-
-    // Typing and online status
-    typingUsers: currentTypingUsers,
-    onlineMembers: currentOnlineMembers,
-
-    // Actions
+    connectionError,
+    typingUsers,
+    onlineMembers,
+    memberStatus,
     sendMessage,
-    loadMessages,
     loadMoreMessages,
-    clearMessages,
-
-    // Typing indicator
     sendTypingIndicator,
-
-    // Connection management
     reconnect,
+    loadMessages,
   };
 };

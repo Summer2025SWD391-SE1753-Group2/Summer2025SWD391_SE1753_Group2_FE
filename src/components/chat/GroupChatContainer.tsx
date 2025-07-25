@@ -7,6 +7,11 @@ import {
   Loader2,
   RefreshCw,
   MoreVertical,
+  LogOut,
+  UserMinus,
+  Ban,
+  Crown,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,11 +23,22 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useGroupChat } from "@/hooks/useGroupChat";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
-import type { GroupChatMessage } from "@/types/group-chat";
+import type { GroupChatMessage, GroupMember } from "@/types/group-chat";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +53,8 @@ import {
   getGroupMembers,
   addGroupMember,
   removeGroupMember,
+  banGroupMember,
+  leaveGroupChat,
   searchAccounts,
 } from "@/services/groupChat/groupChatService";
 import type { UserProfile } from "@/types/account";
@@ -50,25 +68,13 @@ interface GroupChatContainerProps {
   onLeaveGroup?: () => void;
 }
 
-// Local type for group member (since not exported from types)
-interface GroupMember {
-  group_member_id?: string;
-  account_id: string;
-  username: string;
-  full_name: string | null;
-  avatar: string | null;
-  role: string;
-  joined_at?: string;
-  email?: string;
-}
-
 export default function GroupChatContainer({
   groupId,
   token,
   currentUserId,
   groupName = "Group Chat",
   groupDescription,
-  onLeaveGroup,
+  onLeaveGroup: onLeaveGroupCallback,
 }: GroupChatContainerProps) {
   const [input, setInput] = useState("");
   const [showTypingIndicator, setShowTypingIndicator] = useState(false);
@@ -83,7 +89,13 @@ export default function GroupChatContainer({
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
   const [addingUser, setAddingUser] = useState(false);
   const [members, setMembers] = useState<GroupMember[]>([]);
-  const [isLeader, setIsLeader] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("member");
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const [memberActionDialog, setMemberActionDialog] = useState<{
+    open: boolean;
+    member: GroupMember | null;
+    action: "remove" | "ban" | null;
+  }>({ open: false, member: null, action: null });
 
   const {
     messages,
@@ -182,8 +194,8 @@ export default function GroupChatContainer({
     }
   };
 
-  // Get user initials for avatar
-  const getUserInitials = (fullName: string | null) => {
+  // Get user initials for avatar - Fix TypeScript error
+  const getUserInitials = (fullName: string | null | undefined) => {
     if (!fullName) return "?";
     return fullName
       .split(" ")
@@ -206,6 +218,13 @@ export default function GroupChatContainer({
     return `${typingUsers.length} người đang nhập...`;
   };
 
+  // Check permissions
+  const canEditGroup = () => currentUserRole === "leader";
+  const canAddMembers = () => ["leader", "moderator"].includes(currentUserRole);
+  const canRemoveMembers = () =>
+    ["leader", "moderator"].includes(currentUserRole);
+  const canBanMembers = () => currentUserRole === "leader";
+
   // Hàm gọi API đổi tên nhóm
   const onEditGroupName = async () => {
     if (!newGroupName.trim() || newGroupName === groupName) {
@@ -216,37 +235,58 @@ export default function GroupChatContainer({
       await updateGroupName(groupId, newGroupName, token);
       toast.success("Đã đổi tên nhóm thành công");
       setEditingName(false);
-      // Optionally: reload group info
     } catch {
       toast.error("Đổi tên nhóm thất bại");
     }
   };
 
-  // Hàm fetch members
+  // Hàm fetch members với status filtering
   const fetchMembers = async () => {
     try {
       const res: GroupMember[] = await getGroupMembers(groupId, token);
       setMembers(res);
-      // Xác định quyền
+      // Xác định quyền của user hiện tại
       const me = res.find((u: GroupMember) => u.account_id === currentUserId);
-      setIsLeader(me?.role === "leader");
+      setCurrentUserRole(me?.role || "member");
     } catch {
       toast.error("Không thể tải danh sách thành viên");
     }
   };
 
-  // Hàm xóa thành viên
-  const onRemoveMember = async (account_id: string) => {
+  // Hàm xóa thành viên (set status = 'removed')
+  const onRemoveMember = async (member: GroupMember) => {
     if (members.length <= 2) {
       toast.error("Nhóm phải có ít nhất 2 thành viên");
       return;
     }
     try {
-      await removeGroupMember(groupId, account_id, token);
-      toast.success("Đã xóa thành viên");
+      await removeGroupMember(groupId, member.account_id, token);
+      toast.success(`Đã xóa ${member.full_name || member.username} khỏi nhóm`);
       fetchMembers();
     } catch {
       toast.error("Xóa thành viên thất bại");
+    }
+  };
+
+  // Hàm ban thành viên (set status = 'banned')
+  const onBanMember = async (member: GroupMember) => {
+    try {
+      await banGroupMember(groupId, member.account_id, token);
+      toast.success(`Đã cấm ${member.full_name || member.username} khỏi nhóm`);
+      fetchMembers();
+    } catch {
+      toast.error("Cấm thành viên thất bại");
+    }
+  };
+
+  // Hàm rời nhóm (set status = 'left')
+  const handleLeaveGroup = async () => {
+    try {
+      await leaveGroupChat(groupId, token);
+      toast.success("Đã rời khỏi nhóm");
+      onLeaveGroupCallback?.();
+    } catch {
+      toast.error("Rời nhóm thất bại");
     }
   };
 
@@ -261,7 +301,7 @@ export default function GroupChatContainer({
       const res = await searchAccounts(keyword, token);
       // Loại bỏ user đã trong nhóm
       const filtered = res.filter(
-        (u: GroupMember) =>
+        (u: UserProfile) =>
           !members.some((m: GroupMember) => m.account_id === u.account_id)
       );
       setSearchResults(filtered);
@@ -271,7 +311,7 @@ export default function GroupChatContainer({
   };
 
   // Hàm thêm user vào nhóm
-  const onAddUser = async (user: GroupMember) => {
+  const onAddUser = async (user: UserProfile) => {
     if (members.length >= 50) {
       toast.error("Nhóm đã đủ 50 thành viên");
       return;
@@ -279,7 +319,7 @@ export default function GroupChatContainer({
     setAddingUser(true);
     try {
       await addGroupMember(groupId, user.account_id, token);
-      toast.success("Đã thêm thành viên vào nhóm");
+      toast.success(`Đã thêm ${user.full_name || user.username} vào nhóm`);
       setSearchUser("");
       setSearchResults([]);
       fetchMembers();
@@ -287,6 +327,30 @@ export default function GroupChatContainer({
       toast.error("Thêm thành viên thất bại");
     }
     setAddingUser(false);
+  };
+
+  // Get role icon
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case "leader":
+        return <Crown className="w-4 h-4 text-yellow-500" />;
+      case "moderator":
+        return <Shield className="w-4 h-4 text-blue-500" />;
+      default:
+        return <Users className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  // Get role text
+  const getRoleText = (role: string) => {
+    switch (role) {
+      case "leader":
+        return "Trưởng nhóm";
+      case "moderator":
+        return "Quản trị viên";
+      default:
+        return "Thành viên";
+    }
   };
 
   return (
@@ -314,7 +378,7 @@ export default function GroupChatContainer({
                     <h3 className="font-semibold text-lg truncate">
                       {newGroupName}
                     </h3>
-                    {isLeader && (
+                    {canEditGroup() && (
                       <button
                         className="ml-1 text-blue-500 hover:text-blue-700"
                         onClick={() => setEditingName(true)}
@@ -373,26 +437,28 @@ export default function GroupChatContainer({
                     setMembersDialogOpen(true);
                   }}
                 >
+                  <Users className="w-4 h-4 mr-2" />
                   Xem thành viên
                 </DropdownMenuItem>
-                {isLeader && (
+                {canAddMembers() && (
                   <DropdownMenuItem
                     onClick={() => {
                       fetchMembers();
                       setAddUserDialogOpen(true);
                     }}
                   >
+                    <Users className="w-4 h-4 mr-2" />
                     Thêm thành viên
                   </DropdownMenuItem>
                 )}
-                {onLeaveGroup && (
-                  <DropdownMenuItem
-                    onClick={onLeaveGroup}
-                    className="text-red-600"
-                  >
-                    Rời khỏi nhóm
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setLeaveConfirmOpen(true)}
+                  className="text-red-600"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Rời khỏi nhóm
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -543,36 +609,80 @@ export default function GroupChatContainer({
           </div>
         </div>
       </div>
+
       {/* Dialog xem thành viên */}
       <Dialog open={membersDialogOpen} onOpenChange={setMembersDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Thành viên nhóm</DialogTitle>
+            <DialogTitle>Thành viên nhóm ({members.length})</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {members.map((m: GroupMember) => (
               <div
                 key={m.account_id}
-                className="flex items-center gap-3 p-2 rounded hover:bg-gray-50"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border"
               >
-                <Avatar className="w-8 h-8">
+                <Avatar className="w-10 h-10">
                   <AvatarImage src={m.avatar || undefined} />
                   <AvatarFallback>
                     {getUserInitials(m.full_name)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
-                  <div className="font-medium text-sm">{m.full_name}</div>
-                  <div className="text-xs text-gray-500">{m.role}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="font-medium text-sm truncate">
+                      {m.full_name || m.username}
+                    </div>
+                    {getRoleIcon(m.role)}
+                  </div>
+                  <div className="text-xs text-gray-500 flex items-center gap-2">
+                    {getRoleText(m.role)}
+                    {m.status && m.status !== "active" && (
+                      <Badge variant="secondary" className="text-xs">
+                        {m.status}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-                {isLeader && m.role !== "leader" && members.length > 2 && (
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => onRemoveMember(m.account_id)}
-                  >
-                    Xóa
-                  </Button>
+
+                {/* Action buttons */}
+                {m.account_id !== currentUserId && (
+                  <div className="flex gap-1">
+                    {canRemoveMembers() &&
+                      m.role !== "leader" &&
+                      members.length > 2 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setMemberActionDialog({
+                              open: true,
+                              member: m,
+                              action: "remove",
+                            })
+                          }
+                          className="text-orange-600 hover:text-orange-700"
+                        >
+                          <UserMinus className="w-4 h-4" />
+                        </Button>
+                      )}
+                    {canBanMembers() && m.role !== "leader" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setMemberActionDialog({
+                            open: true,
+                            member: m,
+                            action: "ban",
+                          })
+                        }
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Ban className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             ))}
@@ -587,6 +697,7 @@ export default function GroupChatContainer({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       {/* Dialog thêm thành viên */}
       <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
         <DialogContent className="max-w-lg">
@@ -600,22 +711,17 @@ export default function GroupChatContainer({
             className="mb-2"
           />
           <div className="space-y-2 max-h-60 overflow-y-auto">
-            {searchResults.length === 0 && (
-              <div className="text-gray-500 text-sm">Không có kết quả</div>
-            )}
-            {searchResults.map((u: UserProfile) => {
-              const mapped: GroupMember = {
-                account_id: u.account_id,
-                username: u.username,
-                full_name: u.full_name,
-                avatar: u.avatar,
-                role: "member",
-                email: u.email,
-              };
-              return (
+            {searchResults.length === 0 ? (
+              <div className="text-gray-500 text-sm text-center py-4">
+                {searchUser.trim()
+                  ? "Không có kết quả"
+                  : "Nhập tên để tìm kiếm"}
+              </div>
+            ) : (
+              searchResults.map((u: UserProfile) => (
                 <div
                   key={u.account_id}
-                  className="flex items-center gap-3 p-2 rounded hover:bg-blue-50"
+                  className="flex items-center gap-3 p-2 rounded hover:bg-blue-50 border"
                 >
                   <Avatar className="w-8 h-8">
                     <AvatarImage src={u.avatar || undefined} />
@@ -623,19 +729,22 @@ export default function GroupChatContainer({
                       {getUserInitials(u.full_name)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 font-medium text-sm">
-                    {u.full_name}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">
+                      {u.full_name || u.username}
+                    </div>
+                    <div className="text-xs text-gray-500">@{u.username}</div>
                   </div>
                   <Button
                     size="sm"
-                    onClick={() => onAddUser(mapped)}
+                    onClick={() => onAddUser(u)}
                     disabled={addingUser || members.length >= 50}
                   >
-                    Thêm
+                    {addingUser ? "Đang thêm..." : "Thêm"}
                   </Button>
                 </div>
-              );
-            })}
+              ))
+            )}
           </div>
           <DialogFooter>
             <Button
@@ -647,6 +756,87 @@ export default function GroupChatContainer({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirm leave dialog */}
+      <AlertDialog open={leaveConfirmOpen} onOpenChange={setLeaveConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rời khỏi nhóm</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn rời khỏi nhóm "{groupName}"? Bạn sẽ không
+              thể xem tin nhắn hoặc tham gia trò chuyện trong nhóm này nữa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLeaveGroup}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Rời nhóm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Member action dialog */}
+      <AlertDialog
+        open={memberActionDialog.open}
+        onOpenChange={(open) =>
+          setMemberActionDialog({ open, member: null, action: null })
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {memberActionDialog.action === "remove"
+                ? "Xóa thành viên"
+                : "Cấm thành viên"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {memberActionDialog.action === "remove"
+                ? `Bạn có chắc chắn muốn xóa "${
+                    memberActionDialog.member?.full_name ||
+                    memberActionDialog.member?.username
+                  }" khỏi nhóm? Họ có thể tham gia lại sau.`
+                : `Bạn có chắc chắn muốn cấm "${
+                    memberActionDialog.member?.full_name ||
+                    memberActionDialog.member?.username
+                  }" khỏi nhóm? Họ sẽ không thể tham gia lại nhóm này.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (
+                  memberActionDialog.action === "remove" &&
+                  memberActionDialog.member
+                ) {
+                  onRemoveMember(memberActionDialog.member);
+                } else if (
+                  memberActionDialog.action === "ban" &&
+                  memberActionDialog.member
+                ) {
+                  onBanMember(memberActionDialog.member);
+                }
+                setMemberActionDialog({
+                  open: false,
+                  member: null,
+                  action: null,
+                });
+              }}
+              className={
+                memberActionDialog.action === "ban"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-orange-600 hover:bg-orange-700"
+              }
+            >
+              {memberActionDialog.action === "remove" ? "Xóa" : "Cấm"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -11,6 +11,7 @@ export interface WebSocketMessage {
   group_id?: string;
   members?: string[];
   detail?: string;
+  my_status?: string;
 }
 
 export interface GroupChatWebSocketCallbacks {
@@ -21,6 +22,7 @@ export interface GroupChatWebSocketCallbacks {
   onError?: (error: string) => void;
   onDisconnect?: (code: number, reason: string) => void;
   onReconnect?: () => void;
+  onStatusChange?: (status: string) => void;
 }
 
 export class GroupChatWebSocketService {
@@ -35,6 +37,7 @@ export class GroupChatWebSocketService {
   private isManualClose = false;
   private hadConnectionEstablished = false;
   private errorTimeout: NodeJS.Timeout | null = null;
+  private currentStatus: string | null = null;
 
   constructor(
     groupId: string,
@@ -83,12 +86,12 @@ export class GroupChatWebSocketService {
             const message: WebSocketMessage = JSON.parse(event.data);
             if (message.type === "connection_established") {
               this.hadConnectionEstablished = true;
+              this.currentStatus = message.my_status || "active";
+              this.callbacks.onStatusChange?.(this.currentStatus);
               if (this.errorTimeout) {
                 clearTimeout(this.errorTimeout);
                 this.errorTimeout = null;
               }
-              // Optionally: log or handle connection established event
-              // console.info("WebSocket connection established", message);
               return;
             }
             this.handleMessage(message);
@@ -105,16 +108,21 @@ export class GroupChatWebSocketService {
             return;
           }
 
-          // Handle specific error codes
+          // Handle specific error codes for status-related issues
           if (event.code === 4003) {
             this.callbacks.onError?.(
-              "Bạn đã bị xóa khỏi group hoặc không còn quyền truy cập."
+              "Bạn không còn là thành viên hoạt động của group này."
             );
             return;
           }
 
           if (event.code === 4001) {
             this.callbacks.onError?.("Token không hợp lệ hoặc đã hết hạn.");
+            return;
+          }
+
+          if (event.code === 4004) {
+            this.callbacks.onError?.("Bạn đã bị cấm khỏi group này.");
             return;
           }
 
@@ -144,10 +152,9 @@ export class GroupChatWebSocketService {
                   reject(new Error("Không thể kết nối WebSocket"));
                 }
                 this.errorTimeout = null;
-              }, 1000); // Delay error reporting by 1s
+              }, 1000);
             }
           } else {
-            // If connection was established before, just warn
             console.warn(
               "WebSocket error after connection established:",
               error
@@ -184,6 +191,26 @@ export class GroupChatWebSocketService {
       case "message_sent":
         // Optional: Handle message sent confirmation
         break;
+      case "status_changed":
+        // Handle status change notifications
+        if (message.my_status) {
+          this.currentStatus = message.my_status;
+          this.callbacks.onStatusChange?.(message.my_status);
+
+          // If user was removed/banned, show appropriate message
+          if (message.my_status === "removed") {
+            this.callbacks.onError?.("Bạn đã bị xóa khỏi group.");
+            this.disconnect();
+          } else if (message.my_status === "banned") {
+            this.callbacks.onError?.("Bạn đã bị cấm khỏi group.");
+            this.disconnect();
+          }
+        }
+        break;
+      case "member_status_update":
+        // Handle other members' status updates if needed
+        console.log("Member status updated:", message);
+        break;
       case "error":
         this.callbacks.onError?.(message.detail || "Lỗi WebSocket");
         break;
@@ -191,7 +218,6 @@ export class GroupChatWebSocketService {
         // Already handled in onmessage
         break;
       default:
-        // Only log unknown types as warning
         console.warn("Unknown WebSocket message type:", message.type);
     }
   }
@@ -220,6 +246,14 @@ export class GroupChatWebSocketService {
       return false;
     }
 
+    // Check if user is still active
+    if (this.currentStatus && this.currentStatus !== "active") {
+      this.callbacks.onError?.(
+        "Bạn không thể gửi tin nhắn trong trạng thái hiện tại."
+      );
+      return false;
+    }
+
     const message: WebSocketMessage = {
       type: "send_message",
       content: content.trim(),
@@ -236,6 +270,11 @@ export class GroupChatWebSocketService {
 
   public sendTypingIndicator(isTyping: boolean): boolean {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return false;
+    }
+
+    // Only send typing indicator if user is active
+    if (this.currentStatus && this.currentStatus !== "active") {
       return false;
     }
 
@@ -262,6 +301,11 @@ export class GroupChatWebSocketService {
       this.reconnectTimeout = null;
     }
 
+    if (this.errorTimeout) {
+      clearTimeout(this.errorTimeout);
+      this.errorTimeout = null;
+    }
+
     if (this.ws) {
       this.ws.close();
       this.ws = null;
@@ -274,6 +318,10 @@ export class GroupChatWebSocketService {
 
   public getConnectingStatus(): boolean {
     return this.connecting;
+  }
+
+  public getCurrentStatus(): string | null {
+    return this.currentStatus;
   }
 }
 
@@ -288,6 +336,7 @@ export const useGroupChatWebSocket = (
   );
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [memberStatus, setMemberStatus] = useState<string>("active");
 
   useEffect(() => {
     if (!groupId || !token) return;
@@ -308,6 +357,10 @@ export const useGroupChatWebSocket = (
         setIsConnected(false);
         setIsConnecting(false);
         callbacks.onError?.(error);
+      },
+      onStatusChange: (status) => {
+        setMemberStatus(status);
+        callbacks.onStatusChange?.(status);
       },
     });
 
@@ -342,6 +395,7 @@ export const useGroupChatWebSocket = (
   return {
     isConnected,
     isConnecting,
+    memberStatus,
     sendMessage,
     sendTypingIndicator,
     service,
