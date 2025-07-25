@@ -26,18 +26,18 @@ const isValidEmail = (email: string): boolean => {
 };
 
 const isValidPassword = (password: string): boolean => {
-  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
-  return passwordRegex.test(password);
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-/=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/;
+  return passwordRegex.test(password) && !/\s/.test(password);
 };
 
 const isValidUsername = (username: string): boolean => {
-  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+  const usernameRegex = /^[a-zA-Z0-9_.-]{3,20}$/;
   return usernameRegex.test(username);
 };
 
 const isValidFullName = (fullName: string): boolean => {
   const nameRegex = /^[a-zA-ZÀ-ỹ\s]{2,50}$/;
-  return nameRegex.test(fullName.trim());
+  return nameRegex.test(fullName) && fullName.trim() === fullName;
 };
 
 const isValidDateOfBirth = (dateOfBirth: string): boolean => {
@@ -54,10 +54,10 @@ const isValidDateOfBirth = (dateOfBirth: string): boolean => {
     monthDiff < 0 ||
     (monthDiff === 0 && today.getDate() < birthDate.getDate())
   ) {
-    return age - 1 >= 13;
+    return age - 1 >= 13 && age - 1 <= 100;
   }
 
-  return age >= 13;
+  return age >= 13 && age <= 100;
 };
 
 const validateRegisterForm = (data: RegisterRequest): ValidationResult => {
@@ -66,7 +66,7 @@ const validateRegisterForm = (data: RegisterRequest): ValidationResult => {
   if (!data.full_name) {
     errors.full_name = "Vui lòng nhập họ và tên";
   } else if (!isValidFullName(data.full_name)) {
-    errors.full_name = "Họ tên phải có ít nhất 2 ký tự và chỉ chứa chữ cái";
+    errors.full_name = "Họ tên phải có ít nhất 2 ký tự, chỉ chứa chữ cái và không có khoảng trắng đầu cuối";
   }
 
   if (!data.username) {
@@ -85,13 +85,14 @@ const validateRegisterForm = (data: RegisterRequest): ValidationResult => {
   if (!data.password) {
     errors.password = "Vui lòng nhập mật khẩu";
   } else if (!isValidPassword(data.password)) {
-    errors.password = "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ cái và số";
+    errors.password =
+      "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số, ký tự đặc biệt và không chứa khoảng trắng";
   }
 
   if (!data.date_of_birth) {
     errors.date_of_birth = "Vui lòng nhập ngày sinh";
   } else if (!isValidDateOfBirth(data.date_of_birth)) {
-    errors.date_of_birth = "Ngày sinh không hợp lệ hoặc tuổi chưa đủ 13";
+    errors.date_of_birth = "Ngày sinh không hợp lệ, tuổi phải từ 13 đến 100";
   }
 
   return {
@@ -118,7 +119,7 @@ const getPasswordStrength = (
   if (/[a-z]/.test(password)) score++;
   if (/[A-Z]/.test(password)) score++;
   if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++;
 
   const indicators = [
     { score: 0, label: "Rất yếu", color: "bg-red-500" },
@@ -253,7 +254,7 @@ const RegisterPage: React.FC = () => {
     try {
       console.log("📤 Sending data to register:", formData);
       await authService.register(formData);
-      toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+      toast.success("Đăng ký thành công! Vui lòng xác nhận Email và đăng nhập.");
       navigate("/auth/login");
     } catch (error: unknown) {
       const errorData = error as { response?: { data?: ErrorResponse } };
@@ -262,7 +263,7 @@ const RegisterPage: React.FC = () => {
       if (errorData?.response?.data?.detail) {
         toast.error(`Đăng ký thất bại: ${errorData.response.data.detail}`);
       } else {
-        toast.error("Đăng ký thất bại. tên người dùng hoặc email đã tồn tại!.");
+        toast.error("Đăng ký thất bại. Tên người dùng hoặc email đã tồn tại!");
       }
     } finally {
       setLoading(false);
@@ -288,7 +289,6 @@ const RegisterPage: React.FC = () => {
             Tạo tài khoản Food Forum để tham gia cộng đồng
           </CardDescription>
         </CardHeader>
-
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -317,7 +317,6 @@ const RegisterPage: React.FC = () => {
                 )}
               </div>
             </div>
-
             <div>
               <label
                 htmlFor="username"
@@ -356,9 +355,11 @@ const RegisterPage: React.FC = () => {
                 )}
               </div>
             </div>
-
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium mb-1"
+              >
                 Email
               </label>
               <div className="relative">
@@ -392,7 +393,6 @@ const RegisterPage: React.FC = () => {
                 )}
               </div>
             </div>
-
             <div>
               <label
                 htmlFor="password"
@@ -426,7 +426,6 @@ const RegisterPage: React.FC = () => {
                   )}
                 </button>
               </div>
-
               {formData.password && (
                 <div className="mt-2">
                   <div className="flex items-center justify-between text-xs">
@@ -455,7 +454,6 @@ const RegisterPage: React.FC = () => {
                   </div>
                 </div>
               )}
-
               <div className="h-5 mt-1">
                 {validationErrors.password && (
                   <p className="text-sm text-red-600">
@@ -464,7 +462,6 @@ const RegisterPage: React.FC = () => {
                 )}
               </div>
             </div>
-
             <div>
               <label
                 htmlFor="date_of_birth"
@@ -485,7 +482,6 @@ const RegisterPage: React.FC = () => {
                   validationErrors.date_of_birth ? "border-red-500" : ""
                 }
               />
-              {/* Reserved space để tránh UI jumping */}
               <div className="h-5 mt-1">
                 {validationErrors.date_of_birth && (
                   <p className="text-sm text-red-600">
@@ -497,7 +493,6 @@ const RegisterPage: React.FC = () => {
                 Bạn phải ít nhất 13 tuổi để đăng ký
               </p>
             </div>
-
             <Button
               type="submit"
               className="w-full"
@@ -506,7 +501,6 @@ const RegisterPage: React.FC = () => {
               {loading ? "Đang đăng ký..." : "Đăng ký"}
             </Button>
           </form>
-
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">Đã có tài khoản? </span>
             <Link

@@ -369,7 +369,7 @@ const Header = () => {
                       to={
                         paths[
                           user.role.role_name as "user" | "moderator" | "admin"
-                        ]?.dashboard
+                        ]?.home
                       }
                       className="flex items-center gap-2 w-full"
                     >
