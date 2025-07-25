@@ -1,8 +1,8 @@
 // src/pages/auth/ForgotPasswordPage.tsx
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Lock } from "lucide-react";
 
 import type { ApiResponse } from "@/types/auth";
@@ -18,36 +18,56 @@ import { toast } from "sonner";
 import { authService } from "@/services/auth/authService";
 
 const ForgotPasswordPage = () => {
-  const navigate = useNavigate();
   const [username, setUsername] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isCooldown, setIsCooldown] = useState(false);
+  const [cooldown, setCooldown] = useState(30);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setError("");
-  setSuccess("");
-  setIsLoading(true);
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setIsLoading(true);
 
-  if (!username) {
-    setError("Vui lòng nhập tên đăng nhập.");
-    setIsLoading(false);
-    return;
-  }
+    if (!username) {
+      setError("Vui lòng nhập tên đăng nhập.");
+      setIsLoading(false);
+      return;
+    }
 
-  try {
-    const response: ApiResponse<null> = await authService.forgotPassword(username);
-    setSuccess(response.message);
-    toast.success(response.message);
-    setUsername("");
-  } catch (err) {
-    setError(authService.extractErrorMessage(err));
-    toast.error(authService.extractErrorMessage(err));
-  } finally {
-    setIsLoading(false);
-  }
-};
+    try {
+      const response: ApiResponse<null> = await authService.forgotPassword(
+        username
+      );
+      setSuccess(response.message);
+      toast.success(response.message);
+      setUsername("");
+      setIsCooldown(true);
+      setCooldown(30);
+    } catch (err) {
+      let msg = authService.extractErrorMessage(err);
+      if (msg && msg.toLowerCase().includes("account not found")) {
+        msg = "Tài khoản không tồn tại trong hệ thống, vui lòng kiểm tra lại.";
+      }
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Cooldown effect
+  useEffect(() => {
+    if (!isCooldown) return;
+    if (cooldown === 0) {
+      setIsCooldown(false);
+      return;
+    }
+    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [isCooldown, cooldown]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-to-br from-blue-50 to-purple-50">
@@ -58,7 +78,8 @@ const ForgotPasswordPage = () => {
           </div>
           <CardTitle className="text-2xl">Đặt lại mật khẩu</CardTitle>
           <CardDescription>
-            Nhập tên đăng nhập của bạn. Chúng tôi sẽ gửi một liên kết để xác nhận.
+            Nhập tên đăng nhập của bạn. Chúng tôi sẽ gửi một liên kết để xác
+            nhận.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -68,13 +89,19 @@ const ForgotPasswordPage = () => {
             </Alert>
           )}
           {success && (
-            <Alert variant="default" className="mb-3 bg-green-50 text-green-700">
+            <Alert
+              variant="default"
+              className="mb-3 bg-green-50 text-green-700"
+            >
               <AlertDescription>{success}</AlertDescription>
             </Alert>
           )}
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium mb-1">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium mb-1"
+              >
                 Tên đăng nhập
               </label>
               <Input
@@ -85,7 +112,9 @@ const ForgotPasswordPage = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 disabled={isLoading}
-                className={error && error.includes("nhập") ? "border-red-500" : ""}
+                className={
+                  error && error.includes("nhập") ? "border-red-500" : ""
+                }
               />
               <div className="h-4 mt-1">
                 {error && error.includes("nhập") && (
@@ -96,10 +125,14 @@ const ForgotPasswordPage = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || isCooldown}
               aria-label="Gửi liên kết đặt lại"
             >
-              {isLoading ? "Đang gửi..." : "Gửi liên kết đặt lại"}
+              {isLoading
+                ? "Đang gửi..."
+                : isCooldown
+                ? `Vui lòng chờ ${cooldown}s để gửi lại`
+                : "Gửi liên kết đặt lại"}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">

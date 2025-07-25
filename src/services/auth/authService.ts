@@ -319,11 +319,23 @@ export const authService = {
 
         // Handle ErrorResponse type
         if ("detail" in data && data.detail) {
+          if (
+            typeof data.detail === "string" &&
+            data.detail.includes("Account not found")
+          ) {
+            return "Tài khoản không tồn tại trong hệ thống, vui lòng kiểm tra lại.";
+          }
           return data.detail;
         }
 
         // Handle generic error message
         if ("message" in data && data.message) {
+          if (
+            typeof data.message === "string" &&
+            data.message.includes("Account not found")
+          ) {
+            return "Tài khoản không tồn tại trong hệ thống, vui lòng kiểm tra lại.";
+          }
           return data.message;
         }
       }
@@ -336,7 +348,7 @@ export const authService = {
           case 403:
             return "Tài khoản đã bị khóa hoặc chưa được xác thực";
           case 404:
-            return "Không tìm thấy tài khoản";
+            return "Tài khoản không tồn tại trong hệ thống, vui lòng kiểm tra lại.";
           case 429:
             return "Quá nhiều lần thử. Vui lòng thử lại sau";
           case 500:
