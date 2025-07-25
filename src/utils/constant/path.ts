@@ -14,6 +14,8 @@ export const paths = {
   forgotPassword: "/auth/forgot-password",
   changePassword: "/auth/change-password",
   verifyEmail: "/verify-email",
+  verifySuccess: "/verify-success",
+  verifyFailed: "/verify-failed",
 
   //user
   user: {

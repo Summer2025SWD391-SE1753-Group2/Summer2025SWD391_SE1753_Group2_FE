@@ -38,6 +38,8 @@ import { ReportPage } from "@/pages/private/management/ReportPage";
 import CreateReportPage from "@/pages/private/CreateReportPage";
 import { UserReportPage } from "@/pages/private/UserReportPage";
 import VerifyEmailPage from "@/pages/publicPage/verify-email";
+import VerifySuccess from "@/pages/publicPage/verify-success";
+import VerifyFailed from "@/pages/publicPage/verify-failed";
 
 const router = createBrowserRouter([
   {
@@ -54,6 +56,8 @@ const router = createBrowserRouter([
           { path: paths.forgotPassword, element: <ForgotPasswordPage /> },
           { path: paths.changePassword, element: <ChangePasswordPage /> },
           { path: paths.verifyEmail, element: <VerifyEmailPage /> },
+          { path: paths.verifySuccess, element: <VerifySuccess /> },
+          { path: paths.verifyFailed, element: <VerifyFailed /> },
         ],
       },
     ],
