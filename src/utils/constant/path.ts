@@ -9,9 +9,13 @@ export const paths = {
   register: "/auth/register",
   googleCallback: "/auth/google-callback",
   postDetail: "/posts/:postId",
-  search: "/searchPage",  chat: "chat",
+  search: "/searchPage",
+  chat: "chat",
   forgotPassword: "/auth/forgot-password",
   changePassword: "/auth/change-password",
+  verifyEmail: "/verify-email",
+  verifySuccess: "/verify-success",
+  verifyFailed: "/verify-failed",
 
   //user
   user: {

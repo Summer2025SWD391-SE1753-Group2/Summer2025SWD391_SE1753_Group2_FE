@@ -99,7 +99,7 @@ export function GoogleCallbackPage() {
 
           // Redirect to appropriate dashboard based on role
           const roleName = userInfo.role?.role_name || "user";
-          const redirectTo = getDefaultRouteByRole(roleName);
+          const redirectTo = getDefaultRouteByRole(roleName) || "/";
           navigate(redirectTo, { replace: true });
         } catch (error) {
           console.error("Failed to process Google callback:", error);

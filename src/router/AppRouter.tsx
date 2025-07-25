@@ -12,7 +12,7 @@ import ProtectedRoute from "./protected-route";
 import { paths } from "@/utils/constant/path";
 import LoginPage from "@/pages/publicPage/auth/LoginPage";
 import RegisterPage from "@/pages/publicPage/auth/RegisterPage";
-import { GoogleCallbackPage } from "@/pages/publicPage/auth/GoogleCallbackPage";
+import GoogleCallback from "@/pages/publicPage/auth/google-callback";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CreatePostPage } from "@/pages/publicPage/posts/CreatePostPage";
 import { PostDetailPage } from "@/pages/publicPage/posts/PostDetailPage";
@@ -37,7 +37,9 @@ import GroupChatManagementPage from "@/pages/private/management/GroupChatManagem
 import { ReportPage } from "@/pages/private/management/ReportPage";
 import CreateReportPage from "@/pages/private/CreateReportPage";
 import { UserReportPage } from "@/pages/private/UserReportPage";
-
+import VerifyEmailPage from "@/pages/publicPage/verify-email";
+import VerifySuccess from "@/pages/publicPage/verify-success";
+import VerifyFailed from "@/pages/publicPage/verify-failed";
 
 const router = createBrowserRouter([
   {
@@ -50,9 +52,12 @@ const router = createBrowserRouter([
         children: [
           { path: paths.login, element: <LoginPage /> },
           { path: paths.register, element: <RegisterPage /> },
-          { path: paths.googleCallback, element: <GoogleCallbackPage /> },
+          { path: paths.googleCallback, element: <GoogleCallback /> },
           { path: paths.forgotPassword, element: <ForgotPasswordPage /> },
-          { path: paths.changePassword, element: <ChangePasswordPage/> },
+          { path: paths.changePassword, element: <ChangePasswordPage /> },
+          { path: paths.verifyEmail, element: <VerifyEmailPage /> },
+          { path: paths.verifySuccess, element: <VerifySuccess /> },
+          { path: paths.verifyFailed, element: <VerifyFailed /> },
         ],
       },
     ],

@@ -26,7 +26,8 @@ const isValidEmail = (email: string): boolean => {
 };
 
 const isValidPassword = (password: string): boolean => {
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-/=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/;
+  const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-/=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/;
   return passwordRegex.test(password) && !/\s/.test(password);
 };
 
@@ -66,7 +67,8 @@ const validateRegisterForm = (data: RegisterRequest): ValidationResult => {
   if (!data.full_name) {
     errors.full_name = "Vui lòng nhập họ và tên";
   } else if (!isValidFullName(data.full_name)) {
-    errors.full_name = "Họ tên phải có ít nhất 2 ký tự, chỉ chứa chữ cái và không có khoảng trắng đầu cuối";
+    errors.full_name =
+      "Họ tên phải có ít nhất 2 ký tự, chỉ chứa chữ cái và không có khoảng trắng đầu cuối";
   }
 
   if (!data.username) {
@@ -254,7 +256,10 @@ const RegisterPage: React.FC = () => {
     try {
       console.log("📤 Sending data to register:", formData);
       await authService.register(formData);
-      toast.success("Đăng ký thành công! Vui lòng xác nhận Email và đăng nhập.");
+      toast.success(
+        "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.",
+        { duration: 5000 }
+      );
       navigate("/auth/login");
     } catch (error: unknown) {
       const errorData = error as { response?: { data?: ErrorResponse } };
@@ -356,10 +361,7 @@ const RegisterPage: React.FC = () => {
               </div>
             </div>
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium mb-1"
-              >
+              <label htmlFor="email" className="block text-sm font-medium mb-1">
                 Email
               </label>
               <div className="relative">
