@@ -33,7 +33,7 @@ const createTag = async (data: {
   status: "active" | "inactive";
   created_by: string;
 }): Promise<Tag> => {
-  const response = await axiosInstance.post<Tag>("/api/v1/tags", data);
+  const response = await axiosInstance.post<Tag>("/api/v1/tags/", data);
   return response.data;
 };
 
